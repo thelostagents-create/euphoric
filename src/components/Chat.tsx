@@ -7,7 +7,8 @@ import { ServerManage } from "./ServerManage";
 import { CreateServerModal } from "./CreateServerModal";
 import { ServerIcon } from "./ServerIcon";
 import { MessageText } from "./MessageText";
-import { displayName } from "../social";
+import { LendStar } from "./LendStar";
+import { displayName, serverStars } from "../social";
 
 export function Chat() {
   const { state, dispatch } = useStore();
@@ -30,6 +31,7 @@ export function Chat() {
   const [sheetUser, setSheetUser] = useState<string | null>(null);
   const [showManage, setShowManage] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
+  const [showLend, setShowLend] = useState(false);
   const [revealed, setRevealed] = useState<Set<string>>(new Set());
   const [draft, setDraft] = useState("");
   const endRef = useRef<HTMLDivElement>(null);
@@ -87,6 +89,9 @@ export function Chat() {
   // @-mention autocomplete: the partial handle being typed at the end of draft.
   const mentionMatch = /(?:^|\s)@(\w*)$/.exec(draft);
   const mentionQuery = mentionMatch ? mentionMatch[1].toLowerCase() : null;
+  const canMentionEveryone = can(server, state.currentUserId, "MENTION_EVERYONE");
+  const showEveryone =
+    mentionQuery !== null && canMentionEveryone && "everyone".startsWith(mentionQuery);
   const mentionSuggestions =
     mentionQuery === null
       ? []
@@ -144,6 +149,9 @@ export function Chat() {
             <div className="sub">#{channel.name}</div>
           </div>
           <div className="spacer" />
+          <button className="star-pill" onClick={() => setShowLend(true)} title="Lend a Star">
+            {serverStars(state, server.id)} ⭐
+          </button>
           <button className="btn ghost sm" onClick={() => setShowManage(true)}>
             ⚙︎
           </button>
@@ -227,8 +235,15 @@ export function Chat() {
         )}
 
         <div style={{ position: "relative" }}>
-          {mentionSuggestions.length > 0 && (
+          {(showEveryone || mentionSuggestions.length > 0) && (
             <div className="mention-popup">
+              {showEveryone && (
+                <button className="mention-option" onClick={() => pickMention("everyone")}>
+                  <span className="mention-everyone-ico">📣</span>
+                  <span className="dn">everyone</span>
+                  <span className="muted" style={{ fontSize: 12 }}>notify the whole server</span>
+                </button>
+              )}
               {mentionSuggestions.map((u) => (
                 <button key={u.id} className="mention-option" onClick={() => pickMention(u.username)}>
                   <img src={u.avatar} alt="" />
@@ -258,6 +273,7 @@ export function Chat() {
       )}
       {showManage && <ServerManage server={server} onClose={() => setShowManage(false)} />}
       {showCreate && <CreateServerModal onClose={() => setShowCreate(false)} />}
+      {showLend && <LendStar server={server} onClose={() => setShowLend(false)} />}
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import type { AppState, Server, Tier, User } from "./types";
+import { can } from "./permissions";
 
 /** Total Stars a member of a given tier is granted to spend. */
 export function starCapacity(tier: Tier): number {
@@ -86,20 +87,35 @@ export interface Mention {
   channelName: string;
   content: string;
   createdAt: string;
+  /** True when this came from an authorized @everyone ping. */
+  everyone: boolean;
 }
 
-/** Server messages (not DMs) that @-mention the given user, newest first. */
+const EVERYONE_RE = /@everyone\b/i;
+
+/**
+ * Server messages (not DMs) that notify the given user, newest first:
+ * direct @username mentions, plus @everyone pings from members who hold the
+ * Mention @everyone permission (in servers the user belongs to).
+ */
 export function mentionsOf(state: AppState, userId: string): Mention[] {
   const user = state.users[userId];
   if (!user) return [];
-  const pattern = new RegExp(`@${user.username.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i");
+  const namePattern = new RegExp(`@${user.username.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i");
   const mentions: Mention[] = [];
   for (const m of state.messages) {
     if (m.channelId.startsWith("dm:")) continue;
     if (m.authorId === userId) continue;
-    if (!pattern.test(m.content)) continue;
     const server = state.servers.find((s) => s.channels.some((c) => c.id === m.channelId));
     if (!server) continue;
+    const isMember = server.members.some((mem) => mem.userId === userId && !mem.banned);
+    if (!isMember) continue;
+
+    const direct = namePattern.test(m.content);
+    const everyone =
+      !direct && EVERYONE_RE.test(m.content) && can(server, m.authorId, "MENTION_EVERYONE");
+    if (!direct && !everyone) continue;
+
     const channel = server.channels.find((c) => c.id === m.channelId)!;
     mentions.push({
       messageId: m.id,
@@ -110,6 +126,7 @@ export function mentionsOf(state: AppState, userId: string): Mention[] {
       channelName: channel.name,
       content: m.content,
       createdAt: m.createdAt,
+      everyone,
     });
   }
   return mentions.sort((a, b) => b.createdAt.localeCompare(a.createdAt));

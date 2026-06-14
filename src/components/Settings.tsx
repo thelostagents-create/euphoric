@@ -52,7 +52,7 @@ export function AccountSettings() {
 
   return (
     <>
-      <div className="section-title">Subscription</div>
+      <div className="section-title" id="subscription-section">Subscription</div>
       {TIERS.map((t) => {
         const active = user.tier === t.id;
         return (

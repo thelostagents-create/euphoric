@@ -66,6 +66,15 @@ export function Profile() {
       </div>
 
       <div className="list">
+        <button
+          className="btn ghost full"
+          onClick={() =>
+            document.getElementById("subscription-section")?.scrollIntoView({ behavior: "smooth", block: "start" })
+          }
+        >
+          ⭐ Manage subscription
+        </button>
+
         <div className="field">
           <label>Username (unique — one per person)</label>
           <div className="row" style={{ gap: 8 }}>

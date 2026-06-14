@@ -16,8 +16,10 @@ iOS port come in later passes.
   (`euphoric.gg/<code>`); paste a code on the Discover page to join. One code
   maps to exactly one server.
 - **Roles & permissions** — create roles (incl. dedicated *staff roles*) with
-  granular permissions: kick, ban, timeout, **delete messages**, manage
-  roles/channels/server. Moderation respects a role hierarchy (you can only act
+  granular permissions: kick, ban, timeout, **delete messages**, **mention
+  @everyone**, manage roles/channels/server. An `@everyone` ping from a member
+  with that permission alerts the whole server. Moderation respects a role
+  hierarchy (you can only act
   on lower-ranked members; nobody can act on the owner).
 - **Moderation** — kick, ban, and timeout members from a user's profile sheet.
   Timed-out users can't send messages.
@@ -35,8 +37,9 @@ iOS port come in later passes.
   username, see a **notification feed of who @-mentioned you** in servers, and
   **DM your friends** one-on-one.
 - **Server boosts (⭐ Stars)** — Premium members get 1 Star, Supernova members
-  get 2, to spend across servers. At **3 ⭐** a server unlocks an animated
-  (GIF) icon; at **9 ⭐** it can set a custom invite code.
+  get 2, to spend across servers. A server's Star count shows as a tappable
+  pill in the chat header — tap it to lend a Star. At **3 ⭐** a server unlocks
+  an animated (GIF) icon; at **9 ⭐** it can set a custom invite code.
 - **Profiles & bios** — every user has an avatar, a custom bio, a banner, and a
   tier.
 - **Subscription tiers**

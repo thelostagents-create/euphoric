@@ -95,7 +95,7 @@ const servers: Server[] = [
         id: "r_mod",
         name: "Moderator",
         color: "#a06bff",
-        permissions: ["KICK_MEMBERS", "TIMEOUT_MEMBERS"],
+        permissions: ["KICK_MEMBERS", "TIMEOUT_MEMBERS", "MENTION_EVERYONE"],
         position: 50,
         staff: true,
       },
@@ -156,6 +156,7 @@ export const seedState: AppState = {
     // Mentions of @you — surface in the Friends tab notification feed.
     { id: "m8", channelId: "c_general", authorId: "rex", content: "@you you in for the game tonight?", createdAt: ago(20) },
     { id: "m9", channelId: "c_dev_general", authorId: "nova", content: "hey @you can you review my PR?", createdAt: ago(15) },
+    { id: "m10", channelId: "c_general", authorId: "luna", content: "@everyone movie night at 8! 🎬", createdAt: ago(10) },
     // DM history with luna (a mutual friend).
     { id: "d1", channelId: "dm:luna_me", authorId: "luna", content: "heyy! glad we're friends on here now 🌙", createdAt: ago(180) },
     { id: "d2", channelId: "dm:luna_me", authorId: "me", content: "same! this place is cozy", createdAt: ago(175) },

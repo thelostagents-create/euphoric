@@ -23,7 +23,15 @@ export function MessageText({
     <>
       {parts.map((part, i) => {
         const m = /^@(\w+)$/.exec(part);
-        const user = m ? byName.get(m[1].toLowerCase()) : undefined;
+        const token = m?.[1].toLowerCase();
+        if (token === "everyone") {
+          return (
+            <span key={i} className="mention mention-me">
+              @everyone
+            </span>
+          );
+        }
+        const user = token ? byName.get(token) : undefined;
         if (user) {
           return (
             <span key={i} className={`mention ${user.id === meId ? "mention-me" : ""}`}>

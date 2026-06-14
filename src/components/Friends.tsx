@@ -10,7 +10,8 @@ export function Friends() {
   const [openDm, setOpenDm] = useState<string | null>(null);
 
   const friends = useMemo(() => friendsOf(state, me.id), [state, me.id]);
-  const mentions = useMemo(() => mentionsOf(state, me.id), [state, me.id]);
+  const allMentions = useMemo(() => mentionsOf(state, me.id), [state, me.id]);
+  const mentions = allMentions.slice(0, 3); // only the 3 most recent
 
   if (openDm) {
     return <DmView friendId={openDm} onBack={() => setOpenDm(null)} />;
@@ -22,8 +23,8 @@ export function Friends() {
         <h1>Friends</h1>
       </div>
       <div className="list">
-        {/* Notifications: mentions in servers */}
-        <div className="section-title">Notifications · {mentions.length}</div>
+        {/* Notifications: 3 most recent mentions in servers */}
+        <div className="section-title">Notifications</div>
         {mentions.length === 0 ? (
           <p className="muted">No one has mentioned you yet.</p>
         ) : (
@@ -36,8 +37,10 @@ export function Friends() {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 13 }}>
                       <b>{displayName(author)}</b>{" "}
-                      <span className="muted">mentioned you in</span> {m.serverName}{" "}
-                      <span className="muted">#{m.channelName}</span>
+                      <span className="muted">
+                        {m.everyone ? "pinged @everyone in" : "mentioned you in"}
+                      </span>{" "}
+                      {m.serverName} <span className="muted">#{m.channelName}</span>
                     </div>
                     <div className="muted" style={{ fontSize: 13, marginTop: 2 }}>{m.content}</div>
                   </div>
@@ -46,6 +49,11 @@ export function Friends() {
               </div>
             );
           })
+        )}
+        {allMentions.length > 3 && (
+          <p className="muted" style={{ fontSize: 12, margin: "2px 0 0" }}>
+            +{allMentions.length - 3} older notification{allMentions.length - 3 === 1 ? "" : "s"}
+          </p>
         )}
 
         <AddFriend />

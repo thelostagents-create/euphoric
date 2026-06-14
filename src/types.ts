@@ -8,6 +8,7 @@ export type Permission =
   | "BAN_MEMBERS"
   | "TIMEOUT_MEMBERS"
   | "DELETE_MESSAGES"
+  | "MENTION_EVERYONE"
   | "MANAGE_ROLES"
   | "MANAGE_CHANNELS"
   | "MANAGE_SERVER";
@@ -17,6 +18,7 @@ export const ALL_PERMISSIONS: { id: Permission; label: string; desc: string }[] 
   { id: "BAN_MEMBERS", label: "Ban Members", desc: "Permanently bar members from the server." },
   { id: "TIMEOUT_MEMBERS", label: "Timeout Members", desc: "Temporarily mute members." },
   { id: "DELETE_MESSAGES", label: "Delete Messages", desc: "Delete messages sent by other members." },
+  { id: "MENTION_EVERYONE", label: "Mention @everyone", desc: "Ping and alert everyone in the server." },
   { id: "MANAGE_ROLES", label: "Manage Roles", desc: "Create, edit and assign roles." },
   { id: "MANAGE_CHANNELS", label: "Manage Channels", desc: "Create and delete channels." },
   { id: "MANAGE_SERVER", label: "Manage Server", desc: "Edit server settings, invite and discovery." },

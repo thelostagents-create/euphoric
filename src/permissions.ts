@@ -1,4 +1,4 @@
-import type { Member, Permission, Server } from "./types";
+import { ALL_PERMISSIONS, type Member, type Permission, type Server } from "./types";
 
 /** The owner implicitly has every permission. */
 export function isOwner(server: Server, userId: string): boolean {
@@ -12,14 +12,7 @@ export function getMember(server: Server, userId: string): Member | undefined {
 /** Collect the effective permission set for a user within a server. */
 export function effectivePermissions(server: Server, userId: string): Set<Permission> {
   if (isOwner(server, userId)) {
-    return new Set<Permission>([
-      "KICK_MEMBERS",
-      "BAN_MEMBERS",
-      "TIMEOUT_MEMBERS",
-      "MANAGE_ROLES",
-      "MANAGE_CHANNELS",
-      "MANAGE_SERVER",
-    ]);
+    return new Set<Permission>(ALL_PERMISSIONS.map((p) => p.id));
   }
   const member = getMember(server, userId);
   const perms = new Set<Permission>();
