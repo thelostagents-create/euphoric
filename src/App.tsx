@@ -15,7 +15,7 @@ export interface ChatNav {
 
 const TABS: { id: Tab; icon: string; label: string }[] = [
   { id: "chat", icon: "💬", label: "Chat" },
-  { id: "friends", icon: "👥", label: "Friends" },
+  { id: "friends", icon: "✉️", label: "Messages" },
   { id: "discover", icon: "🧭", label: "Discover" },
   { id: "profile", icon: "🪐", label: "Profile" },
   { id: "settings", icon: "⚙️", label: "Settings" },

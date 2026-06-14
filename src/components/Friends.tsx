@@ -4,6 +4,7 @@ import { areFriends, displayName, dmChannelId, friendsOf, mentionsOf, userByName
 import { timeAgo } from "./Modal";
 import { MessageText, MessageAttachment } from "./MessageText";
 import { AttachButton } from "./AttachButton";
+import { ReactionChips, ReactionPicker, longPressProps } from "./Reactions";
 import { CreateGroupModal, GroupView, GroupAvatar } from "./Groups";
 import type { GroupChat, Message } from "../types";
 
@@ -82,7 +83,7 @@ export function Friends({
   return (
     <div className="screen">
       <div className="topbar">
-        <h1>Friends</h1>
+        <h1>Messages</h1>
       </div>
       <div className="list">
         {/* Notifications: 3 most recent mentions in servers */}
@@ -211,6 +212,7 @@ function DmView({ friendId, onBack }: { friendId: string; onBack: () => void }) 
   const friend = state.users[friendId];
   const channelId = dmChannelId(me.id, friendId);
   const [draft, setDraft] = useState("");
+  const [reactFor, setReactFor] = useState<string | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
 
   const messages = useMemo(
@@ -252,7 +254,7 @@ function DmView({ friendId, onBack }: { friendId: string; onBack: () => void }) 
         {messages.map((m) => {
           const author = state.users[m.authorId];
           return (
-            <div key={m.id} className="msg">
+            <div key={m.id} className="msg" {...longPressProps(() => setReactFor(m.id))}>
               <img className="avatar" src={author?.avatar} alt="" />
               <div className="body">
                 <div className="meta">
@@ -265,12 +267,15 @@ function DmView({ friendId, onBack }: { friendId: string; onBack: () => void }) 
                   </div>
                 )}
                 {m.attachment && <MessageAttachment attachment={m.attachment} />}
+                <ReactionChips message={m} />
               </div>
             </div>
           );
         })}
         <div ref={endRef} />
       </div>
+
+      {reactFor && <ReactionPicker messageId={reactFor} onClose={() => setReactFor(null)} />}
 
       {blocked ? (
         <div className="timeout-banner">You've blocked {displayName(friend)}. Unblock them to chat.</div>

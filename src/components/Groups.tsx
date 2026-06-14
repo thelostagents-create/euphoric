@@ -5,6 +5,7 @@ import { displayName, friendsOf } from "../social";
 import { timeAgo } from "./Modal";
 import { MessageText, MessageAttachment } from "./MessageText";
 import { AttachButton } from "./AttachButton";
+import { ReactionChips, ReactionPicker, longPressProps } from "./Reactions";
 import { ImagePicker } from "./ImagePicker";
 
 /** Group picture: image if set, otherwise the member count in a circle. */
@@ -177,6 +178,7 @@ export function GroupView({ groupId, onBack }: { groupId: string; onBack: () => 
   const group = state.groups.find((g) => g.id === groupId);
   const [draft, setDraft] = useState("");
   const [showAdd, setShowAdd] = useState(false);
+  const [reactFor, setReactFor] = useState<string | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
 
   const messages = useMemo(
@@ -222,7 +224,7 @@ export function GroupView({ groupId, onBack }: { groupId: string; onBack: () => 
         {messages.map((m) => {
           const author = state.users[m.authorId];
           return (
-            <div key={m.id} className="msg">
+            <div key={m.id} className="msg" {...longPressProps(() => setReactFor(m.id))}>
               <img className="avatar" src={author?.avatar} alt="" />
               <div className="body">
                 <div className="meta">
@@ -235,6 +237,7 @@ export function GroupView({ groupId, onBack }: { groupId: string; onBack: () => 
                   </div>
                 )}
                 {m.attachment && <MessageAttachment attachment={m.attachment} />}
+                <ReactionChips message={m} />
               </div>
             </div>
           );
@@ -267,6 +270,7 @@ export function GroupView({ groupId, onBack }: { groupId: string; onBack: () => 
       </div>
 
       {showAdd && <GroupSettingsModal groupId={groupId} onClose={() => setShowAdd(false)} />}
+      {reactFor && <ReactionPicker messageId={reactFor} onClose={() => setReactFor(null)} />}
     </div>
   );
 }

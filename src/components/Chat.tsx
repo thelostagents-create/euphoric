@@ -9,7 +9,9 @@ import { JoinServerModal } from "./JoinServerModal";
 import { ServerIcon } from "./ServerIcon";
 import { MessageText, MessageAttachment } from "./MessageText";
 import { AttachButton } from "./AttachButton";
+import { ReactionChips, ReactionPicker, longPressProps } from "./Reactions";
 import { LendStar } from "./LendStar";
+import { ChannelsModal } from "./ChannelsModal";
 import { displayName, serverStars } from "../social";
 import type { ChatNav } from "../App";
 
@@ -17,6 +19,8 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
   const { state, dispatch } = useStore();
   const me = state.users[state.currentUserId];
   const [highlight, setHighlight] = useState<string | null>(null);
+  const [reactFor, setReactFor] = useState<string | null>(null);
+  const [showChannels, setShowChannels] = useState(false);
 
   const myServers = useMemo(
     () =>
@@ -199,6 +203,13 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
         </div>
 
         <div className="channel-list" style={{ display: "flex", gap: 6, overflowX: "auto", padding: "8px 10px", borderBottom: "1px solid var(--border)" }}>
+          <button
+            className="channel"
+            style={{ width: "auto", flex: "0 0 auto", fontWeight: 700 }}
+            onClick={() => setShowChannels(true)}
+          >
+            ☰ Channels
+          </button>
           {server.channels.map((c) => (
             <button
               key={c.id}
@@ -228,6 +239,7 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
                 className={`msg ${blocked ? "blocked" : ""} ${isRevealed ? "revealed" : ""} ${
                   m.id === highlight ? "highlight" : ""
                 }`}
+                {...longPressProps(() => setReactFor(m.id))}
               >
                 <img
                   className="avatar"
@@ -271,6 +283,7 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
                     </div>
                   )}
                   {m.attachment && <MessageAttachment attachment={m.attachment} />}
+                  <ReactionChips message={m} />
                 </div>
               </div>
             );
@@ -328,6 +341,15 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
         <JoinServerModal onClose={() => setShowJoin(false)} onJoined={(sid) => setServerId(sid)} />
       )}
       {showLend && <LendStar server={server} onClose={() => setShowLend(false)} />}
+      {reactFor && <ReactionPicker messageId={reactFor} onClose={() => setReactFor(null)} />}
+      {showChannels && (
+        <ChannelsModal
+          server={server}
+          currentChannelId={channel.id}
+          onSelect={setChannelId}
+          onClose={() => setShowChannels(false)}
+        />
+      )}
     </div>
   );
 }

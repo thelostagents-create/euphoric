@@ -103,6 +103,8 @@ export interface Message {
   content: string;
   createdAt: string;
   attachment?: Attachment;
+  /** Emoji -> user ids who reacted. */
+  reactions?: Record<string, string[]>;
 }
 
 export interface Server {

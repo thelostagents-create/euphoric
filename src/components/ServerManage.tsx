@@ -13,7 +13,7 @@ import { can, effectivePermissions, isOwner } from "../permissions";
 import { inviteLink, isGif, serverStars, starsAvailable } from "../social";
 import { ImagePicker } from "./ImagePicker";
 
-type Tab = "overview" | "roles" | "members" | "discovery";
+type Tab = "overview" | "roles" | "channels" | "members" | "discovery";
 
 export function ServerManage({ server, onClose }: { server: Server; onClose: () => void }) {
   const { state } = useStore();
@@ -23,10 +23,12 @@ export function ServerManage({ server, onClose }: { server: Server; onClose: () 
   const owner = isOwner(server, meId);
   const canManageRoles = owner || can(server, meId, "MANAGE_ROLES");
   const canManageServer = owner || can(server, meId, "MANAGE_SERVER");
+  const canManageChannels = owner || can(server, meId, "MANAGE_CHANNELS");
 
   const tabs: { id: Tab; label: string }[] = [
     { id: "overview", label: "Overview" },
     { id: "roles", label: "Roles & Staff" },
+    { id: "channels", label: "Channels" },
     { id: "members", label: "Members" },
     { id: "discovery", label: "Discovery" },
   ];
@@ -47,6 +49,7 @@ export function ServerManage({ server, onClose }: { server: Server; onClose: () 
 
       {tab === "overview" && <OverviewTab server={server} canManage={canManageServer} />}
       {tab === "roles" && <RolesTab server={server} canManage={canManageRoles} />}
+      {tab === "channels" && <ChannelsTab server={server} canManage={canManageChannels} />}
       {tab === "members" && <MembersTab server={server} />}
       {tab === "discovery" &&
         (canManageServer ? (
@@ -301,6 +304,62 @@ function RoleCard({ server, role }: { server: Server; role: Role }) {
           Delete role
         </button>
       )}
+    </div>
+  );
+}
+
+function ChannelsTab({ server, canManage }: { server: Server; canManage: boolean }) {
+  const { dispatch } = useStore();
+  const [name, setName] = useState("");
+
+  if (!canManage) return <p className="muted">You need the Manage Channels permission.</p>;
+
+  return (
+    <div>
+      <p className="muted" style={{ fontSize: 13, marginTop: 0 }}>
+        Reorder channels with the arrows, or remove them. The order here is the order shown in chat.
+      </p>
+      {server.channels.map((c, i) => (
+        <div className="card" key={c.id} style={{ marginBottom: 8, padding: 10 }}>
+          <div className="row" style={{ gap: 8 }}>
+            <span style={{ flex: 1, fontWeight: 600 }}># {c.name}</span>
+            <button
+              className="btn ghost sm"
+              disabled={i === 0}
+              onClick={() => dispatch({ type: "MOVE_CHANNEL", serverId: server.id, channelId: c.id, dir: -1 })}
+            >
+              ↑
+            </button>
+            <button
+              className="btn ghost sm"
+              disabled={i === server.channels.length - 1}
+              onClick={() => dispatch({ type: "MOVE_CHANNEL", serverId: server.id, channelId: c.id, dir: 1 })}
+            >
+              ↓
+            </button>
+            <button
+              className="btn danger sm"
+              disabled={server.channels.length <= 1}
+              onClick={() => dispatch({ type: "DELETE_CHANNEL", serverId: server.id, channelId: c.id })}
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+      ))}
+      <div className="row" style={{ gap: 8, marginTop: 10 }}>
+        <input value={name} placeholder="new-channel" onChange={(e) => setName(e.target.value)} />
+        <button
+          className="btn sm"
+          disabled={!name.trim()}
+          onClick={() => {
+            dispatch({ type: "CREATE_CHANNEL", serverId: server.id, name });
+            setName("");
+          }}
+        >
+          Add
+        </button>
+      </div>
     </div>
   );
 }

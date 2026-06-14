@@ -27,6 +27,9 @@ const STORAGE_KEY = "euphoric.state.v1";
 type Action =
   | { type: "SEND_MESSAGE"; channelId: string; content: string; attachment?: Attachment }
   | { type: "DELETE_MESSAGE"; messageId: string }
+  | { type: "TOGGLE_REACTION"; messageId: string; emoji: string }
+  | { type: "MOVE_CHANNEL"; serverId: string; channelId: string; dir: -1 | 1 }
+  | { type: "DELETE_CHANNEL"; serverId: string; channelId: string }
   | { type: "CREATE_SERVER"; name: string; icon: string; iconImage?: string }
   | { type: "JOIN_SERVER"; serverId: string }
   | { type: "CREATE_CHANNEL"; serverId: string; name: string }
@@ -109,6 +112,49 @@ function reducer(state: AppState, action: Action): AppState {
       return {
         ...state,
         messages: state.messages.filter((m) => m.id !== action.messageId),
+      };
+    }
+
+    case "TOGGLE_REACTION": {
+      return {
+        ...state,
+        messages: state.messages.map((m) => {
+          if (m.id !== action.messageId) return m;
+          const reactions = { ...(m.reactions ?? {}) };
+          const ids = reactions[action.emoji] ?? [];
+          const next = ids.includes(me) ? ids.filter((u) => u !== me) : [...ids, me];
+          if (next.length === 0) delete reactions[action.emoji];
+          else reactions[action.emoji] = next;
+          return { ...m, reactions };
+        }),
+      };
+    }
+
+    case "MOVE_CHANNEL": {
+      return {
+        ...state,
+        servers: mapServer(state, action.serverId, (s) => {
+          const i = s.channels.findIndex((c) => c.id === action.channelId);
+          const j = i + action.dir;
+          if (i < 0 || j < 0 || j >= s.channels.length) return s;
+          const channels = [...s.channels];
+          [channels[i], channels[j]] = [channels[j], channels[i]];
+          return { ...s, channels };
+        }),
+      };
+    }
+
+    case "DELETE_CHANNEL": {
+      const server = state.servers.find((s) => s.id === action.serverId);
+      // Keep at least one channel around.
+      if (!server || server.channels.length <= 1) return state;
+      return {
+        ...state,
+        servers: mapServer(state, action.serverId, (s) => ({
+          ...s,
+          channels: s.channels.filter((c) => c.id !== action.channelId),
+        })),
+        messages: state.messages.filter((m) => m.channelId !== action.channelId),
       };
     }
 
