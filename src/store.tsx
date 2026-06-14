@@ -35,7 +35,7 @@ type Action =
   | { type: "CREATE_CHANNEL"; serverId: string; name: string }
   | { type: "UPDATE_PROFILE"; bio?: string; avatar?: string; username?: string; nickname?: string }
   | { type: "UPDATE_THEME"; theme: Partial<ProfileTheme> }
-  | { type: "UPDATE_BANNER"; color?: string; image?: string }
+  | { type: "UPDATE_BANNER"; color?: string; image?: string; position?: number }
   | { type: "SET_TIER"; tier: Tier }
   | { type: "TOGGLE_BLOCK"; userId: string }
   | { type: "TOGGLE_FOLLOW"; userId: string }
@@ -252,7 +252,11 @@ function reducer(state: AppState, action: Action): AppState {
           ...state.users,
           [me]: {
             ...u,
-            banner: { color: action.color ?? u.banner.color, image },
+            banner: {
+              color: action.color ?? u.banner.color,
+              image,
+              position: action.position ?? u.banner.position ?? 50,
+            },
           },
         },
       };
@@ -551,7 +555,11 @@ function migrate(state: AppState): AppState {
       {
         ...u,
         nickname: u.nickname ?? "",
-        banner: u.banner ?? { color: "#2a2440", image: "" },
+        banner: {
+          color: u.banner?.color ?? "#2a2440",
+          image: u.banner?.image ?? "",
+          position: u.banner?.position ?? 50,
+        },
         following: u.following ?? [],
         starAllocations: u.starAllocations ?? {},
       },

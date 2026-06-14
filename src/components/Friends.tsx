@@ -83,7 +83,7 @@ export function Friends({
   return (
     <div className="screen">
       <div className="topbar">
-        <h1>Messages</h1>
+        <h1>Friends</h1>
       </div>
       <div className="list">
         {/* Notifications: 3 most recent mentions in servers */}

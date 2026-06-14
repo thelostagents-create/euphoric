@@ -45,6 +45,8 @@ export interface Banner {
   color: string;
   /** Image url — premium/supernova only. Empty = color only. */
   image: string;
+  /** Vertical crop position of the image, 0 (top) – 100 (bottom). */
+  position: number;
 }
 
 export interface User {

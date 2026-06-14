@@ -19,7 +19,7 @@ function user(
     nickname: "",
     bio: "",
     tier: "free",
-    banner: { color: "#2a2440", image: "" },
+    banner: { color: "#2a2440", image: "", position: 50 },
     theme: { ...defaultTheme },
     blockedUserIds: [],
     following: [],

@@ -4,8 +4,9 @@ import type { Message } from "../types";
 export const REACTION_EMOJIS = ["❤️", "👍", "👎", "😂", "🔥", "🎉"];
 
 let pressTimer: number | undefined;
+let lastTap = 0;
 
-/** Touch/mouse long-press props that fire `onLong` after a short hold. */
+/** Long-press, double-tap or right-click props that fire `onLong`. */
 export function longPressProps(onLong: () => void, ms = 400) {
   const start = () => {
     pressTimer = window.setTimeout(onLong, ms);
@@ -13,11 +14,20 @@ export function longPressProps(onLong: () => void, ms = 400) {
   const cancel = () => window.clearTimeout(pressTimer);
   return {
     onTouchStart: start,
-    onTouchEnd: cancel,
+    onTouchEnd: () => {
+      cancel();
+      const now = Date.now();
+      if (now - lastTap < 300) onLong(); // double-tap
+      lastTap = now;
+    },
     onTouchMove: cancel,
     onMouseDown: start,
     onMouseUp: cancel,
     onMouseLeave: cancel,
+    onDoubleClick: (e: React.MouseEvent) => {
+      e.preventDefault();
+      onLong();
+    },
     onContextMenu: (e: React.MouseEvent) => {
       e.preventDefault();
       onLong();

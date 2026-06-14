@@ -12,6 +12,7 @@ import { AttachButton } from "./AttachButton";
 import { ReactionChips, ReactionPicker, longPressProps } from "./Reactions";
 import { LendStar } from "./LendStar";
 import { ChannelsModal } from "./ChannelsModal";
+import { PersonIcon, SettingsIcon } from "./Icons";
 import { displayName, serverStars } from "../social";
 import type { ChatNav } from "../App";
 
@@ -194,11 +195,15 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
             <div className="sub">#{channel.name}</div>
           </div>
           <div className="spacer" />
+          <span className="count-pill" title="Members in this server">
+            <PersonIcon size={13} />
+            {server.members.filter((m) => !m.banned).length}
+          </span>
           <button className="star-pill" onClick={() => setShowLend(true)} title="Lend a Star">
             {serverStars(state, server.id)} ⭐
           </button>
-          <button className="btn ghost sm" onClick={() => setShowManage(true)}>
-            ⚙︎
+          <button className="gear-btn" onClick={() => setShowManage(true)} title="Server settings">
+            <SettingsIcon size={24} />
           </button>
         </div>
 

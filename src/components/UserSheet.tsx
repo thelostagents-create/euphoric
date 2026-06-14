@@ -46,7 +46,7 @@ export function UserSheet({
           color: theme.textColor,
         }}
       >
-        <div style={{ height: 84, ...bannerStyle(user) }} />
+        <div style={{ height: 110, ...bannerStyle(user) }} />
         <div style={{ padding: "0 20px 20px" }}>
         <img
           src={user.avatar}

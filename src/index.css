@@ -130,6 +130,30 @@ textarea:focus {
   font-weight: 700;
 }
 
+.count-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--bg-3);
+  color: var(--muted);
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.gear-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text);
+  padding: 4px;
+}
+
+.gear-btn:active {
+  transform: rotate(30deg);
+}
+
 /* ---------- Tab bar ---------- */
 .tabbar {
   display: flex;
@@ -154,7 +178,10 @@ textarea:focus {
 }
 
 .tabbar .ico {
-  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 22px;
 }
 
 /* ---------- Buttons ---------- */
@@ -634,7 +661,7 @@ textarea:focus {
 
 /* ---------- Profile ---------- */
 .profile-banner {
-  height: 130px;
+  height: 180px;
   background-size: cover;
   background-position: center;
 }

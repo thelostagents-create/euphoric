@@ -4,6 +4,8 @@ import { Friends } from "./components/Friends";
 import { Discover } from "./components/Discover";
 import { Profile } from "./components/Profile";
 import { Settings } from "./components/Settings";
+import { ChatIcon, FriendsIcon, DiscoverIcon, ProfileIcon, SettingsIcon } from "./components/Icons";
+import type { JSX } from "react";
 
 type Tab = "chat" | "friends" | "discover" | "profile" | "settings";
 
@@ -13,12 +15,12 @@ export interface ChatNav {
   messageId: string;
 }
 
-const TABS: { id: Tab; icon: string; label: string }[] = [
-  { id: "chat", icon: "💬", label: "Chat" },
-  { id: "friends", icon: "✉️", label: "Messages" },
-  { id: "discover", icon: "🧭", label: "Discover" },
-  { id: "profile", icon: "🪐", label: "Profile" },
-  { id: "settings", icon: "⚙️", label: "Settings" },
+const TABS: { id: Tab; icon: (p: { size?: number }) => JSX.Element; label: string }[] = [
+  { id: "chat", icon: ChatIcon, label: "Chat" },
+  { id: "friends", icon: FriendsIcon, label: "Friends" },
+  { id: "discover", icon: DiscoverIcon, label: "Discover" },
+  { id: "profile", icon: ProfileIcon, label: "Profile" },
+  { id: "settings", icon: SettingsIcon, label: "Settings" },
 ];
 
 export function App() {
@@ -41,16 +43,19 @@ export function App() {
       {tab === "settings" && <Settings />}
 
       <nav className="tabbar">
-        {TABS.map((t) => (
-          <button
-            key={t.id}
-            className={tab === t.id ? "active" : ""}
-            onClick={() => setTab(t.id)}
-          >
-            <span className="ico">{t.icon}</span>
-            {t.label}
-          </button>
-        ))}
+        {TABS.map((t) => {
+          const Icon = t.icon;
+          return (
+            <button
+              key={t.id}
+              className={tab === t.id ? "active" : ""}
+              onClick={() => setTab(t.id)}
+            >
+              <span className="ico"><Icon size={22} /></span>
+              {t.label}
+            </button>
+          );
+        })}
       </nav>
     </div>
   );

@@ -157,13 +157,26 @@ export function Profile({ onManageSubscription }: { onManageSubscription: () => 
                 onChange={(v) => dispatch({ type: "UPDATE_BANNER", image: v })}
               />
               {user.banner.image && (
-                <button
-                  className="btn ghost sm"
-                  style={{ marginTop: 8 }}
-                  onClick={() => dispatch({ type: "UPDATE_BANNER", image: "" })}
-                >
-                  Remove image
-                </button>
+                <>
+                  <label style={{ display: "block", fontSize: 12, color: "var(--muted)", margin: "12px 0 5px", fontWeight: 600 }}>
+                    Crop — drag to choose which part of the banner shows
+                  </label>
+                  <input
+                    type="range"
+                    min={0}
+                    max={100}
+                    value={user.banner.position}
+                    onChange={(e) => dispatch({ type: "UPDATE_BANNER", position: Number(e.target.value) })}
+                    style={{ width: "100%" }}
+                  />
+                  <button
+                    className="btn ghost sm"
+                    style={{ marginTop: 8 }}
+                    onClick={() => dispatch({ type: "UPDATE_BANNER", image: "" })}
+                  >
+                    Remove image
+                  </button>
+                </>
               )}
             </div>
           ) : (

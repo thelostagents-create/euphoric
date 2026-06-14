@@ -34,7 +34,7 @@ export function bannerStyle(user: User): CSSProperties {
     return {
       backgroundImage: `url(${user.banner.image})`,
       backgroundSize: "cover",
-      backgroundPosition: "center",
+      backgroundPosition: `center ${user.banner.position ?? 50}%`,
     };
   }
   return { background: user.banner.color };
