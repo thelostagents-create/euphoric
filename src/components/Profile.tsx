@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useStore } from "../store";
 import { bannerStyle, tierBadge } from "./Modal";
 import { displayName, usernameTaken } from "../social";
+import { ImagePicker } from "./ImagePicker";
 
 const FONTS = [
   { label: "Default", value: "system-ui" },
@@ -117,11 +118,12 @@ export function Profile({ onManageSubscription }: { onManageSubscription: () => 
 
         <div className="field">
           <label>
-            Avatar URL {canGif ? "(animated GIFs allowed ✨)" : "(static only)"}
+            Avatar — import or paste a URL {canGif ? "(animated GIFs allowed ✨)" : "(static only)"}
           </label>
-          <input
+          <ImagePicker
             value={user.avatar}
-            onChange={(e) => dispatch({ type: "UPDATE_PROFILE", avatar: e.target.value })}
+            placeholder="https://…"
+            onChange={(v) => dispatch({ type: "UPDATE_PROFILE", avatar: v })}
           />
           {!canGif && (
             <p className="muted" style={{ fontSize: 12, marginTop: 6 }}>
@@ -148,11 +150,11 @@ export function Profile({ onManageSubscription }: { onManageSubscription: () => 
           </div>
           {canGif ? (
             <div className="field" style={{ marginBottom: 0 }}>
-              <label>Banner image URL (GIFs allowed ✨)</label>
-              <input
+              <label>Banner image — import or paste a URL (GIFs allowed ✨)</label>
+              <ImagePicker
                 value={user.banner.image}
                 placeholder="https://…"
-                onChange={(e) => dispatch({ type: "UPDATE_BANNER", image: e.target.value })}
+                onChange={(v) => dispatch({ type: "UPDATE_BANNER", image: v })}
               />
               {user.banner.image && (
                 <button

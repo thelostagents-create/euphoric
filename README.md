@@ -34,9 +34,15 @@ iOS port come in later passes.
   mentions render highlighted in messages (and brighter when they're you).
 - **Follows & friends** — follow anyone from their profile; a mutual follow
   makes you friends. A dedicated **Friends tab** lets you add people by
-  username, see a **notification feed of who @-mentioned you** in servers,
-  **DM your friends** one-on-one, and start **group chats** with several
-  friends at once.
+  username, see a **notification feed of who @-mentioned you** in servers
+  (tap one to jump to the message), and a unified **Messages** list of DMs and
+  **group chats** sorted by most recent activity.
+- **Group chats** — start a group from your friends; everyone can rename it and
+  set a group picture, the creator can remove members, and anyone can add more
+  friends or leave.
+- **Images & video** — import a local image (or paste a URL) for avatars,
+  banners, server icons and group pictures, and send **image/video
+  attachments** in any chat.
 - **Server boosts (⭐ Stars)** — Premium members get 1 Star, Supernova members
   get 2, to spend across servers. A server's Star count shows as a tappable
   pill in the chat header — tap it to lend a Star. At **3 ⭐** a server unlocks

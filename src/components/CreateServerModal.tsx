@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useStore } from "../store";
 import { Modal } from "./Modal";
+import { ImagePicker } from "./ImagePicker";
 
 const SUGGESTED = ["✨", "🌙", "💻", "🎮", "🎵", "🎨", "🌸", "🔥", "🛸", "📚"];
 
@@ -39,12 +40,8 @@ export function CreateServerModal({ onClose }: { onClose: () => void }) {
       </div>
 
       <div className="field">
-        <label>Or icon image URL (optional)</label>
-        <input
-          value={iconImage}
-          placeholder="https://… (static image)"
-          onChange={(e) => setIconImage(e.target.value)}
-        />
+        <label>Or use an image (optional)</label>
+        <ImagePicker value={iconImage} placeholder="https://… (static image)" onChange={setIconImage} />
         <p className="muted" style={{ fontSize: 11, marginTop: 5 }}>
           Animated GIF icons unlock once the server reaches 3 ⭐ Stars.
         </p>

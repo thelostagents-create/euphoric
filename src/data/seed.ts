@@ -164,5 +164,7 @@ export const seedState: AppState = {
     { id: "g1", channelId: "g_crew", authorId: "luna", content: "welcome to the crew chat 🎉", createdAt: ago(90) },
     { id: "g2", channelId: "g_crew", authorId: "nova", content: "lets plan something this weekend", createdAt: ago(80) },
   ],
-  groups: [{ id: "g_crew", name: "Weekend Crew", memberIds: ["me", "luna", "nova"] }],
+  groups: [
+    { id: "g_crew", name: "Weekend Crew", iconImage: "", createdBy: "me", memberIds: ["me", "luna", "nova"] },
+  ],
 };

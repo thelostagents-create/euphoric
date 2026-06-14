@@ -1,6 +1,14 @@
 import { Fragment } from "react";
-import type { User } from "../types";
+import type { Attachment, User } from "../types";
 import { displayName } from "../social";
+
+/** Render an image/video message attachment. */
+export function MessageAttachment({ attachment }: { attachment: Attachment }) {
+  if (attachment.kind === "video") {
+    return <video className="attachment" src={attachment.url} controls />;
+  }
+  return <img className="attachment" src={attachment.url} alt="attachment" />;
+}
 
 /**
  * Render message text, turning @username tokens that resolve to a real user

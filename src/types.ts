@@ -91,12 +91,18 @@ export interface Channel {
   name: string;
 }
 
+export interface Attachment {
+  kind: "image" | "video";
+  url: string;
+}
+
 export interface Message {
   id: string;
   channelId: string;
   authorId: string;
   content: string;
   createdAt: string;
+  attachment?: Attachment;
 }
 
 export interface Server {
@@ -122,6 +128,10 @@ export interface Server {
 export interface GroupChat {
   id: string;
   name: string;
+  /** Optional group picture (image/gif data url). */
+  iconImage: string;
+  /** The member who created it — only they can remove others. */
+  createdBy: string;
   memberIds: string[];
 }
 

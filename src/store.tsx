@@ -8,6 +8,7 @@ import {
 } from "react";
 import type {
   AppState,
+  Attachment,
   GroupChat,
   Message,
   Permission,
@@ -24,7 +25,7 @@ import { BOOST_ANIMATED_ICON, BOOST_CUSTOM_INVITE } from "./types";
 const STORAGE_KEY = "euphoric.state.v1";
 
 type Action =
-  | { type: "SEND_MESSAGE"; channelId: string; content: string }
+  | { type: "SEND_MESSAGE"; channelId: string; content: string; attachment?: Attachment }
   | { type: "DELETE_MESSAGE"; messageId: string }
   | { type: "CREATE_SERVER"; name: string; icon: string; iconImage?: string }
   | { type: "JOIN_SERVER"; serverId: string }
@@ -39,6 +40,9 @@ type Action =
   | { type: "REMOVE_FRIEND"; userId: string }
   | { type: "CREATE_GROUP"; id: string; name: string; memberIds: string[] }
   | { type: "ADD_TO_GROUP"; groupId: string; userId: string }
+  | { type: "REMOVE_FROM_GROUP"; groupId: string; userId: string }
+  | { type: "RENAME_GROUP"; groupId: string; name: string }
+  | { type: "SET_GROUP_ICON"; groupId: string; iconImage: string }
   | { type: "LEAVE_GROUP"; groupId: string }
   | { type: "ALLOCATE_STAR"; serverId: string; delta: number }
   | { type: "SET_SERVER_ICON"; serverId: string; iconImage: string }
@@ -83,13 +87,14 @@ function reducer(state: AppState, action: Action): AppState {
   const me = state.currentUserId;
   switch (action.type) {
     case "SEND_MESSAGE": {
-      if (!action.content.trim()) return state;
+      if (!action.content.trim() && !action.attachment) return state;
       const msg: Message = {
         id: id("m"),
         channelId: action.channelId,
         authorId: me,
         content: action.content.trim(),
         createdAt: new Date().toISOString(),
+        attachment: action.attachment,
       };
       return { ...state, messages: [...state.messages, msg] };
     }
@@ -308,6 +313,8 @@ function reducer(state: AppState, action: Action): AppState {
       const group: GroupChat = {
         id: action.id,
         name: action.name.trim() || "New Group",
+        iconImage: "",
+        createdBy: me,
         memberIds,
       };
       return { ...state, groups: [...state.groups, group] };
@@ -320,6 +327,38 @@ function reducer(state: AppState, action: Action): AppState {
           g.id === action.groupId
             ? { ...g, memberIds: addUnique(g.memberIds, action.userId) }
             : g,
+        ),
+      };
+    }
+
+    case "REMOVE_FROM_GROUP": {
+      const group = state.groups.find((g) => g.id === action.groupId);
+      // Only the creator may remove members (and not themselves this way).
+      if (!group || group.createdBy !== me || action.userId === me) return state;
+      return {
+        ...state,
+        groups: state.groups.map((g) =>
+          g.id === action.groupId
+            ? { ...g, memberIds: g.memberIds.filter((u) => u !== action.userId) }
+            : g,
+        ),
+      };
+    }
+
+    case "RENAME_GROUP": {
+      const name = action.name.trim();
+      if (!name) return state;
+      return {
+        ...state,
+        groups: state.groups.map((g) => (g.id === action.groupId ? { ...g, name } : g)),
+      };
+    }
+
+    case "SET_GROUP_ICON": {
+      return {
+        ...state,
+        groups: state.groups.map((g) =>
+          g.id === action.groupId ? { ...g, iconImage: action.iconImage } : g,
         ),
       };
     }
@@ -477,7 +516,12 @@ function migrate(state: AppState): AppState {
     iconImage: s.iconImage ?? "",
     invite: s.invite ?? newInviteCode(state.servers),
   }));
-  return { ...state, users, servers, groups: state.groups ?? [] };
+  const groups = (state.groups ?? []).map((g) => ({
+    ...g,
+    iconImage: g.iconImage ?? "",
+    createdBy: g.createdBy ?? g.memberIds[0],
+  }));
+  return { ...state, users, servers, groups };
 }
 
 function loadState(): AppState {

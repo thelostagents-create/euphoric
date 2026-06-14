@@ -2,8 +2,18 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useStore } from "../store";
 import { areFriends, displayName, dmChannelId, friendsOf, mentionsOf, userByName } from "../social";
 import { timeAgo } from "./Modal";
-import { MessageText } from "./MessageText";
-import { CreateGroupModal, GroupView } from "./Groups";
+import { MessageText, MessageAttachment } from "./MessageText";
+import { AttachButton } from "./AttachButton";
+import { CreateGroupModal, GroupView, GroupAvatar } from "./Groups";
+import type { GroupChat, Message } from "../types";
+
+/** Short preview for the last message in a conversation. */
+function preview(last: Message | undefined, fallback: string): string {
+  if (!last) return fallback;
+  if (last.content) return last.content;
+  if (last.attachment) return last.attachment.kind === "video" ? "🎥 Video" : "📷 Photo";
+  return fallback;
+}
 
 export function Friends({
   onOpenMessage,
@@ -23,6 +33,44 @@ export function Friends({
   );
   const allMentions = useMemo(() => mentionsOf(state, me.id), [state, me.id]);
   const mentions = allMentions.slice(0, 3); // only the 3 most recent
+
+  // Unified conversation list (DMs + groups), newest activity first.
+  const conversations = useMemo(() => {
+    const lastIn = (channelId: string) =>
+      [...state.messages].reverse().find((x) => x.channelId === channelId);
+
+    type Convo =
+      | { kind: "dm"; key: string; id: string; title: string; avatar: string; preview: string; time?: string }
+      | { kind: "group"; key: string; id: string; title: string; group: GroupChat; preview: string; time?: string };
+
+    const dmConvos: Convo[] = friends.map((f) => {
+      const last = lastIn(dmChannelId(me.id, f.id));
+      return {
+        kind: "dm",
+        key: `dm-${f.id}`,
+        id: f.id,
+        title: displayName(f),
+        avatar: f.avatar,
+        preview: preview(last, "Say hi 👋"),
+        time: last?.createdAt,
+      };
+    });
+
+    const groupConvos: Convo[] = myGroups.map((g) => {
+      const last = lastIn(g.id);
+      return {
+        kind: "group",
+        key: `group-${g.id}`,
+        id: g.id,
+        title: g.name,
+        group: g,
+        preview: preview(last, `${g.memberIds.length} members`),
+        time: last?.createdAt,
+      };
+    });
+
+    return [...dmConvos, ...groupConvos].sort((a, b) => (b.time ?? "").localeCompare(a.time ?? ""));
+  }, [state.messages, friends, myGroups, me.id]);
 
   if (openDm) {
     return <DmView friendId={openDm} onBack={() => setOpenDm(null)} />;
@@ -77,53 +125,42 @@ export function Friends({
 
         <AddFriend />
 
-        {/* Friends list */}
-        <div className="section-title">Your friends · {friends.length}</div>
-        {friends.length === 0 ? (
-          <p className="muted">Add someone by username above. Friends can DM each other here.</p>
-        ) : (
-          friends.map((f) => {
-            const dm = dmChannelId(me.id, f.id);
-            const last = [...state.messages].reverse().find((x) => x.channelId === dm);
-            return (
-              <div className="card" key={f.id} style={{ padding: 12 }} onClick={() => setOpenDm(f.id)}>
-                <div className="row" style={{ gap: 10 }}>
-                  <img src={f.avatar} alt="" style={{ width: 38, height: 38, borderRadius: "50%" }} />
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontWeight: 700 }}>{displayName(f)}</div>
-                    <div className="muted" style={{ fontSize: 12, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                      {last ? last.content : "Say hi 👋"}
-                    </div>
-                  </div>
-                  <span className="muted">›</span>
-                </div>
-              </div>
-            );
-          })
-        )}
-
-        {/* Group chats */}
-        <div className="section-title">Group chats · {myGroups.length}</div>
+        {/* Unified messages: DMs + group chats, most recent first */}
+        <div className="section-title">Messages</div>
         <button className="btn full" onClick={() => setShowCreateGroup(true)}>
           + New group chat
         </button>
-        {myGroups.map((g) => {
-          const last = [...state.messages].reverse().find((x) => x.channelId === g.id);
-          return (
-            <div className="card" key={g.id} style={{ padding: 12, marginTop: 8 }} onClick={() => setOpenGroup(g.id)}>
+
+        {conversations.length === 0 ? (
+          <p className="muted" style={{ marginTop: 8 }}>
+            Add a friend above to start messaging, or create a group chat.
+          </p>
+        ) : (
+          conversations.map((c) => (
+            <div
+              className="card"
+              key={c.key}
+              style={{ padding: 12, marginTop: 8 }}
+              onClick={() => (c.kind === "dm" ? setOpenDm(c.id) : setOpenGroup(c.id))}
+            >
               <div className="row" style={{ gap: 10 }}>
-                <span className="group-avatar">{g.memberIds.length}</span>
+                {c.kind === "dm" ? (
+                  <img src={c.avatar} alt="" style={{ width: 38, height: 38, borderRadius: "50%" }} />
+                ) : (
+                  <GroupAvatar group={c.group} />
+                )}
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontWeight: 700 }}>{g.name}</div>
+                  <div style={{ fontWeight: 700 }}>{c.title}</div>
                   <div className="muted" style={{ fontSize: 12, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {last ? last.content : `${g.memberIds.length} members`}
+                    {c.preview}
                   </div>
                 </div>
+                {c.time && <span className="time">{timeAgo(c.time)}</span>}
                 <span className="muted">›</span>
               </div>
             </div>
-          );
-        })}
+          ))
+        )}
       </div>
 
       {showCreateGroup && (
@@ -222,9 +259,12 @@ function DmView({ friendId, onBack }: { friendId: string; onBack: () => void }) 
                   <span className="name">{displayName(author)}</span>
                   <span className="time">{timeAgo(m.createdAt)}</span>
                 </div>
-                <div className="content">
-                  <MessageText content={m.content} users={state.users} meId={state.currentUserId} />
-                </div>
+                {m.content && (
+                  <div className="content">
+                    <MessageText content={m.content} users={state.users} meId={state.currentUserId} />
+                  </div>
+                )}
+                {m.attachment && <MessageAttachment attachment={m.attachment} />}
               </div>
             </div>
           );
@@ -236,6 +276,7 @@ function DmView({ friendId, onBack }: { friendId: string; onBack: () => void }) 
         <div className="timeout-banner">You've blocked {displayName(friend)}. Unblock them to chat.</div>
       ) : (
         <div className="composer">
+          <AttachButton channelId={channelId} />
           <input
             value={draft}
             placeholder={`Message ${displayName(friend)}`}

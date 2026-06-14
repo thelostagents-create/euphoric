@@ -7,7 +7,8 @@ import { ServerManage } from "./ServerManage";
 import { CreateServerModal } from "./CreateServerModal";
 import { JoinServerModal } from "./JoinServerModal";
 import { ServerIcon } from "./ServerIcon";
-import { MessageText } from "./MessageText";
+import { MessageText, MessageAttachment } from "./MessageText";
+import { AttachButton } from "./AttachButton";
 import { LendStar } from "./LendStar";
 import { displayName, serverStars } from "../social";
 import type { ChatNav } from "../App";
@@ -264,9 +265,12 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
                       </button>
                     )}
                   </div>
-                  <div className="content">
-                    <MessageText content={m.content} users={state.users} meId={state.currentUserId} />
-                  </div>
+                  {m.content && (
+                    <div className="content">
+                      <MessageText content={m.content} users={state.users} meId={state.currentUserId} />
+                    </div>
+                  )}
+                  {m.attachment && <MessageAttachment attachment={m.attachment} />}
                 </div>
               </div>
             );
@@ -300,6 +304,7 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
             </div>
           )}
           <div className="composer">
+            <AttachButton channelId={channel.id} disabled={muted} />
             <input
               value={draft}
               placeholder={muted ? "You can't send messages right now" : `Message #${channel.name}  (try @)`}

@@ -331,6 +331,15 @@ textarea:focus {
   word-break: break-word;
 }
 
+.attachment {
+  display: block;
+  margin-top: 5px;
+  max-width: min(260px, 70%);
+  max-height: 260px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+}
+
 .msg.blocked .content,
 .msg.blocked .avatar {
   filter: blur(7px);

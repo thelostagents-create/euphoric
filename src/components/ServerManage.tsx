@@ -11,6 +11,7 @@ import {
 } from "../types";
 import { can, effectivePermissions, isOwner } from "../permissions";
 import { inviteLink, isGif, serverStars, starsAvailable } from "../social";
+import { ImagePicker } from "./ImagePicker";
 
 type Tab = "overview" | "roles" | "members" | "discovery";
 
@@ -160,12 +161,8 @@ function OverviewTab({ server, canManage }: { server: Server; canManage: boolean
           <div className="section-title">Server icon</div>
           <div className="card">
             <div className="field" style={{ marginBottom: 8 }}>
-              <label>Icon image URL {animatedUnlocked ? "(GIFs allowed ✨)" : "(static only)"}</label>
-              <input
-                value={iconUrl}
-                placeholder="https://…"
-                onChange={(e) => setIconUrl(e.target.value)}
-              />
+              <label>Icon — import or paste a URL {animatedUnlocked ? "(GIFs allowed ✨)" : "(static only)"}</label>
+              <ImagePicker value={iconUrl} placeholder="https://…" onChange={setIconUrl} />
             </div>
             {iconBlocked && (
               <p className="muted" style={{ fontSize: 12, margin: "0 0 8px", color: "var(--danger)" }}>

@@ -3,7 +3,23 @@ import { useStore } from "../store";
 import { Modal } from "./Modal";
 import { displayName, friendsOf } from "../social";
 import { timeAgo } from "./Modal";
-import { MessageText } from "./MessageText";
+import { MessageText, MessageAttachment } from "./MessageText";
+import { AttachButton } from "./AttachButton";
+import { ImagePicker } from "./ImagePicker";
+
+/** Group picture: image if set, otherwise the member count in a circle. */
+export function GroupAvatar({ group, size = 38 }: { group: { iconImage: string; memberIds: string[] }; size?: number }) {
+  if (group.iconImage) {
+    return (
+      <img
+        src={group.iconImage}
+        alt=""
+        style={{ width: size, height: size, borderRadius: "50%", objectFit: "cover", flex: "0 0 auto" }}
+      />
+    );
+  }
+  return <span className="group-avatar" style={{ width: size, height: size }}>{group.memberIds.length}</span>;
+}
 
 /** Pick a name and friends to start a group chat. */
 export function CreateGroupModal({
@@ -68,31 +84,89 @@ export function CreateGroupModal({
   );
 }
 
-/** Add more friends to an existing group. */
-function AddMembersModal({ groupId, onClose }: { groupId: string; onClose: () => void }) {
+/** Manage a group: rename, group picture, members (creator can remove). */
+function GroupSettingsModal({ groupId, onClose }: { groupId: string; onClose: () => void }) {
   const { state, dispatch } = useStore();
+  const meId = state.currentUserId;
   const group = state.groups.find((g) => g.id === groupId);
-  const friends = friendsOf(state, state.currentUserId).filter(
-    (f) => !group?.memberIds.includes(f.id),
-  );
+  const [name, setName] = useState(group?.name ?? "");
+  if (!group) return null;
+
+  const isCreator = group.createdBy === meId;
+  const friendsToAdd = friendsOf(state, meId).filter((f) => !group.memberIds.includes(f.id));
 
   return (
-    <Modal title="Add friends to group" onClose={onClose}>
-      {friends.length === 0 ? (
-        <p className="muted">All your friends are already in this group.</p>
-      ) : (
-        friends.map((f) => (
-          <div className="row" key={f.id} style={{ marginBottom: 8 }}>
-            <img src={f.avatar} alt="" style={{ width: 32, height: 32, borderRadius: "50%" }} />
-            <span style={{ flex: 1 }}>{displayName(f)}</span>
-            <button
-              className="btn sm"
-              onClick={() => dispatch({ type: "ADD_TO_GROUP", groupId, userId: f.id })}
-            >
-              Add
-            </button>
+    <Modal title="Group settings" onClose={onClose}>
+      <div className="field">
+        <label>Group name (any member can change)</label>
+        <div className="row" style={{ gap: 8 }}>
+          <input value={name} onChange={(e) => setName(e.target.value)} />
+          <button
+            className="btn sm"
+            disabled={!name.trim() || name.trim() === group.name}
+            onClick={() => dispatch({ type: "RENAME_GROUP", groupId, name })}
+          >
+            Save
+          </button>
+        </div>
+      </div>
+
+      <div className="field">
+        <label>Group picture — import or paste a URL (GIFs allowed)</label>
+        <ImagePicker
+          value={group.iconImage}
+          placeholder="https://…"
+          onChange={(v) => dispatch({ type: "SET_GROUP_ICON", groupId, iconImage: v })}
+        />
+        {group.iconImage && (
+          <button
+            className="btn ghost sm"
+            style={{ marginTop: 8 }}
+            onClick={() => dispatch({ type: "SET_GROUP_ICON", groupId, iconImage: "" })}
+          >
+            Remove picture
+          </button>
+        )}
+      </div>
+
+      <div className="section-title">Members · {group.memberIds.length}</div>
+      {group.memberIds.map((uid) => {
+        const u = state.users[uid];
+        if (!u) return null;
+        return (
+          <div className="row" key={uid} style={{ marginBottom: 8 }}>
+            <img src={u.avatar} alt="" style={{ width: 32, height: 32, borderRadius: "50%" }} />
+            <span style={{ flex: 1 }}>
+              {displayName(u)} {uid === group.createdBy && <span className="badge staff">Owner</span>}
+            </span>
+            {isCreator && uid !== meId && (
+              <button
+                className="btn danger sm"
+                onClick={() => dispatch({ type: "REMOVE_FROM_GROUP", groupId, userId: uid })}
+              >
+                Remove
+              </button>
+            )}
           </div>
-        ))
+        );
+      })}
+
+      {friendsToAdd.length > 0 && (
+        <>
+          <div className="section-title">Add friends</div>
+          {friendsToAdd.map((f) => (
+            <div className="row" key={f.id} style={{ marginBottom: 8 }}>
+              <img src={f.avatar} alt="" style={{ width: 32, height: 32, borderRadius: "50%" }} />
+              <span style={{ flex: 1 }}>{displayName(f)}</span>
+              <button
+                className="btn sm"
+                onClick={() => dispatch({ type: "ADD_TO_GROUP", groupId, userId: f.id })}
+              >
+                Add
+              </button>
+            </div>
+          ))}
+        </>
       )}
     </Modal>
   );
@@ -133,13 +207,14 @@ export function GroupView({ groupId, onBack }: { groupId: string; onBack: () => 
     <div className="chat-main" style={{ height: "100%" }}>
       <div className="topbar">
         <button className="btn ghost sm" onClick={onBack}>‹</button>
+        <GroupAvatar group={group} size={30} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <h2>{group.name}</h2>
           <div className="sub" style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             {group.memberIds.length} members · {memberNames}
           </div>
         </div>
-        <button className="btn ghost sm" onClick={() => setShowAdd(true)}>+ Add</button>
+        <button className="btn ghost sm" onClick={() => setShowAdd(true)}>⚙︎</button>
       </div>
 
       <div className="messages">
@@ -154,9 +229,12 @@ export function GroupView({ groupId, onBack }: { groupId: string; onBack: () => 
                   <span className="name">{displayName(author)}</span>
                   <span className="time">{timeAgo(m.createdAt)}</span>
                 </div>
-                <div className="content">
-                  <MessageText content={m.content} users={state.users} meId={state.currentUserId} />
-                </div>
+                {m.content && (
+                  <div className="content">
+                    <MessageText content={m.content} users={state.users} meId={state.currentUserId} />
+                  </div>
+                )}
+                {m.attachment && <MessageAttachment attachment={m.attachment} />}
               </div>
             </div>
           );
@@ -165,6 +243,7 @@ export function GroupView({ groupId, onBack }: { groupId: string; onBack: () => 
       </div>
 
       <div className="composer">
+        <AttachButton channelId={groupId} />
         <input
           value={draft}
           placeholder={`Message ${group.name}`}
@@ -187,7 +266,7 @@ export function GroupView({ groupId, onBack }: { groupId: string; onBack: () => 
         </button>
       </div>
 
-      {showAdd && <AddMembersModal groupId={groupId} onClose={() => setShowAdd(false)} />}
+      {showAdd && <GroupSettingsModal groupId={groupId} onClose={() => setShowAdd(false)} />}
     </div>
   );
 }
