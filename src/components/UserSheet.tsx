@@ -1,6 +1,7 @@
 import { useStore } from "../store";
 import { Modal, bannerStyle, tierBadge } from "./Modal";
 import { canModerate, getMember, isTimedOut } from "../permissions";
+import { areFriends } from "../social";
 import type { Server } from "../types";
 
 export function UserSheet({
@@ -19,6 +20,9 @@ export function UserSheet({
 
   const isMe = userId === state.currentUserId;
   const isBlocked = me.blockedUserIds.includes(userId);
+  const isFollowing = me.following.includes(userId);
+  const followsMe = user.following.includes(me.id);
+  const friends = areFriends(me, user);
   const supernova = user.tier === "supernova";
 
   // MySpace-style theming only applies to supernova profiles.
@@ -74,9 +78,30 @@ export function UserSheet({
         </div>
       </div>
 
+      {!isMe && !isBlocked && (
+        <>
+          <div className="row" style={{ gap: 8 }}>
+            <button
+              className={`btn full ${isFollowing ? "ghost" : ""}`}
+              onClick={() => dispatch({ type: "TOGGLE_FOLLOW", userId })}
+            >
+              {friends ? "✓ Friends" : isFollowing ? "Following" : "Follow"}
+            </button>
+          </div>
+          <p className="muted" style={{ fontSize: 12, margin: "8px 0 0", textAlign: "center" }}>
+            {friends
+              ? "You follow each other — you're friends."
+              : followsMe
+                ? "Follows you. Follow back to become friends."
+                : "Follow back to become friends."}
+          </p>
+        </>
+      )}
+
       {!isMe && (
         <button
           className={`btn full ${isBlocked ? "ghost" : "danger"}`}
+          style={{ marginTop: 10 }}
           onClick={() => dispatch({ type: "TOGGLE_BLOCK", userId })}
         >
           {isBlocked ? "Unblock" : "Block"}

@@ -16,13 +16,16 @@ import type {
   Tier,
 } from "./types";
 import { seedState } from "./data/seed";
-import { canModerate } from "./permissions";
+import { can, canModerate } from "./permissions";
+import { isGif, serverStars, starsAvailable } from "./social";
+import { BOOST_ANIMATED_ICON, BOOST_CUSTOM_INVITE } from "./types";
 
 const STORAGE_KEY = "euphoric.state.v1";
 
 type Action =
   | { type: "SEND_MESSAGE"; channelId: string; content: string }
-  | { type: "CREATE_SERVER"; name: string; icon: string }
+  | { type: "DELETE_MESSAGE"; messageId: string }
+  | { type: "CREATE_SERVER"; name: string; icon: string; iconImage?: string }
   | { type: "JOIN_SERVER"; serverId: string }
   | { type: "CREATE_CHANNEL"; serverId: string; name: string }
   | { type: "UPDATE_PROFILE"; bio?: string; avatar?: string; username?: string }
@@ -30,6 +33,10 @@ type Action =
   | { type: "UPDATE_BANNER"; color?: string; image?: string }
   | { type: "SET_TIER"; tier: Tier }
   | { type: "TOGGLE_BLOCK"; userId: string }
+  | { type: "TOGGLE_FOLLOW"; userId: string }
+  | { type: "ALLOCATE_STAR"; serverId: string; delta: number }
+  | { type: "SET_SERVER_ICON"; serverId: string; iconImage: string }
+  | { type: "SET_SERVER_INVITE"; serverId: string; invite: string }
   | { type: "CREATE_ROLE"; serverId: string; role: Omit<Role, "id" | "position"> }
   | { type: "UPDATE_ROLE"; serverId: string; roleId: string; patch: Partial<Role> }
   | { type: "DELETE_ROLE"; serverId: string; roleId: string }
@@ -44,8 +51,22 @@ function id(prefix: string): string {
   return `${prefix}_${Math.random().toString(36).slice(2, 9)}`;
 }
 
+/** Random invite code, unique across existing servers. */
+function newInviteCode(servers: Server[]): string {
+  let code = "";
+  do {
+    code = Math.random().toString(36).slice(2, 8);
+  } while (servers.some((s) => s.invite === code));
+  return code;
+}
+
 function mapServer(state: AppState, serverId: string, fn: (s: Server) => Server): Server[] {
   return state.servers.map((s) => (s.id === serverId ? fn(s) : s));
+}
+
+/** Find the server that owns a given channel. */
+function serverOfChannel(state: AppState, channelId: string): Server | undefined {
+  return state.servers.find((s) => s.channels.some((c) => c.id === channelId));
 }
 
 function reducer(state: AppState, action: Action): AppState {
@@ -63,6 +84,19 @@ function reducer(state: AppState, action: Action): AppState {
       return { ...state, messages: [...state.messages, msg] };
     }
 
+    case "DELETE_MESSAGE": {
+      const msg = state.messages.find((m) => m.id === action.messageId);
+      if (!msg) return state;
+      const server = serverOfChannel(state, msg.channelId);
+      const allowed =
+        msg.authorId === me || (server && can(server, me, "DELETE_MESSAGES"));
+      if (!allowed) return state;
+      return {
+        ...state,
+        messages: state.messages.filter((m) => m.id !== action.messageId),
+      };
+    }
+
     case "CREATE_SERVER": {
       const everyoneRole: Role = {
         id: id("r"),
@@ -76,6 +110,9 @@ function reducer(state: AppState, action: Action): AppState {
         id: id("s"),
         name: action.name.trim() || "New Server",
         icon: action.icon || "✨",
+        // New servers have 0 Stars, so animated (GIF) icons aren't unlocked yet.
+        iconImage: action.iconImage && !isGif(action.iconImage) ? action.iconImage : "",
+        invite: newInviteCode(state.servers),
         ownerId: me,
         channels: [{ id: id("c"), name: "general" }],
         roles: [everyoneRole],
@@ -164,6 +201,60 @@ function reducer(state: AppState, action: Action): AppState {
         ? u.blockedUserIds.filter((x) => x !== action.userId)
         : [...u.blockedUserIds, action.userId];
       return { ...state, users: { ...state.users, [me]: { ...u, blockedUserIds: blocked } } };
+    }
+
+    case "TOGGLE_FOLLOW": {
+      if (action.userId === me) return state;
+      const u = state.users[me];
+      const following = u.following.includes(action.userId)
+        ? u.following.filter((x) => x !== action.userId)
+        : [...u.following, action.userId];
+      return { ...state, users: { ...state.users, [me]: { ...u, following } } };
+    }
+
+    case "ALLOCATE_STAR": {
+      const u = state.users[me];
+      const current = u.starAllocations[action.serverId] ?? 0;
+      const next = current + action.delta;
+      // Can't go below zero or spend more Stars than the tier grants.
+      if (next < 0) return state;
+      if (action.delta > 0 && starsAvailable(u) <= 0) return state;
+      const starAllocations = { ...u.starAllocations };
+      if (next === 0) delete starAllocations[action.serverId];
+      else starAllocations[action.serverId] = next;
+      return { ...state, users: { ...state.users, [me]: { ...u, starAllocations } } };
+    }
+
+    case "SET_SERVER_ICON": {
+      const server = state.servers.find((s) => s.id === action.serverId);
+      if (!server || !can(server, me, "MANAGE_SERVER")) return state;
+      // Animated (GIF) server icons require the boost threshold.
+      if (
+        isGif(action.iconImage) &&
+        serverStars(state, action.serverId) < BOOST_ANIMATED_ICON
+      ) {
+        return state;
+      }
+      return {
+        ...state,
+        servers: mapServer(state, action.serverId, (s) => ({ ...s, iconImage: action.iconImage })),
+      };
+    }
+
+    case "SET_SERVER_INVITE": {
+      const server = state.servers.find((s) => s.id === action.serverId);
+      if (!server || !can(server, me, "MANAGE_SERVER")) return state;
+      // Custom invites are a boost perk.
+      if (serverStars(state, action.serverId) < BOOST_CUSTOM_INVITE) return state;
+      const code = action.invite.trim().toLowerCase().replace(/[^a-z0-9-]/g, "");
+      // Invite codes are unique to one server.
+      if (!code || state.servers.some((s) => s.id !== server.id && s.invite === code)) {
+        return state;
+      }
+      return {
+        ...state,
+        servers: mapServer(state, action.serverId, (s) => ({ ...s, invite: code })),
+      };
     }
 
     case "CREATE_ROLE": {
@@ -289,12 +380,22 @@ function reducer(state: AppState, action: Action): AppState {
 /** Backfill fields added after a user's state was first persisted. */
 function migrate(state: AppState): AppState {
   const users = Object.fromEntries(
-    Object.entries(state.users).map(([id, u]) => [
-      id,
-      { ...u, banner: u.banner ?? { color: "#2a2440", image: "" } },
+    Object.entries(state.users).map(([uid, u]) => [
+      uid,
+      {
+        ...u,
+        banner: u.banner ?? { color: "#2a2440", image: "" },
+        following: u.following ?? [],
+        starAllocations: u.starAllocations ?? {},
+      },
     ]),
   );
-  return { ...state, users };
+  const servers = state.servers.map((s) => ({
+    ...s,
+    iconImage: s.iconImage ?? "",
+    invite: s.invite ?? newInviteCode(state.servers),
+  }));
+  return { ...state, users, servers };
 }
 
 function loadState(): AppState {

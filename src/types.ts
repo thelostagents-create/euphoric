@@ -7,6 +7,7 @@ export type Permission =
   | "KICK_MEMBERS"
   | "BAN_MEMBERS"
   | "TIMEOUT_MEMBERS"
+  | "DELETE_MESSAGES"
   | "MANAGE_ROLES"
   | "MANAGE_CHANNELS"
   | "MANAGE_SERVER";
@@ -15,10 +16,15 @@ export const ALL_PERMISSIONS: { id: Permission; label: string; desc: string }[] 
   { id: "KICK_MEMBERS", label: "Kick Members", desc: "Remove members from the server." },
   { id: "BAN_MEMBERS", label: "Ban Members", desc: "Permanently bar members from the server." },
   { id: "TIMEOUT_MEMBERS", label: "Timeout Members", desc: "Temporarily mute members." },
+  { id: "DELETE_MESSAGES", label: "Delete Messages", desc: "Delete messages sent by other members." },
   { id: "MANAGE_ROLES", label: "Manage Roles", desc: "Create, edit and assign roles." },
   { id: "MANAGE_CHANNELS", label: "Manage Channels", desc: "Create and delete channels." },
-  { id: "MANAGE_SERVER", label: "Manage Server", desc: "Edit server settings and discovery." },
+  { id: "MANAGE_SERVER", label: "Manage Server", desc: "Edit server settings, invite and discovery." },
 ];
+
+/** Boost thresholds unlocked by spent Stars. */
+export const BOOST_ANIMATED_ICON = 3;
+export const BOOST_CUSTOM_INVITE = 9;
 
 /** MySpace-style profile theme. Only meaningful for the supernova tier. */
 export interface ProfileTheme {
@@ -50,6 +56,10 @@ export interface User {
   theme: ProfileTheme;
   /** User ids this user has blocked. */
   blockedUserIds: string[];
+  /** User ids this user follows. A mutual follow = friends. */
+  following: string[];
+  /** Stars this user has spent, keyed by server id. */
+  starAllocations: Record<string, number>;
 }
 
 export interface Role {
@@ -87,11 +97,16 @@ export interface Message {
 export interface Server {
   id: string;
   name: string;
+  /** Emoji fallback icon. */
   icon: string;
+  /** Optional image url; GIFs require BOOST_ANIMATED_ICON stars. */
+  iconImage: string;
   ownerId: string;
   channels: Channel[];
   roles: Role[];
   members: Member[];
+  /** Unique invite code; one server per code. */
+  invite: string;
   /** Discovery opt-in. */
   discoverable: boolean;
   description: string;

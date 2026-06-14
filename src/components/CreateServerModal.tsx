@@ -8,10 +8,11 @@ export function CreateServerModal({ onClose }: { onClose: () => void }) {
   const { dispatch } = useStore();
   const [name, setName] = useState("");
   const [icon, setIcon] = useState("✨");
+  const [iconImage, setIconImage] = useState("");
 
   function create() {
     if (!name.trim()) return;
-    dispatch({ type: "CREATE_SERVER", name, icon });
+    dispatch({ type: "CREATE_SERVER", name, icon, iconImage });
     onClose();
   }
 
@@ -22,7 +23,7 @@ export function CreateServerModal({ onClose }: { onClose: () => void }) {
       </p>
 
       <div className="field">
-        <label>Icon</label>
+        <label>Icon emoji</label>
         <div className="chips">
           {SUGGESTED.map((e) => (
             <button
@@ -35,6 +36,18 @@ export function CreateServerModal({ onClose }: { onClose: () => void }) {
             </button>
           ))}
         </div>
+      </div>
+
+      <div className="field">
+        <label>Or icon image URL (optional)</label>
+        <input
+          value={iconImage}
+          placeholder="https://… (static image)"
+          onChange={(e) => setIconImage(e.target.value)}
+        />
+        <p className="muted" style={{ fontSize: 11, marginTop: 5 }}>
+          Animated GIF icons unlock once the server reaches 3 ⭐ boosts.
+        </p>
       </div>
 
       <div className="field">

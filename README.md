@@ -10,16 +10,28 @@ iOS port come in later passes.
 
 ## Features in this prototype
 
-- **Servers & channels** — create servers, add channels, switch between them.
+- **Servers & channels** — create servers (emoji **or image icon**), add
+  channels, switch between them.
+- **Invites** — every server gets a unique random invite link
+  (`euphoric.gg/<code>`); paste a code on the Discover page to join. One code
+  maps to exactly one server.
 - **Roles & permissions** — create roles (incl. dedicated *staff roles*) with
-  granular permissions: kick, ban, timeout, manage roles/channels/server.
-  Moderation respects a role hierarchy (you can only act on lower-ranked
-  members; nobody can act on the owner).
+  granular permissions: kick, ban, timeout, **delete messages**, manage
+  roles/channels/server. Moderation respects a role hierarchy (you can only act
+  on lower-ranked members; nobody can act on the owner).
 - **Moderation** — kick, ban, and timeout members from a user's profile sheet.
   Timed-out users can't send messages.
+- **Messages** — delete your own messages; members with the *Delete Messages*
+  permission can delete anyone's.
 - **Block feature** — blocked users' messages and avatars are blurred (tap
   "reveal" to peek), and they can no longer contact you.
-- **Profiles & bios** — every user has an avatar, a custom bio, and a tier.
+- **Follows & friends** — follow anyone from their profile; a mutual follow
+  makes you friends (listed in Settings).
+- **Server boosts (⭐ Stars)** — Premium members get 1 Star, Supernova members
+  get 2, to spend across servers. At **3 ⭐** a server unlocks an animated
+  (GIF) icon; at **9 ⭐** it can set a custom invite code.
+- **Profiles & bios** — every user has an avatar, a custom bio, a banner, and a
+  tier.
 - **Subscription tiers**
   - **Free** — core features.
   - **Premium ($5/mo)** — animated GIF profile picture.

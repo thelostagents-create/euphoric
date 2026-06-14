@@ -1,34 +1,50 @@
 import { useState } from "react";
 import { useStore } from "../store";
 import { Modal } from "./Modal";
-import { ALL_PERMISSIONS, type Permission, type Role, type Server } from "../types";
+import {
+  ALL_PERMISSIONS,
+  BOOST_ANIMATED_ICON,
+  BOOST_CUSTOM_INVITE,
+  type Permission,
+  type Role,
+  type Server,
+} from "../types";
 import { can, effectivePermissions, isOwner } from "../permissions";
+import { inviteLink, isGif, serverStars, starsAvailable } from "../social";
 
-type Tab = "roles" | "members" | "discovery";
+type Tab = "overview" | "roles" | "members" | "discovery";
 
 export function ServerManage({ server, onClose }: { server: Server; onClose: () => void }) {
   const { state } = useStore();
   const meId = state.currentUserId;
-  const [tab, setTab] = useState<Tab>("roles");
+  const [tab, setTab] = useState<Tab>("overview");
 
   const owner = isOwner(server, meId);
   const canManageRoles = owner || can(server, meId, "MANAGE_ROLES");
   const canManageServer = owner || can(server, meId, "MANAGE_SERVER");
 
+  const tabs: { id: Tab; label: string }[] = [
+    { id: "overview", label: "Overview" },
+    { id: "roles", label: "Roles & Staff" },
+    { id: "members", label: "Members" },
+    { id: "discovery", label: "Discovery" },
+  ];
+
   return (
     <Modal title={`Manage ${server.name}`} onClose={onClose}>
-      <div className="row" style={{ gap: 6, marginBottom: 14 }}>
-        <button className={`btn sm ${tab === "roles" ? "" : "ghost"}`} onClick={() => setTab("roles")}>
-          Roles & Staff
-        </button>
-        <button className={`btn sm ${tab === "members" ? "" : "ghost"}`} onClick={() => setTab("members")}>
-          Members
-        </button>
-        <button className={`btn sm ${tab === "discovery" ? "" : "ghost"}`} onClick={() => setTab("discovery")}>
-          Discovery
-        </button>
+      <div className="row" style={{ gap: 6, marginBottom: 14, flexWrap: "wrap" }}>
+        {tabs.map((t) => (
+          <button
+            key={t.id}
+            className={`btn sm ${tab === t.id ? "" : "ghost"}`}
+            onClick={() => setTab(t.id)}
+          >
+            {t.label}
+          </button>
+        ))}
       </div>
 
+      {tab === "overview" && <OverviewTab server={server} canManage={canManageServer} />}
       {tab === "roles" && <RolesTab server={server} canManage={canManageRoles} />}
       {tab === "members" && <MembersTab server={server} />}
       {tab === "discovery" &&
@@ -38,6 +54,148 @@ export function ServerManage({ server, onClose }: { server: Server; onClose: () 
           <p className="muted">You need the Manage Server permission.</p>
         ))}
     </Modal>
+  );
+}
+
+function OverviewTab({ server, canManage }: { server: Server; canManage: boolean }) {
+  const { state, dispatch } = useStore();
+  const me = state.users[state.currentUserId];
+  const stars = serverStars(state, server.id);
+  const mine = me.starAllocations[server.id] ?? 0;
+  const available = starsAvailable(me);
+  const animatedUnlocked = stars >= BOOST_ANIMATED_ICON;
+  const customInviteUnlocked = stars >= BOOST_CUSTOM_INVITE;
+
+  const [iconUrl, setIconUrl] = useState(server.iconImage);
+  const [customInvite, setCustomInvite] = useState(server.invite);
+  const [copied, setCopied] = useState(false);
+
+  function copyInvite() {
+    navigator.clipboard?.writeText(inviteLink(server)).catch(() => {});
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  }
+
+  const iconIsGif = isGif(iconUrl);
+  const iconBlocked = iconIsGif && !animatedUnlocked;
+
+  return (
+    <div>
+      {/* Boost / Stars */}
+      <div className="section-title">Boost · {stars} ⭐</div>
+      <div className="card">
+        <p className="desc" style={{ marginBottom: 10 }}>
+          Members spend Stars to boost this server. Premium grants 1 Star, Supernova grants 2.
+        </p>
+        <div className="row" style={{ justifyContent: "space-between" }}>
+          <div>
+            <div style={{ fontWeight: 700 }}>Your Stars on this server: {mine}</div>
+            <div className="muted" style={{ fontSize: 12 }}>{available} available to spend</div>
+          </div>
+          <div className="row" style={{ gap: 6 }}>
+            <button
+              className="btn ghost sm"
+              disabled={mine <= 0}
+              onClick={() => dispatch({ type: "ALLOCATE_STAR", serverId: server.id, delta: -1 })}
+            >
+              −
+            </button>
+            <button
+              className="btn sm"
+              disabled={available <= 0}
+              onClick={() => dispatch({ type: "ALLOCATE_STAR", serverId: server.id, delta: 1 })}
+            >
+              + Star
+            </button>
+          </div>
+        </div>
+        <div className="chips" style={{ marginTop: 12 }}>
+          <span className={`chip ${animatedUnlocked ? "accent" : ""}`}>
+            {animatedUnlocked ? "✓" : `${BOOST_ANIMATED_ICON}⭐`} Animated icon
+          </span>
+          <span className={`chip ${customInviteUnlocked ? "accent" : ""}`}>
+            {customInviteUnlocked ? "✓" : `${BOOST_CUSTOM_INVITE}⭐`} Custom invite
+          </span>
+        </div>
+      </div>
+
+      {/* Invite */}
+      <div className="section-title">Invite</div>
+      <div className="card">
+        <div className="row" style={{ gap: 8 }}>
+          <input readOnly value={inviteLink(server)} />
+          <button className="btn sm" onClick={copyInvite}>
+            {copied ? "Copied" : "Copy"}
+          </button>
+        </div>
+        {canManage && (
+          <div style={{ marginTop: 12 }}>
+            <label className="muted" style={{ fontSize: 12, fontWeight: 600 }}>
+              Custom invite code {customInviteUnlocked ? "" : `(unlocks at ${BOOST_CUSTOM_INVITE}⭐)`}
+            </label>
+            <div className="row" style={{ gap: 8, marginTop: 5 }}>
+              <input
+                value={customInvite}
+                disabled={!customInviteUnlocked}
+                onChange={(e) => setCustomInvite(e.target.value)}
+                placeholder="my-cool-server"
+              />
+              <button
+                className="btn sm"
+                disabled={!customInviteUnlocked || !customInvite.trim()}
+                onClick={() =>
+                  dispatch({ type: "SET_SERVER_INVITE", serverId: server.id, invite: customInvite })
+                }
+              >
+                Set
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Server icon */}
+      {canManage && (
+        <>
+          <div className="section-title">Server icon</div>
+          <div className="card">
+            <div className="field" style={{ marginBottom: 8 }}>
+              <label>Icon image URL {animatedUnlocked ? "(GIFs allowed ✨)" : "(static only)"}</label>
+              <input
+                value={iconUrl}
+                placeholder="https://…"
+                onChange={(e) => setIconUrl(e.target.value)}
+              />
+            </div>
+            {iconBlocked && (
+              <p className="muted" style={{ fontSize: 12, margin: "0 0 8px", color: "var(--danger)" }}>
+                Animated GIF icons unlock at {BOOST_ANIMATED_ICON}⭐.
+              </p>
+            )}
+            <div className="row" style={{ gap: 8 }}>
+              <button
+                className="btn sm"
+                disabled={iconBlocked}
+                onClick={() => dispatch({ type: "SET_SERVER_ICON", serverId: server.id, iconImage: iconUrl })}
+              >
+                Save icon
+              </button>
+              {server.iconImage && (
+                <button
+                  className="btn ghost sm"
+                  onClick={() => {
+                    setIconUrl("");
+                    dispatch({ type: "SET_SERVER_ICON", serverId: server.id, iconImage: "" });
+                  }}
+                >
+                  Remove (use {server.icon})
+                </button>
+              )}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
   );
 }
 

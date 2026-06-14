@@ -2,6 +2,8 @@ import { useState } from "react";
 import { resetState, useStore } from "../store";
 import type { Tier } from "../types";
 import { CreateServerModal } from "./CreateServerModal";
+import { friendsOf, starCapacity, starsAvailable } from "../social";
+import { UserSheet } from "./UserSheet";
 
 const TIERS: {
   id: Tier;
@@ -19,7 +21,12 @@ const TIERS: {
     id: "premium",
     name: "Premium",
     price: "$5/mo",
-    perks: ["Everything in Free", "Animated GIF profile picture"],
+    perks: [
+      "Everything in Free",
+      "Animated GIF profile picture",
+      "Banner image",
+      "1 ⭐ Star to boost a server",
+    ],
   },
   {
     id: "supernova",
@@ -29,6 +36,7 @@ const TIERS: {
       "Everything in Premium",
       "Custom username font",
       "MySpace-style profile colors",
+      "2 ⭐ Stars to boost servers",
     ],
   },
 ];
@@ -37,6 +45,12 @@ export function Settings() {
   const { state, dispatch } = useStore();
   const user = state.users[state.currentUserId];
   const [showCreate, setShowCreate] = useState(false);
+  const [sheetUser, setSheetUser] = useState<string | null>(null);
+
+  const friends = friendsOf(state, user.id);
+  const followingOnly = user.following.filter(
+    (id) => !friends.some((f) => f.id === id),
+  );
 
   const blocked = user.blockedUserIds
     .map((id) => state.users[id])
@@ -78,8 +92,35 @@ export function Settings() {
         })}
         <p className="muted" style={{ fontSize: 11 }}>
           Demo only — no real payment is processed. Apple In-App Purchase wiring comes with the
-          native build.
+          native build. You have {starCapacity(user.tier)} ⭐ Star
+          {starCapacity(user.tier) === 1 ? "" : "s"} ({starsAvailable(user)} available to spend).
         </p>
+
+        <div className="section-title">Friends</div>
+        {friends.length === 0 && followingOnly.length === 0 ? (
+          <p className="muted">Follow people from their profile. Mutual follows become friends.</p>
+        ) : (
+          <>
+            {friends.map((f) => (
+              <div className="row" key={f.id} style={{ marginBottom: 8 }} onClick={() => setSheetUser(f.id)}>
+                <img src={f.avatar} alt="" style={{ width: 32, height: 32, borderRadius: "50%" }} />
+                <span style={{ flex: 1 }}>{f.username}</span>
+                <span className="badge staff">Friend</span>
+              </div>
+            ))}
+            {followingOnly.map((id) => {
+              const u = state.users[id];
+              if (!u) return null;
+              return (
+                <div className="row" key={id} style={{ marginBottom: 8 }} onClick={() => setSheetUser(id)}>
+                  <img src={u.avatar} alt="" style={{ width: 32, height: 32, borderRadius: "50%" }} />
+                  <span style={{ flex: 1 }}>{u.username}</span>
+                  <span className="muted" style={{ fontSize: 12 }}>Following</span>
+                </div>
+              );
+            })}
+          </>
+        )}
 
         <div className="section-title">Servers</div>
         <button className="btn full" onClick={() => setShowCreate(true)}>
@@ -111,6 +152,7 @@ export function Settings() {
       </div>
 
       {showCreate && <CreateServerModal onClose={() => setShowCreate(false)} />}
+      {sheetUser && <UserSheet userId={sheetUser} onClose={() => setSheetUser(null)} />}
     </div>
   );
 }

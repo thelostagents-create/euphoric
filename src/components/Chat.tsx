@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useStore } from "../store";
-import { getMember, isTimedOut } from "../permissions";
+import { can, getMember, isTimedOut } from "../permissions";
 import { timeAgo } from "./Modal";
 import { UserSheet } from "./UserSheet";
 import { ServerManage } from "./ServerManage";
 import { CreateServerModal } from "./CreateServerModal";
+import { ServerIcon } from "./ServerIcon";
 
 export function Chat() {
   const { state, dispatch } = useStore();
@@ -73,6 +74,7 @@ export function Chat() {
 
   const myMember = getMember(server, state.currentUserId);
   const muted = isTimedOut(myMember);
+  const canDeleteOthers = can(server, state.currentUserId, "DELETE_MESSAGES");
 
   function send() {
     if (!draft.trim() || muted) return;
@@ -94,8 +96,9 @@ export function Chat() {
             className={`rail-icon ${s.id === server.id ? "active" : ""}`}
             onClick={() => setServerId(s.id)}
             title={s.name}
+            style={s.iconImage ? { overflow: "hidden", padding: 0 } : undefined}
           >
-            {s.icon}
+            <ServerIcon server={s} />
           </button>
         ))}
         <button className="rail-icon add" onClick={() => setShowCreate(true)} title="Create a server">
@@ -105,7 +108,19 @@ export function Chat() {
 
       <div className="chat-main">
         <div className="topbar">
-          <span style={{ fontSize: 18 }}>{server.icon}</span>
+          <span
+            style={{
+              width: 26,
+              height: 26,
+              borderRadius: 8,
+              overflow: "hidden",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <ServerIcon server={server} size={18} />
+          </span>
           <div>
             <h2>{server.name}</h2>
             <div className="sub">#{channel.name}</div>
@@ -116,7 +131,7 @@ export function Chat() {
           </button>
         </div>
 
-        <div className="channel-list" style={{ display: "flex", gap: 6, overflowX: "auto", padding: "8px 10px", borderBottom: "1px solid #251f44" }}>
+        <div className="channel-list" style={{ display: "flex", gap: 6, overflowX: "auto", padding: "8px 10px", borderBottom: "1px solid var(--border)" }}>
           {server.channels.map((c) => (
             <button
               key={c.id}
@@ -138,6 +153,7 @@ export function Chat() {
             const author = state.users[m.authorId];
             const blocked = me.blockedUserIds.includes(m.authorId);
             const isRevealed = revealed.has(m.id);
+            const canDelete = m.authorId === state.currentUserId || canDeleteOthers;
             return (
               <div key={m.id} className={`msg ${blocked ? "blocked" : ""} ${isRevealed ? "revealed" : ""}`}>
                 <img
@@ -164,6 +180,15 @@ export function Chat() {
                         }
                       >
                         blocked · {isRevealed ? "hide" : "reveal"}
+                      </button>
+                    )}
+                    {canDelete && (
+                      <button
+                        className="msg-delete"
+                        title={m.authorId === state.currentUserId ? "Delete your message" : "Delete message"}
+                        onClick={() => dispatch({ type: "DELETE_MESSAGE", messageId: m.id })}
+                      >
+                        delete
                       </button>
                     )}
                   </div>
