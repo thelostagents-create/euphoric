@@ -47,7 +47,10 @@ export interface Banner {
 
 export interface User {
   id: string;
+  /** Unique handle used for @mentions and friend-adds. */
   username: string;
+  /** Optional display name shown in chat; falls back to username. */
+  nickname: string;
   /** May be an animated GIF url for premium/supernova tiers. */
   avatar: string;
   bio: string;

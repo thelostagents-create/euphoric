@@ -6,6 +6,8 @@ import { UserSheet } from "./UserSheet";
 import { ServerManage } from "./ServerManage";
 import { CreateServerModal } from "./CreateServerModal";
 import { ServerIcon } from "./ServerIcon";
+import { MessageText } from "./MessageText";
+import { displayName } from "../social";
 
 export function Chat() {
   const { state, dispatch } = useStore();
@@ -80,6 +82,22 @@ export function Chat() {
     if (!draft.trim() || muted) return;
     dispatch({ type: "SEND_MESSAGE", channelId: channel!.id, content: draft });
     setDraft("");
+  }
+
+  // @-mention autocomplete: the partial handle being typed at the end of draft.
+  const mentionMatch = /(?:^|\s)@(\w*)$/.exec(draft);
+  const mentionQuery = mentionMatch ? mentionMatch[1].toLowerCase() : null;
+  const mentionSuggestions =
+    mentionQuery === null
+      ? []
+      : server.members
+          .filter((mem) => !mem.banned)
+          .map((mem) => state.users[mem.userId])
+          .filter((u): u is NonNullable<typeof u> => !!u && u.username.toLowerCase().startsWith(mentionQuery))
+          .slice(0, 6);
+
+  function pickMention(username: string) {
+    setDraft((d) => d.replace(/@(\w*)$/, `@${username} `));
   }
 
   function createChannel() {
@@ -165,7 +183,7 @@ export function Chat() {
                 <div className="body">
                   <div className="meta">
                     <span className="name" onClick={() => setSheetUser(m.authorId)}>
-                      {author?.username ?? "unknown"}
+                      {displayName(author)}
                     </span>
                     <span className="time">{timeAgo(m.createdAt)}</span>
                     {blocked && (
@@ -192,7 +210,9 @@ export function Chat() {
                       </button>
                     )}
                   </div>
-                  <div className="content">{m.content}</div>
+                  <div className="content">
+                    <MessageText content={m.content} users={state.users} meId={state.currentUserId} />
+                  </div>
                 </div>
               </div>
             );
@@ -206,17 +226,30 @@ export function Chat() {
           </div>
         )}
 
-        <div className="composer">
-          <input
-            value={draft}
-            placeholder={muted ? "You can't send messages right now" : `Message #${channel.name}`}
-            disabled={muted}
-            onChange={(e) => setDraft(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && send()}
-          />
-          <button className="btn" onClick={send} disabled={muted || !draft.trim()}>
-            Send
-          </button>
+        <div style={{ position: "relative" }}>
+          {mentionSuggestions.length > 0 && (
+            <div className="mention-popup">
+              {mentionSuggestions.map((u) => (
+                <button key={u.id} className="mention-option" onClick={() => pickMention(u.username)}>
+                  <img src={u.avatar} alt="" />
+                  <span className="dn">{displayName(u)}</span>
+                  <span className="muted" style={{ fontSize: 12 }}>@{u.username}</span>
+                </button>
+              ))}
+            </div>
+          )}
+          <div className="composer">
+            <input
+              value={draft}
+              placeholder={muted ? "You can't send messages right now" : `Message #${channel.name}  (try @)`}
+              disabled={muted}
+              onChange={(e) => setDraft(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && send()}
+            />
+            <button className="btn" onClick={send} disabled={muted || !draft.trim()}>
+              Send
+            </button>
+          </div>
         </div>
       </div>
 

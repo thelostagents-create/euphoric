@@ -1,7 +1,7 @@
 import { useStore } from "../store";
 import { Modal, bannerStyle, tierBadge } from "./Modal";
 import { canModerate, getMember, isTimedOut } from "../permissions";
-import { areFriends } from "../social";
+import { areFriends, displayName } from "../social";
 import type { Server } from "../types";
 
 export function UserSheet({
@@ -69,8 +69,9 @@ export function UserSheet({
             color: theme.accentColor,
           }}
         >
-          {user.username}
+          {displayName(user)}
         </div>
+        <div className="muted" style={{ fontSize: 13, marginTop: 2 }}>@{user.username}</div>
         <div style={{ marginTop: 4 }}>{tierBadge(user.tier)}</div>
         {user.bio && (
           <p style={{ marginTop: 12, fontSize: 14, lineHeight: 1.5, opacity: 0.92 }}>{user.bio}</p>

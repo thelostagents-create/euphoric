@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useStore } from "../store";
 import { bannerStyle, tierBadge } from "./Modal";
-import { usernameTaken } from "../social";
+import { displayName, usernameTaken } from "../social";
+import { AccountSettings } from "./Settings";
 
 const FONTS = [
   { label: "Default", value: "system-ui" },
@@ -57,9 +58,10 @@ export function Profile() {
               : undefined
           }
         >
-          {user.username}
+          {displayName(user)}
         </div>
-        <div>{tierBadge(user.tier)}</div>
+        <div className="muted" style={{ fontSize: 13 }}>@{user.username}</div>
+        <div style={{ marginTop: 4 }}>{tierBadge(user.tier)}</div>
         <p className="bio">{user.bio || "No bio yet."}</p>
       </div>
 
@@ -89,6 +91,15 @@ export function Profile() {
               <p className="muted" style={{ fontSize: 12, marginTop: 5 }}>"{trimmed}" is available.</p>
             )
           )}
+        </div>
+
+        <div className="field">
+          <label>Nickname (shown in chat — set this if you couldn't get the username you wanted)</label>
+          <input
+            value={user.nickname}
+            placeholder={user.username}
+            onChange={(e) => dispatch({ type: "UPDATE_PROFILE", nickname: e.target.value })}
+          />
         </div>
 
         <div className="field">
@@ -200,6 +211,8 @@ export function Profile() {
             </div>
           </div>
         )}
+
+        <AccountSettings />
       </div>
     </div>
   );

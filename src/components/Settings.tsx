@@ -2,8 +2,7 @@ import { useState } from "react";
 import { resetState, useStore } from "../store";
 import type { Tier } from "../types";
 import { CreateServerModal } from "./CreateServerModal";
-import { friendsOf, starCapacity, starsAvailable } from "../social";
-import { UserSheet } from "./UserSheet";
+import { starCapacity, starsAvailable } from "../social";
 
 const TIERS: {
   id: Tier;
@@ -41,118 +40,81 @@ const TIERS: {
   },
 ];
 
-export function Settings() {
+/** Account settings rendered inside the Profile tab (no own screen chrome). */
+export function AccountSettings() {
   const { state, dispatch } = useStore();
   const user = state.users[state.currentUserId];
   const [showCreate, setShowCreate] = useState(false);
-  const [sheetUser, setSheetUser] = useState<string | null>(null);
-
-  const friends = friendsOf(state, user.id);
-  const followingOnly = user.following.filter(
-    (id) => !friends.some((f) => f.id === id),
-  );
 
   const blocked = user.blockedUserIds
     .map((id) => state.users[id])
     .filter(Boolean);
 
   return (
-    <div className="screen">
-      <div className="topbar">
-        <h1>Settings</h1>
-      </div>
-      <div className="list">
-        <div className="section-title">Subscription</div>
-        {TIERS.map((t) => {
-          const active = user.tier === t.id;
-          return (
-            <div
-              className="card"
-              key={t.id}
-              style={active ? { borderColor: "var(--accent-2)" } : undefined}
+    <>
+      <div className="section-title">Subscription</div>
+      {TIERS.map((t) => {
+        const active = user.tier === t.id;
+        return (
+          <div
+            className="card"
+            key={t.id}
+            style={active ? { borderColor: "var(--accent-2)" } : undefined}
+          >
+            <div className="row" style={{ justifyContent: "space-between" }}>
+              <h3 style={{ margin: 0 }}>{t.name}</h3>
+              <span style={{ fontWeight: 800 }}>{t.price}</span>
+            </div>
+            <ul style={{ margin: "8px 0 12px", paddingLeft: 18, color: "var(--muted)", fontSize: 13 }}>
+              {t.perks.map((p) => (
+                <li key={p}>{p}</li>
+              ))}
+            </ul>
+            <button
+              className={`btn full ${active ? "ghost" : ""}`}
+              disabled={active}
+              onClick={() => dispatch({ type: "SET_TIER", tier: t.id })}
             >
-              <div className="row" style={{ justifyContent: "space-between" }}>
-                <h3 style={{ margin: 0 }}>{t.name}</h3>
-                <span style={{ fontWeight: 800 }}>{t.price}</span>
-              </div>
-              <ul style={{ margin: "8px 0 12px", paddingLeft: 18, color: "var(--muted)", fontSize: 13 }}>
-                {t.perks.map((p) => (
-                  <li key={p}>{p}</li>
-                ))}
-              </ul>
-              <button
-                className={`btn full ${active ? "ghost" : ""}`}
-                disabled={active}
-                onClick={() => dispatch({ type: "SET_TIER", tier: t.id })}
-              >
-                {active ? "Current plan" : `Choose ${t.name}`}
-              </button>
-            </div>
-          );
-        })}
-        <p className="muted" style={{ fontSize: 11 }}>
-          Demo only — no real payment is processed. Apple In-App Purchase wiring comes with the
-          native build. You have {starCapacity(user.tier)} ⭐ Star
-          {starCapacity(user.tier) === 1 ? "" : "s"} ({starsAvailable(user)} available to spend).
-        </p>
+              {active ? "Current plan" : `Choose ${t.name}`}
+            </button>
+          </div>
+        );
+      })}
+      <p className="muted" style={{ fontSize: 11 }}>
+        Demo only — no real payment is processed. Apple In-App Purchase wiring comes with the
+        native build. You have {starCapacity(user.tier)} ⭐ Star
+        {starCapacity(user.tier) === 1 ? "" : "s"} ({starsAvailable(user)} available to spend).
+      </p>
 
-        <div className="section-title">Friends</div>
-        {friends.length === 0 && followingOnly.length === 0 ? (
-          <p className="muted">Follow people from their profile. Mutual follows become friends.</p>
-        ) : (
-          <>
-            {friends.map((f) => (
-              <div className="row" key={f.id} style={{ marginBottom: 8 }} onClick={() => setSheetUser(f.id)}>
-                <img src={f.avatar} alt="" style={{ width: 32, height: 32, borderRadius: "50%" }} />
-                <span style={{ flex: 1 }}>{f.username}</span>
-                <span className="badge staff">Friend</span>
-              </div>
-            ))}
-            {followingOnly.map((id) => {
-              const u = state.users[id];
-              if (!u) return null;
-              return (
-                <div className="row" key={id} style={{ marginBottom: 8 }} onClick={() => setSheetUser(id)}>
-                  <img src={u.avatar} alt="" style={{ width: 32, height: 32, borderRadius: "50%" }} />
-                  <span style={{ flex: 1 }}>{u.username}</span>
-                  <span className="muted" style={{ fontSize: 12 }}>Following</span>
-                </div>
-              );
-            })}
-          </>
-        )}
+      <div className="section-title">Servers</div>
+      <button className="btn full" onClick={() => setShowCreate(true)}>
+        Create a server
+      </button>
 
-        <div className="section-title">Servers</div>
-        <button className="btn full" onClick={() => setShowCreate(true)}>
-          Create a server
-        </button>
+      <div className="section-title">Blocked users</div>
+      {blocked.length === 0 ? (
+        <p className="muted">You haven't blocked anyone.</p>
+      ) : (
+        blocked.map((u) => (
+          <div className="row" key={u.id} style={{ marginBottom: 8 }}>
+            <img src={u.avatar} alt="" style={{ width: 32, height: 32, borderRadius: "50%" }} />
+            <span style={{ flex: 1 }}>{u.username}</span>
+            <button
+              className="btn ghost sm"
+              onClick={() => dispatch({ type: "TOGGLE_BLOCK", userId: u.id })}
+            >
+              Unblock
+            </button>
+          </div>
+        ))
+      )}
 
-        <div className="section-title">Blocked users</div>
-        {blocked.length === 0 ? (
-          <p className="muted">You haven't blocked anyone.</p>
-        ) : (
-          blocked.map((u) => (
-            <div className="row" key={u.id} style={{ marginBottom: 8 }}>
-              <img src={u.avatar} alt="" style={{ width: 32, height: 32, borderRadius: "50%" }} />
-              <span style={{ flex: 1 }}>{u.username}</span>
-              <button
-                className="btn ghost sm"
-                onClick={() => dispatch({ type: "TOGGLE_BLOCK", userId: u.id })}
-              >
-                Unblock
-              </button>
-            </div>
-          ))
-        )}
-
-        <div className="section-title">Danger zone</div>
-        <button className="btn danger full" onClick={resetState}>
-          Reset demo data
-        </button>
-      </div>
+      <div className="section-title">Danger zone</div>
+      <button className="btn danger full" onClick={resetState}>
+        Reset demo data
+      </button>
 
       {showCreate && <CreateServerModal onClose={() => setShowCreate(false)} />}
-      {sheetUser && <UserSheet userId={sheetUser} onClose={() => setSheetUser(null)} />}
-    </div>
+    </>
   );
 }

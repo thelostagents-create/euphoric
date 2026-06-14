@@ -16,6 +16,7 @@ function user(
     id,
     username,
     avatar: `https://api.dicebear.com/9.x/thumbs/svg?seed=${encodeURIComponent(username)}`,
+    nickname: "",
     bio: "",
     tier: "free",
     banner: { color: "#2a2440", image: "" },
@@ -46,7 +47,7 @@ const users: Record<string, User> = {
     starAllocations: { s_lounge: 1 },
   }),
   rex: user("rex", "rex", { bio: "ttrpg goblin" }),
-  nova: user("nova", "nova_dev", { bio: "shipping bugs since 2015" }),
+  nova: user("nova", "nova_dev", { nickname: "Nova ⚡", bio: "shipping bugs since 2015" }),
   spammer: user("spammer", "totally_not_spam", { bio: "DM me for crypto 🚀" }),
 };
 

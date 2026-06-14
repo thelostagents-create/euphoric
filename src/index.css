@@ -347,6 +347,55 @@ textarea:focus {
   border-radius: 20px;
 }
 
+.mention {
+  color: var(--accent);
+  background: rgba(155, 123, 255, 0.16);
+  border-radius: 5px;
+  padding: 0 3px;
+  font-weight: 600;
+}
+
+.mention-me {
+  color: var(--accent-2);
+  background: rgba(255, 184, 107, 0.18);
+}
+
+.mention-popup {
+  position: absolute;
+  bottom: 100%;
+  left: 12px;
+  right: 12px;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.mention-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.mention-option:hover {
+  background: var(--bg-2);
+}
+
+.mention-option img {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+}
+
+.mention-option .dn {
+  font-weight: 600;
+}
+
 .timeout-banner {
   background: rgba(255, 84, 112, 0.15);
   color: var(--danger);

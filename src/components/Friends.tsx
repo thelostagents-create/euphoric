@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useStore } from "../store";
-import { areFriends, dmChannelId, friendsOf, mentionsOf, userByName } from "../social";
+import { areFriends, displayName, dmChannelId, friendsOf, mentionsOf, userByName } from "../social";
 import { timeAgo } from "./Modal";
+import { MessageText } from "./MessageText";
 
 export function Friends() {
   const { state } = useStore();
@@ -34,7 +35,7 @@ export function Friends() {
                   <img src={author?.avatar} alt="" style={{ width: 30, height: 30, borderRadius: "50%" }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 13 }}>
-                      <b>{author?.username ?? "someone"}</b>{" "}
+                      <b>{displayName(author)}</b>{" "}
                       <span className="muted">mentioned you in</span> {m.serverName}{" "}
                       <span className="muted">#{m.channelName}</span>
                     </div>
@@ -62,7 +63,7 @@ export function Friends() {
                 <div className="row" style={{ gap: 10 }}>
                   <img src={f.avatar} alt="" style={{ width: 38, height: 38, borderRadius: "50%" }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontWeight: 700 }}>{f.username}</div>
+                    <div style={{ fontWeight: 700 }}>{displayName(f)}</div>
                     <div className="muted" style={{ fontSize: 12, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       {last ? last.content : "Say hi 👋"}
                     </div>
@@ -139,7 +140,7 @@ function DmView({ friendId, onBack }: { friendId: string; onBack: () => void }) 
       <div className="topbar">
         <button className="btn ghost sm" onClick={onBack}>‹</button>
         <img src={friend?.avatar} alt="" style={{ width: 28, height: 28, borderRadius: "50%" }} />
-        <h2>{friend?.username}</h2>
+        <h2>{displayName(friend)}</h2>
         <div className="spacer" />
         <button
           className="btn ghost sm"
@@ -161,10 +162,12 @@ function DmView({ friendId, onBack }: { friendId: string; onBack: () => void }) 
               <img className="avatar" src={author?.avatar} alt="" />
               <div className="body">
                 <div className="meta">
-                  <span className="name">{author?.username}</span>
+                  <span className="name">{displayName(author)}</span>
                   <span className="time">{timeAgo(m.createdAt)}</span>
                 </div>
-                <div className="content">{m.content}</div>
+                <div className="content">
+                  <MessageText content={m.content} users={state.users} meId={state.currentUserId} />
+                </div>
               </div>
             </div>
           );
@@ -173,12 +176,12 @@ function DmView({ friendId, onBack }: { friendId: string; onBack: () => void }) 
       </div>
 
       {blocked ? (
-        <div className="timeout-banner">You've blocked {friend?.username}. Unblock them to chat.</div>
+        <div className="timeout-banner">You've blocked {displayName(friend)}. Unblock them to chat.</div>
       ) : (
         <div className="composer">
           <input
             value={draft}
-            placeholder={`Message ${friend?.username}`}
+            placeholder={`Message ${displayName(friend)}`}
             onChange={(e) => setDraft(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && send()}
           />

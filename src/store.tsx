@@ -28,7 +28,7 @@ type Action =
   | { type: "CREATE_SERVER"; name: string; icon: string; iconImage?: string }
   | { type: "JOIN_SERVER"; serverId: string }
   | { type: "CREATE_CHANNEL"; serverId: string; name: string }
-  | { type: "UPDATE_PROFILE"; bio?: string; avatar?: string; username?: string }
+  | { type: "UPDATE_PROFILE"; bio?: string; avatar?: string; username?: string; nickname?: string }
   | { type: "UPDATE_THEME"; theme: Partial<ProfileTheme> }
   | { type: "UPDATE_BANNER"; color?: string; image?: string }
   | { type: "SET_TIER"; tier: Tier }
@@ -170,6 +170,7 @@ function reducer(state: AppState, action: Action): AppState {
             ...u,
             bio: action.bio ?? u.bio,
             avatar: action.avatar ?? u.avatar,
+            nickname: action.nickname ?? u.nickname,
             username,
           },
         },
@@ -425,6 +426,7 @@ function migrate(state: AppState): AppState {
       uid,
       {
         ...u,
+        nickname: u.nickname ?? "",
         banner: u.banner ?? { color: "#2a2440", image: "" },
         following: u.following ?? [],
         starAllocations: u.starAllocations ?? {},

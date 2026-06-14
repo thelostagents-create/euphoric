@@ -24,6 +24,12 @@ export function serverStars(state: AppState, serverId: string): number {
   );
 }
 
+/** Name shown in chat: the nickname if set, otherwise the username. */
+export function displayName(user: User | undefined): string {
+  if (!user) return "unknown";
+  return user.nickname.trim() || user.username;
+}
+
 export function areFriends(a: User, b: User): boolean {
   return a.following.includes(b.id) && b.following.includes(a.id);
 }

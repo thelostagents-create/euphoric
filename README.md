@@ -25,8 +25,11 @@ iOS port come in later passes.
   permission can delete anyone's.
 - **Block feature** — blocked users' messages and avatars are blurred (tap
   "reveal" to peek), and they can no longer contact you.
-- **Unique usernames** — each username can be claimed by only one person;
-  claim/change yours on the Profile screen with live availability feedback.
+- **Unique usernames + nicknames** — each username can be claimed by only one
+  person (claim flow with live availability feedback). Set an optional
+  **nickname** that's shown in chat instead of your handle.
+- **@mentions** — type `@` in any composer to autocomplete server members;
+  mentions render highlighted in messages (and brighter when they're you).
 - **Follows & friends** — follow anyone from their profile; a mutual follow
   makes you friends. A dedicated **Friends tab** lets you add people by
   username, see a **notification feed of who @-mentioned you** in servers, and
@@ -67,14 +70,16 @@ src/
   permissions.ts      # permission resolution & moderation hierarchy
   store.tsx           # reducer + context + localStorage persistence
   data/seed.ts        # demo users, servers, messages
-  App.tsx             # tab shell (Chat / Discover / Profile / Settings)
+  App.tsx             # tab shell (Chat / Friends / Discover / Profile)
   components/
-    Chat.tsx          # server rail, channels, messages, composer
-    ServerManage.tsx  # roles & staff, members, discovery settings
-    UserSheet.tsx     # profile view + block + moderation actions
-    Discover.tsx      # keyword search & join
-    Profile.tsx       # edit bio/avatar + Supernova theming
-    Settings.tsx      # subscription tiers, create server, blocklist
+    Chat.tsx          # server rail, channels, messages, @mention composer
+    Friends.tsx       # mentions feed, add friends, DMs
+    ServerManage.tsx  # roles & staff, members, invite, Stars, discovery
+    UserSheet.tsx     # profile view + follow/block + moderation actions
+    Discover.tsx      # keyword search, join by invite
+    Profile.tsx       # edit profile/banner/theme + account settings
+    Settings.tsx      # AccountSettings block embedded in Profile
+    MessageText.tsx   # renders @mentions in message text
     Modal.tsx         # shared modal + helpers
 ```
 
