@@ -1,7 +1,7 @@
 # Euphoric
 
-A minimal group-chat app inspired by old-school Discord's simplicity and
-old MySpace's profile customization.
+A minimal group-chat app inspired by old-school Discord's simplicity, with
+deep premium profile customization.
 
 This is the **web (PWA) foundation** — a mobile-first, installable web app
 that runs in Safari on iPhone and can be added to the home screen. It uses
@@ -34,8 +34,9 @@ iOS port come in later passes.
   mentions render highlighted in messages (and brighter when they're you).
 - **Follows & friends** — follow anyone from their profile; a mutual follow
   makes you friends. A dedicated **Friends tab** lets you add people by
-  username, see a **notification feed of who @-mentioned you** in servers, and
-  **DM your friends** one-on-one.
+  username, see a **notification feed of who @-mentioned you** in servers,
+  **DM your friends** one-on-one, and start **group chats** with several
+  friends at once.
 - **Server boosts (⭐ Stars)** — Premium members get 1 Star, Supernova members
   get 2, to spend across servers. A server's Star count shows as a tappable
   pill in the chat header — tap it to lend a Star. At **3 ⭐** a server unlocks
@@ -46,7 +47,7 @@ iOS port come in later passes.
   - **Free** — core features.
   - **Premium ($5/mo)** — animated GIF profile picture.
   - **Supernova ($8/mo)** — GIF avatar **plus** custom username font and
-    MySpace-style profile colors (background / accent / text).
+    premium profile color customization (background / accent / text).
 - **Server Discovery** — servers opt in with a description and keywords; a
   search page lets anyone find and join them by keyword.
 

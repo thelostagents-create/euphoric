@@ -25,7 +25,7 @@ export function UserSheet({
   const friends = areFriends(me, user);
   const supernova = user.tier === "supernova";
 
-  // MySpace-style theming only applies to supernova profiles.
+  // Premium color theming only applies to supernova profiles.
   const theme = supernova
     ? user.theme
     : { backgroundColor: "var(--bg-2)", accentColor: "var(--accent)", textColor: "var(--text)", usernameFont: "inherit" };

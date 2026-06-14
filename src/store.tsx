@@ -8,6 +8,7 @@ import {
 } from "react";
 import type {
   AppState,
+  GroupChat,
   Message,
   Permission,
   ProfileTheme,
@@ -36,6 +37,9 @@ type Action =
   | { type: "TOGGLE_FOLLOW"; userId: string }
   | { type: "ADD_FRIEND"; userId: string }
   | { type: "REMOVE_FRIEND"; userId: string }
+  | { type: "CREATE_GROUP"; id: string; name: string; memberIds: string[] }
+  | { type: "ADD_TO_GROUP"; groupId: string; userId: string }
+  | { type: "LEAVE_GROUP"; groupId: string }
   | { type: "ALLOCATE_STAR"; serverId: string; delta: number }
   | { type: "SET_SERVER_ICON"; serverId: string; iconImage: string }
   | { type: "SET_SERVER_INVITE"; serverId: string; invite: string }
@@ -299,6 +303,41 @@ function reducer(state: AppState, action: Action): AppState {
       };
     }
 
+    case "CREATE_GROUP": {
+      const memberIds = Array.from(new Set([me, ...action.memberIds]));
+      const group: GroupChat = {
+        id: action.id,
+        name: action.name.trim() || "New Group",
+        memberIds,
+      };
+      return { ...state, groups: [...state.groups, group] };
+    }
+
+    case "ADD_TO_GROUP": {
+      return {
+        ...state,
+        groups: state.groups.map((g) =>
+          g.id === action.groupId
+            ? { ...g, memberIds: addUnique(g.memberIds, action.userId) }
+            : g,
+        ),
+      };
+    }
+
+    case "LEAVE_GROUP": {
+      return {
+        ...state,
+        groups: state.groups
+          .map((g) =>
+            g.id === action.groupId
+              ? { ...g, memberIds: g.memberIds.filter((u) => u !== me) }
+              : g,
+          )
+          // Drop a group once nobody is left in it.
+          .filter((g) => g.memberIds.length > 0),
+      };
+    }
+
     case "CREATE_ROLE": {
       return {
         ...state,
@@ -438,7 +477,7 @@ function migrate(state: AppState): AppState {
     iconImage: s.iconImage ?? "",
     invite: s.invite ?? newInviteCode(state.servers),
   }));
-  return { ...state, users, servers };
+  return { ...state, users, servers, groups: state.groups ?? [] };
 }
 
 function loadState(): AppState {

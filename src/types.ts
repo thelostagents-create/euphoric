@@ -28,7 +28,7 @@ export const ALL_PERMISSIONS: { id: Permission; label: string; desc: string }[] 
 export const BOOST_ANIMATED_ICON = 3;
 export const BOOST_CUSTOM_INVITE = 9;
 
-/** MySpace-style profile theme. Only meaningful for the supernova tier. */
+/** Premium customization profile theme. Only meaningful for the supernova tier. */
 export interface ProfileTheme {
   backgroundColor: string;
   accentColor: string;
@@ -118,9 +118,17 @@ export interface Server {
   keywords: string[];
 }
 
+/** A multi-person direct conversation between friends. */
+export interface GroupChat {
+  id: string;
+  name: string;
+  memberIds: string[];
+}
+
 export interface AppState {
   currentUserId: string;
   users: Record<string, User>;
   servers: Server[];
+  groups: GroupChat[];
   messages: Message[];
 }

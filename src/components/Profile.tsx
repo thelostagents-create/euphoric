@@ -175,7 +175,7 @@ export function Profile({ onManageSubscription }: { onManageSubscription: () => 
         {!canCustomize ? (
           <div className="card">
             <p className="desc" style={{ margin: 0 }}>
-              MySpace-style colors and custom username fonts are a <b>Supernova</b> feature.
+              Premium color customization and custom username fonts are a <b>Supernova</b> feature.
             </p>
           </div>
         ) : (

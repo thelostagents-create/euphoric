@@ -34,7 +34,7 @@ const TIERS: {
     perks: [
       "Everything in Premium",
       "Custom username font",
-      "MySpace-style profile colors",
+      "Premium profile color customization",
       "2 ⭐ Stars to spend on servers",
     ],
   },

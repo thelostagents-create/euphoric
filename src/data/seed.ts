@@ -160,5 +160,9 @@ export const seedState: AppState = {
     // DM history with luna (a mutual friend).
     { id: "d1", channelId: "dm:luna_me", authorId: "luna", content: "heyy! glad we're friends on here now 🌙", createdAt: ago(180) },
     { id: "d2", channelId: "dm:luna_me", authorId: "me", content: "same! this place is cozy", createdAt: ago(175) },
+    // A group chat history.
+    { id: "g1", channelId: "g_crew", authorId: "luna", content: "welcome to the crew chat 🎉", createdAt: ago(90) },
+    { id: "g2", channelId: "g_crew", authorId: "nova", content: "lets plan something this weekend", createdAt: ago(80) },
   ],
+  groups: [{ id: "g_crew", name: "Weekend Crew", memberIds: ["me", "luna", "nova"] }],
 };

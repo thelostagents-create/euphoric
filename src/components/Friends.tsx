@@ -3,6 +3,7 @@ import { useStore } from "../store";
 import { areFriends, displayName, dmChannelId, friendsOf, mentionsOf, userByName } from "../social";
 import { timeAgo } from "./Modal";
 import { MessageText } from "./MessageText";
+import { CreateGroupModal, GroupView } from "./Groups";
 
 export function Friends({
   onOpenMessage,
@@ -12,13 +13,22 @@ export function Friends({
   const { state } = useStore();
   const me = state.users[state.currentUserId];
   const [openDm, setOpenDm] = useState<string | null>(null);
+  const [openGroup, setOpenGroup] = useState<string | null>(null);
+  const [showCreateGroup, setShowCreateGroup] = useState(false);
 
   const friends = useMemo(() => friendsOf(state, me.id), [state, me.id]);
+  const myGroups = useMemo(
+    () => state.groups.filter((g) => g.memberIds.includes(me.id)),
+    [state.groups, me.id],
+  );
   const allMentions = useMemo(() => mentionsOf(state, me.id), [state, me.id]);
   const mentions = allMentions.slice(0, 3); // only the 3 most recent
 
   if (openDm) {
     return <DmView friendId={openDm} onBack={() => setOpenDm(null)} />;
+  }
+  if (openGroup) {
+    return <GroupView groupId={openGroup} onBack={() => setOpenGroup(null)} />;
   }
 
   return (
@@ -91,7 +101,37 @@ export function Friends({
             );
           })
         )}
+
+        {/* Group chats */}
+        <div className="section-title">Group chats · {myGroups.length}</div>
+        <button className="btn full" onClick={() => setShowCreateGroup(true)}>
+          + New group chat
+        </button>
+        {myGroups.map((g) => {
+          const last = [...state.messages].reverse().find((x) => x.channelId === g.id);
+          return (
+            <div className="card" key={g.id} style={{ padding: 12, marginTop: 8 }} onClick={() => setOpenGroup(g.id)}>
+              <div className="row" style={{ gap: 10 }}>
+                <span className="group-avatar">{g.memberIds.length}</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontWeight: 700 }}>{g.name}</div>
+                  <div className="muted" style={{ fontSize: 12, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {last ? last.content : `${g.memberIds.length} members`}
+                  </div>
+                </div>
+                <span className="muted">›</span>
+              </div>
+            </div>
+          );
+        })}
       </div>
+
+      {showCreateGroup && (
+        <CreateGroupModal
+          onClose={() => setShowCreateGroup(false)}
+          onCreated={(gid) => setOpenGroup(gid)}
+        />
+      )}
     </div>
   );
 }
