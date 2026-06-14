@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useStore } from "../store";
-import { can, getMember, isTimedOut } from "../permissions";
+import { can, canSendInChannel, getMember, isTimedOut } from "../permissions";
 import { timeAgo } from "./Modal";
 import { UserSheet } from "./UserSheet";
 import { ServerManage } from "./ServerManage";
@@ -123,9 +123,12 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
   const myMember = getMember(server, state.currentUserId);
   const muted = isTimedOut(myMember);
   const canDeleteOthers = can(server, state.currentUserId, "DELETE_MESSAGES");
+  const canTalk = canSendInChannel(server, state.currentUserId, channel);
+  const myRoleIds = myMember?.roleIds ?? [];
+  const mentionableRoles = server.roles.filter((r) => r.mentionable);
 
   function send() {
-    if (!draft.trim() || muted) return;
+    if (!draft.trim() || muted || !canTalk) return;
     dispatch({ type: "SEND_MESSAGE", channelId: channel!.id, content: draft, replyTo: replyTo ?? undefined });
     setDraft("");
     setReplyTo(null);
@@ -145,9 +148,13 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
           .map((mem) => state.users[mem.userId])
           .filter((u): u is NonNullable<typeof u> => !!u && u.username.toLowerCase().startsWith(mentionQuery))
           .slice(0, 6);
+  const roleSuggestions =
+    mentionQuery === null
+      ? []
+      : mentionableRoles.filter((r) => r.name.toLowerCase().startsWith(mentionQuery)).slice(0, 4);
 
-  function pickMention(username: string) {
-    setDraft((d) => d.replace(/@(\w*)$/, `@${username} `));
+  function pickMention(name: string) {
+    setDraft((d) => d.replace(/@(\w*)$/, `@${name} `));
   }
 
   function createChannel() {
@@ -295,7 +302,13 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
                   </div>
                   {m.content && (
                     <div className="content">
-                      <MessageText content={m.content} users={state.users} meId={state.currentUserId} />
+                      <MessageText
+                        content={m.content}
+                        users={state.users}
+                        meId={state.currentUserId}
+                        roles={mentionableRoles}
+                        myRoleIds={myRoleIds}
+                      />
                     </div>
                   )}
                   {m.attachment && <MessageAttachment attachment={m.attachment} />}
@@ -314,7 +327,7 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
         )}
 
         <div style={{ position: "relative" }}>
-          {(showEveryone || mentionSuggestions.length > 0) && (
+          {(showEveryone || roleSuggestions.length > 0 || mentionSuggestions.length > 0) && (
             <div className="mention-popup">
               {showEveryone && (
                 <button className="mention-option" onClick={() => pickMention("everyone")}>
@@ -323,6 +336,13 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
                   <span className="muted" style={{ fontSize: 12 }}>notify the whole server</span>
                 </button>
               )}
+              {roleSuggestions.map((r) => (
+                <button key={r.id} className="mention-option" onClick={() => pickMention(r.name)}>
+                  <span className="mention-everyone-ico" style={{ background: "transparent", color: r.color }}>@</span>
+                  <span className="dn" style={{ color: r.color }}>{r.name}</span>
+                  <span className="muted" style={{ fontSize: 12 }}>role</span>
+                </button>
+              ))}
               {mentionSuggestions.map((u) => (
                 <button key={u.id} className="mention-option" onClick={() => pickMention(u.username)}>
                   <img src={u.avatar} alt="" />
@@ -332,20 +352,24 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
               ))}
             </div>
           )}
-          {replyTo && <ReplyBar replyTo={replyTo} onCancel={() => setReplyTo(null)} />}
-          <div className="composer">
-            <AttachButton channelId={channel.id} disabled={muted} />
-            <input
-              value={draft}
-              placeholder={muted ? "You can't send messages right now" : `Message #${channel.name}  (try @)`}
-              disabled={muted}
-              onChange={(e) => setDraft(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && send()}
-            />
-            <button className="btn" onClick={send} disabled={muted || !draft.trim()}>
-              Send
-            </button>
-          </div>
+          {replyTo && canTalk && <ReplyBar replyTo={replyTo} onCancel={() => setReplyTo(null)} />}
+          {!canTalk ? (
+            <div className="timeout-banner">Only certain roles can talk in #{channel.name}.</div>
+          ) : (
+            <div className="composer">
+              <AttachButton channelId={channel.id} disabled={muted} />
+              <input
+                value={draft}
+                placeholder={muted ? "You can't send messages right now" : `Message #${channel.name}  (try @)`}
+                disabled={muted}
+                onChange={(e) => setDraft(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && send()}
+              />
+              <button className="btn" onClick={send} disabled={muted || !draft.trim()}>
+                Send
+              </button>
+            </div>
+          )}
         </div>
       </div>
 

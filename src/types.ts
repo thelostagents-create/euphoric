@@ -58,6 +58,9 @@ export interface User {
   /** May be an animated GIF url for premium/supernova tiers. */
   avatar: string;
   bio: string;
+  /** Short status line shown on the profile. */
+  blurb: string;
+  blurbColor: string;
   tier: Tier;
   banner: Banner;
   theme: ProfileTheme;
@@ -78,6 +81,8 @@ export interface Role {
   position: number;
   /** Marks a staff role for the staff-management UI. */
   staff: boolean;
+  /** When true, anyone can @mention this role to ping its members. */
+  mentionable: boolean;
 }
 
 export interface Member {
@@ -91,6 +96,8 @@ export interface Member {
 export interface Channel {
   id: string;
   name: string;
+  /** Role ids allowed to send messages. Empty = everyone can talk. */
+  sendRoleIds: string[];
 }
 
 export interface Attachment {

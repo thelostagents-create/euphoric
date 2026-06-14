@@ -46,7 +46,12 @@ iOS port come in later passes.
 - **Reactions** — long-press (or right-click) any message to react with an
   emoji; tap a reaction chip to toggle yours.
 - **Channels** — a **☰ Channels** button at the start of the channel bar lists
-  every channel; reorder or delete them under server settings → Channels.
+  every channel; reorder, delete, or restrict who can talk (per-role) under
+  server settings → Channels.
+- **Mentionable roles** — toggle a role *Mentionable* so anyone can `@role` to
+  ping its members (shows in their notifications).
+- **Profile blurb** — a short, color-customizable status shown as a translucent
+  block on your profile.
 - **Server boosts (⭐ Stars)** — Premium members get 1 Star, Supernova members
   get 2, to spend across servers. A server's Star count shows as a tappable
   pill in the chat header — tap it to lend a Star. At **3 ⭐** a server unlocks

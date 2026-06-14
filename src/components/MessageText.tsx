@@ -1,5 +1,5 @@
 import { Fragment } from "react";
-import type { Attachment, User } from "../types";
+import type { Attachment, Role, User } from "../types";
 import { displayName } from "../social";
 
 /** Render an image/video message attachment. */
@@ -18,13 +18,20 @@ export function MessageText({
   content,
   users,
   meId,
+  roles = [],
+  myRoleIds = [],
 }: {
   content: string;
   users: Record<string, User>;
   meId: string;
+  /** Mentionable roles in this server (for @role highlighting). */
+  roles?: Role[];
+  myRoleIds?: string[];
 }) {
   const byName = new Map<string, User>();
   Object.values(users).forEach((u) => byName.set(u.username.toLowerCase(), u));
+  const roleByName = new Map<string, Role>();
+  roles.forEach((r) => roleByName.set(r.name.toLowerCase(), r));
 
   const parts = content.split(/(@\w+)/g);
   return (
@@ -36,6 +43,15 @@ export function MessageText({
           return (
             <span key={i} className="mention mention-me">
               @everyone
+            </span>
+          );
+        }
+        const role = token ? roleByName.get(token) : undefined;
+        if (role) {
+          const mine = myRoleIds.includes(role.id);
+          return (
+            <span key={i} className={`mention ${mine ? "mention-me" : ""}`} style={{ color: role.color }}>
+              @{role.name}
             </span>
           );
         }

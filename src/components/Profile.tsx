@@ -62,6 +62,9 @@ export function Profile({ onManageSubscription }: { onManageSubscription: () => 
         </div>
         <div className="muted" style={{ fontSize: 13 }}>@{user.username}</div>
         <div style={{ marginTop: 4 }}>{tierBadge(user.tier)}</div>
+        {user.blurb && (
+          <div className="blurb-block" style={{ color: user.blurbColor }}>{user.blurb}</div>
+        )}
         <p className="bio">{user.bio || "No bio yet."}</p>
       </div>
 
@@ -104,6 +107,24 @@ export function Profile({ onManageSubscription }: { onManageSubscription: () => 
             placeholder={user.username}
             onChange={(e) => dispatch({ type: "UPDATE_PROFILE", nickname: e.target.value })}
           />
+        </div>
+
+        <div className="field">
+          <label>Blurb (a short status shown on your profile)</label>
+          <div className="row" style={{ gap: 8 }}>
+            <input
+              type="color"
+              className="swatch"
+              value={user.blurbColor}
+              onChange={(e) => dispatch({ type: "UPDATE_PROFILE", blurbColor: e.target.value })}
+            />
+            <input
+              value={user.blurb}
+              placeholder="e.g. 🌙 chilling tonight"
+              maxLength={60}
+              onChange={(e) => dispatch({ type: "UPDATE_PROFILE", blurb: e.target.value })}
+            />
+          </div>
         </div>
 
         <div className="field">

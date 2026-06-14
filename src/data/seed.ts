@@ -18,6 +18,8 @@ function user(
     avatar: `https://api.dicebear.com/9.x/thumbs/svg?seed=${encodeURIComponent(username)}`,
     nickname: "",
     bio: "",
+    blurb: "",
+    blurbColor: "#9b7bff",
     tier: "free",
     banner: { color: "#2a2440", image: "", position: 50 },
     theme: { ...defaultTheme },
@@ -31,6 +33,8 @@ function user(
 const users: Record<string, User> = {
   me: user("me", "you", {
     bio: "just vibing ✨ welcome to my corner of euphoric",
+    blurb: "🌙 chilling tonight",
+    blurbColor: "#ff6bd6",
     tier: "supernova",
     theme: {
       backgroundColor: "#1a0b2e",
@@ -63,9 +67,9 @@ const servers: Server[] = [
     description: "A cozy place to hang out, share music, and chat about anything.",
     keywords: ["chill", "music", "hangout", "community"],
     channels: [
-      { id: "c_general", name: "general" },
-      { id: "c_music", name: "music" },
-      { id: "c_introductions", name: "introductions" },
+      { id: "c_general", name: "general", sendRoleIds: [] },
+      { id: "c_music", name: "music", sendRoleIds: [] },
+      { id: "c_introductions", name: "introductions", sendRoleIds: [] },
     ],
     roles: [
       {
@@ -75,6 +79,7 @@ const servers: Server[] = [
         permissions: [],
         position: 0,
         staff: false,
+        mentionable: false,
       },
       {
         id: "r_admin",
@@ -90,6 +95,7 @@ const servers: Server[] = [
         ],
         position: 100,
         staff: true,
+        mentionable: false,
       },
       {
         id: "r_mod",
@@ -98,6 +104,7 @@ const servers: Server[] = [
         permissions: ["KICK_MEMBERS", "TIMEOUT_MEMBERS", "MENTION_EVERYONE"],
         position: 50,
         staff: true,
+        mentionable: true,
       },
     ],
     members: [
@@ -118,8 +125,8 @@ const servers: Server[] = [
     description: "Builders, designers and tinkerers helping each other ship.",
     keywords: ["coding", "programming", "tech", "design", "indie"],
     channels: [
-      { id: "c_dev_general", name: "general" },
-      { id: "c_help", name: "help" },
+      { id: "c_dev_general", name: "general", sendRoleIds: [] },
+      { id: "c_help", name: "help", sendRoleIds: [] },
     ],
     roles: [
       {
@@ -129,6 +136,7 @@ const servers: Server[] = [
         permissions: [],
         position: 0,
         staff: false,
+        mentionable: false,
       },
     ],
     members: [

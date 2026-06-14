@@ -79,6 +79,10 @@ export function UserSheet({
         </div>
       </div>
 
+      {user.blurb && (
+        <div className="blurb-block" style={{ color: user.blurbColor }}>{user.blurb}</div>
+      )}
+
       {!isMe && !isBlocked && (
         <>
           <div className="row" style={{ gap: 8 }}>

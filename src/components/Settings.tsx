@@ -1,7 +1,5 @@
-import { useState } from "react";
 import { resetState, useStore } from "../store";
 import type { Tier } from "../types";
-import { CreateServerModal } from "./CreateServerModal";
 import { starCapacity, starsAvailable } from "../social";
 
 const TIERS: {
@@ -14,7 +12,7 @@ const TIERS: {
     id: "free",
     name: "Free",
     price: "$0",
-    perks: ["Servers, channels & roles", "Profile with a custom bio", "Block anyone"],
+    perks: ["Servers, channels & roles", "Profile with a custom bio", "Join unlimited servers"],
   },
   {
     id: "premium",
@@ -58,7 +56,6 @@ export function Settings() {
 export function AccountSettings() {
   const { state, dispatch } = useStore();
   const user = state.users[state.currentUserId];
-  const [showCreate, setShowCreate] = useState(false);
 
   const blocked = user.blockedUserIds
     .map((id) => state.users[id])
@@ -100,11 +97,6 @@ export function AccountSettings() {
         {starCapacity(user.tier) === 1 ? "" : "s"} ({starsAvailable(user)} available to spend).
       </p>
 
-      <div className="section-title">Servers</div>
-      <button className="btn full" onClick={() => setShowCreate(true)}>
-        Create a server
-      </button>
-
       <div className="section-title">Blocked users</div>
       {blocked.length === 0 ? (
         <p className="muted">You haven't blocked anyone.</p>
@@ -127,8 +119,6 @@ export function AccountSettings() {
       <button className="btn danger full" onClick={resetState}>
         Reset demo data
       </button>
-
-      {showCreate && <CreateServerModal onClose={() => setShowCreate(false)} />}
     </>
   );
 }

@@ -89,9 +89,15 @@ export interface Mention {
   createdAt: string;
   /** True when this came from an authorized @everyone ping. */
   everyone: boolean;
+  /** Set when this came from a mentionable @role ping. */
+  roleName?: string;
 }
 
 const EVERYONE_RE = /@everyone\b/i;
+
+function escapeRe(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
 
 /**
  * Server messages (not DMs) that notify the given user, newest first:
@@ -101,20 +107,30 @@ const EVERYONE_RE = /@everyone\b/i;
 export function mentionsOf(state: AppState, userId: string): Mention[] {
   const user = state.users[userId];
   if (!user) return [];
-  const namePattern = new RegExp(`@${user.username.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i");
+  const namePattern = new RegExp(`@${escapeRe(user.username)}\\b`, "i");
   const mentions: Mention[] = [];
   for (const m of state.messages) {
     if (m.channelId.startsWith("dm:")) continue;
     if (m.authorId === userId) continue;
     const server = state.servers.find((s) => s.channels.some((c) => c.id === m.channelId));
     if (!server) continue;
-    const isMember = server.members.some((mem) => mem.userId === userId && !mem.banned);
-    if (!isMember) continue;
+    const member = server.members.find((mem) => mem.userId === userId && !mem.banned);
+    if (!member) continue;
 
     const direct = namePattern.test(m.content);
     const everyone =
       !direct && EVERYONE_RE.test(m.content) && can(server, m.authorId, "MENTION_EVERYONE");
-    if (!direct && !everyone) continue;
+    // A mentionable role the user holds, pinged in this message.
+    const role =
+      !direct && !everyone
+        ? server.roles.find(
+            (r) =>
+              r.mentionable &&
+              member.roleIds.includes(r.id) &&
+              new RegExp(`@${escapeRe(r.name)}\\b`, "i").test(m.content),
+          )
+        : undefined;
+    if (!direct && !everyone && !role) continue;
 
     const channel = server.channels.find((c) => c.id === m.channelId)!;
     mentions.push({
@@ -127,6 +143,7 @@ export function mentionsOf(state: AppState, userId: string): Mention[] {
       content: m.content,
       createdAt: m.createdAt,
       everyone,
+      roleName: role?.name,
     });
   }
   return mentions.sort((a, b) => b.createdAt.localeCompare(a.createdAt));

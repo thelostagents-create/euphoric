@@ -108,7 +108,11 @@ export function Friends({
                     <div style={{ fontSize: 13 }}>
                       <b>{displayName(author)}</b>{" "}
                       <span className="muted">
-                        {m.everyone ? "pinged @everyone in" : "mentioned you in"}
+                        {m.everyone
+                          ? "pinged @everyone in"
+                          : m.roleName
+                            ? `pinged @${m.roleName} in`
+                            : "mentioned you in"}
                       </span>{" "}
                       {m.serverName} <span className="muted">#{m.channelName}</span>
                     </div>

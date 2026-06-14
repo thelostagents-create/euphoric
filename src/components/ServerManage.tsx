@@ -211,6 +211,7 @@ function RolesTab({ server, canManage }: { server: Server; canManage: boolean })
         color: staff ? "#43d9ad" : "#a06bff",
         permissions: staff ? ["KICK_MEMBERS", "TIMEOUT_MEMBERS"] : [],
         staff,
+        mentionable: false,
       },
     });
   }
@@ -293,6 +294,22 @@ function RoleCard({ server, role }: { server: Server; role: Role }) {
             </button>
           );
         })}
+        {!isEveryone && (
+          <button
+            className={`chip ${role.mentionable ? "accent" : ""}`}
+            title="Allow anyone to @mention this role"
+            onClick={() =>
+              dispatch({
+                type: "UPDATE_ROLE",
+                serverId: server.id,
+                roleId: role.id,
+                patch: { mentionable: !role.mentionable },
+              })
+            }
+          >
+            {role.mentionable ? "✓ " : ""}Mentionable
+          </button>
+        )}
       </div>
 
       {!isEveryone && (
@@ -345,6 +362,40 @@ function ChannelsTab({ server, canManage }: { server: Server; canManage: boolean
               Delete
             </button>
           </div>
+
+          <div style={{ fontSize: 12, color: "var(--muted)", margin: "10px 0 5px", fontWeight: 600 }}>
+            Who can talk {c.sendRoleIds.length === 0 ? "· everyone" : ""}
+          </div>
+          <div className="chips">
+            {server.roles
+              .filter((r) => r.name !== "@everyone")
+              .map((r) => {
+                const on = c.sendRoleIds.includes(r.id);
+                return (
+                  <button
+                    key={r.id}
+                    className={`chip ${on ? "accent" : ""}`}
+                    style={on ? { color: r.color } : undefined}
+                    onClick={() =>
+                      dispatch({
+                        type: "SET_CHANNEL_SEND_ROLES",
+                        serverId: server.id,
+                        channelId: c.id,
+                        roleIds: on
+                          ? c.sendRoleIds.filter((x) => x !== r.id)
+                          : [...c.sendRoleIds, r.id],
+                      })
+                    }
+                  >
+                    {on ? "✓ " : ""}{r.name}
+                  </button>
+                );
+              })}
+          </div>
+          <p className="muted" style={{ fontSize: 11, margin: "6px 0 0" }}>
+            No roles selected = everyone can talk. Selecting roles restricts posting to them
+            (admins can always post).
+          </p>
         </div>
       ))}
       <div className="row" style={{ gap: 8, marginTop: 10 }}>

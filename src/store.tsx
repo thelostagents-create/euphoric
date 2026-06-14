@@ -33,7 +33,8 @@ type Action =
   | { type: "CREATE_SERVER"; name: string; icon: string; iconImage?: string }
   | { type: "JOIN_SERVER"; serverId: string }
   | { type: "CREATE_CHANNEL"; serverId: string; name: string }
-  | { type: "UPDATE_PROFILE"; bio?: string; avatar?: string; username?: string; nickname?: string }
+  | { type: "UPDATE_PROFILE"; bio?: string; avatar?: string; username?: string; nickname?: string; blurb?: string; blurbColor?: string }
+  | { type: "SET_CHANNEL_SEND_ROLES"; serverId: string; channelId: string; roleIds: string[] }
   | { type: "UPDATE_THEME"; theme: Partial<ProfileTheme> }
   | { type: "UPDATE_BANNER"; color?: string; image?: string; position?: number }
   | { type: "SET_TIER"; tier: Tier }
@@ -145,6 +146,18 @@ function reducer(state: AppState, action: Action): AppState {
       };
     }
 
+    case "SET_CHANNEL_SEND_ROLES": {
+      return {
+        ...state,
+        servers: mapServer(state, action.serverId, (s) => ({
+          ...s,
+          channels: s.channels.map((c) =>
+            c.id === action.channelId ? { ...c, sendRoleIds: action.roleIds } : c,
+          ),
+        })),
+      };
+    }
+
     case "DELETE_CHANNEL": {
       const server = state.servers.find((s) => s.id === action.serverId);
       // Keep at least one channel around.
@@ -167,6 +180,7 @@ function reducer(state: AppState, action: Action): AppState {
         permissions: [],
         position: 0,
         staff: false,
+        mentionable: false,
       };
       const server: Server = {
         id: id("s"),
@@ -176,7 +190,7 @@ function reducer(state: AppState, action: Action): AppState {
         iconImage: action.iconImage && !isGif(action.iconImage) ? action.iconImage : "",
         invite: newInviteCode(state.servers),
         ownerId: me,
-        channels: [{ id: id("c"), name: "general" }],
+        channels: [{ id: id("c"), name: "general", sendRoleIds: [] }],
         roles: [everyoneRole],
         members: [{ userId: me, roleIds: [everyoneRole.id] }],
         discoverable: false,
@@ -205,7 +219,7 @@ function reducer(state: AppState, action: Action): AppState {
         ...state,
         servers: mapServer(state, action.serverId, (s) => ({
           ...s,
-          channels: [...s.channels, { id: id("c"), name: action.name.trim().replace(/\s+/g, "-").toLowerCase() }],
+          channels: [...s.channels, { id: id("c"), name: action.name.trim().replace(/\s+/g, "-").toLowerCase(), sendRoleIds: [] }],
         })),
       };
     }
@@ -227,6 +241,8 @@ function reducer(state: AppState, action: Action): AppState {
             bio: action.bio ?? u.bio,
             avatar: action.avatar ?? u.avatar,
             nickname: action.nickname ?? u.nickname,
+            blurb: action.blurb ?? u.blurb,
+            blurbColor: action.blurbColor ?? u.blurbColor,
             username,
           },
         },
@@ -556,6 +572,8 @@ function migrate(state: AppState): AppState {
       {
         ...u,
         nickname: u.nickname ?? "",
+        blurb: u.blurb ?? "",
+        blurbColor: u.blurbColor ?? "#9b7bff",
         banner: {
           color: u.banner?.color ?? "#2a2440",
           image: u.banner?.image ?? "",
@@ -570,6 +588,8 @@ function migrate(state: AppState): AppState {
     ...s,
     iconImage: s.iconImage ?? "",
     invite: s.invite ?? newInviteCode(state.servers),
+    channels: s.channels.map((c) => ({ ...c, sendRoleIds: c.sendRoleIds ?? [] })),
+    roles: s.roles.map((r) => ({ ...r, mentionable: r.mentionable ?? false })),
   }));
   const groups = (state.groups ?? []).map((g) => ({
     ...g,

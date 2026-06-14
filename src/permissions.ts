@@ -1,4 +1,4 @@
-import { ALL_PERMISSIONS, type Member, type Permission, type Server } from "./types";
+import { ALL_PERMISSIONS, type Channel, type Member, type Permission, type Server } from "./types";
 
 /** The owner implicitly has every permission. */
 export function isOwner(server: Server, userId: string): boolean {
@@ -53,4 +53,17 @@ export function canModerate(server: Server, actorId: string, targetId: string): 
 export function isTimedOut(member: Member | undefined): boolean {
   if (!member?.timeoutUntil) return false;
   return new Date(member.timeoutUntil).getTime() > Date.now();
+}
+
+/**
+ * Whether a user may send messages in a channel. Empty `sendRoleIds` means
+ * everyone may talk; otherwise the user needs one of those roles. The owner
+ * and anyone who can manage channels always may.
+ */
+export function canSendInChannel(server: Server, userId: string, channel: Channel): boolean {
+  if (!channel.sendRoleIds || channel.sendRoleIds.length === 0) return true;
+  if (isOwner(server, userId) || can(server, userId, "MANAGE_CHANNELS")) return true;
+  const member = getMember(server, userId);
+  if (!member) return false;
+  return channel.sendRoleIds.some((rid) => member.roleIds.includes(rid));
 }
