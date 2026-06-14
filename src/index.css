@@ -429,12 +429,55 @@ textarea:focus {
 .msg-delete {
   font-size: 11px;
   color: var(--muted);
-  margin-left: auto;
   padding-left: 8px;
 }
 
 .msg-delete:hover {
   color: var(--danger);
+}
+
+.msg-action {
+  margin-left: auto;
+  color: var(--muted);
+  display: inline-flex;
+  align-items: center;
+  padding: 0 2px;
+}
+
+.msg-action:hover {
+  color: var(--accent);
+}
+
+.reply-preview {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 3px;
+  cursor: pointer;
+}
+
+.reply-preview b {
+  color: var(--text);
+}
+
+.reply-snippet {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 220px;
+}
+
+.reply-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--bg-3);
+  border-top: 1px solid var(--border);
+  font-size: 13px;
+  color: var(--muted);
 }
 
 .msg .meta {

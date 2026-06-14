@@ -25,7 +25,7 @@ import { BOOST_ANIMATED_ICON, BOOST_CUSTOM_INVITE } from "./types";
 const STORAGE_KEY = "euphoric.state.v1";
 
 type Action =
-  | { type: "SEND_MESSAGE"; channelId: string; content: string; attachment?: Attachment }
+  | { type: "SEND_MESSAGE"; channelId: string; content: string; attachment?: Attachment; replyTo?: string }
   | { type: "DELETE_MESSAGE"; messageId: string }
   | { type: "TOGGLE_REACTION"; messageId: string; emoji: string }
   | { type: "MOVE_CHANNEL"; serverId: string; channelId: string; dir: -1 | 1 }
@@ -98,6 +98,7 @@ function reducer(state: AppState, action: Action): AppState {
         content: action.content.trim(),
         createdAt: new Date().toISOString(),
         attachment: action.attachment,
+        replyTo: action.replyTo,
       };
       return { ...state, messages: [...state.messages, msg] };
     }

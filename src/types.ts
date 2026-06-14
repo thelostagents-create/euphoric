@@ -107,6 +107,8 @@ export interface Message {
   attachment?: Attachment;
   /** Emoji -> user ids who reacted. */
   reactions?: Record<string, string[]>;
+  /** Id of the message this one replies to. */
+  replyTo?: string;
 }
 
 export interface Server {

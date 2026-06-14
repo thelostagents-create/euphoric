@@ -56,23 +56,44 @@ export function ReactionChips({ message }: { message: Message }) {
   );
 }
 
-/** Emoji picker shown after long-pressing a message. */
-export function ReactionPicker({ messageId, onClose }: { messageId: string; onClose: () => void }) {
+/** Reaction emoji row, plus an optional Reply action. */
+export function ReactionPicker({
+  messageId,
+  onClose,
+  onReply,
+}: {
+  messageId: string;
+  onClose: () => void;
+  onReply?: () => void;
+}) {
   const { dispatch } = useStore();
   return (
     <div className="modal-backdrop" onClick={onClose} style={{ alignItems: "center" }}>
-      <div className="reaction-pop" onClick={(e) => e.stopPropagation()}>
-        {REACTION_EMOJIS.map((emoji) => (
+      <div onClick={(e) => e.stopPropagation()} style={{ display: "flex", flexDirection: "column", gap: 10, alignItems: "center" }}>
+        <div className="reaction-pop">
+          {REACTION_EMOJIS.map((emoji) => (
+            <button
+              key={emoji}
+              onClick={() => {
+                dispatch({ type: "TOGGLE_REACTION", messageId, emoji });
+                onClose();
+              }}
+            >
+              {emoji}
+            </button>
+          ))}
+        </div>
+        {onReply && (
           <button
-            key={emoji}
+            className="btn"
             onClick={() => {
-              dispatch({ type: "TOGGLE_REACTION", messageId, emoji });
+              onReply();
               onClose();
             }}
           >
-            {emoji}
+            ↩ Reply
           </button>
-        ))}
+        )}
       </div>
     </div>
   );

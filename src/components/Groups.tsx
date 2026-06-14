@@ -6,6 +6,8 @@ import { timeAgo } from "./Modal";
 import { MessageText, MessageAttachment } from "./MessageText";
 import { AttachButton } from "./AttachButton";
 import { ReactionChips, ReactionPicker, longPressProps } from "./Reactions";
+import { ReplyPreview, ReplyBar } from "./Reply";
+import { ReplyArrowIcon } from "./Icons";
 import { ImagePicker } from "./ImagePicker";
 
 /** Group picture: image if set, otherwise the member count in a circle. */
@@ -179,6 +181,7 @@ export function GroupView({ groupId, onBack }: { groupId: string; onBack: () => 
   const [draft, setDraft] = useState("");
   const [showAdd, setShowAdd] = useState(false);
   const [reactFor, setReactFor] = useState<string | null>(null);
+  const [replyTo, setReplyTo] = useState<string | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
 
   const messages = useMemo(
@@ -201,8 +204,9 @@ export function GroupView({ groupId, onBack }: { groupId: string; onBack: () => 
 
   function send() {
     if (!draft.trim()) return;
-    dispatch({ type: "SEND_MESSAGE", channelId: groupId, content: draft });
+    dispatch({ type: "SEND_MESSAGE", channelId: groupId, content: draft, replyTo: replyTo ?? undefined });
     setDraft("");
+    setReplyTo(null);
   }
 
   return (
@@ -227,9 +231,13 @@ export function GroupView({ groupId, onBack }: { groupId: string; onBack: () => 
             <div key={m.id} className="msg" {...longPressProps(() => setReactFor(m.id))}>
               <img className="avatar" src={author?.avatar} alt="" />
               <div className="body">
+                {m.replyTo && <ReplyPreview replyTo={m.replyTo} />}
                 <div className="meta">
                   <span className="name">{displayName(author)}</span>
                   <span className="time">{timeAgo(m.createdAt)}</span>
+                  <button className="msg-action" title="React or reply" onClick={() => setReactFor(m.id)}>
+                    <ReplyArrowIcon size={15} />
+                  </button>
                 </div>
                 {m.content && (
                   <div className="content">
@@ -245,6 +253,7 @@ export function GroupView({ groupId, onBack }: { groupId: string; onBack: () => 
         <div ref={endRef} />
       </div>
 
+      {replyTo && <ReplyBar replyTo={replyTo} onCancel={() => setReplyTo(null)} />}
       <div className="composer">
         <AttachButton channelId={groupId} />
         <input
@@ -270,7 +279,13 @@ export function GroupView({ groupId, onBack }: { groupId: string; onBack: () => 
       </div>
 
       {showAdd && <GroupSettingsModal groupId={groupId} onClose={() => setShowAdd(false)} />}
-      {reactFor && <ReactionPicker messageId={reactFor} onClose={() => setReactFor(null)} />}
+      {reactFor && (
+        <ReactionPicker
+          messageId={reactFor}
+          onReply={() => setReplyTo(reactFor)}
+          onClose={() => setReactFor(null)}
+        />
+      )}
     </div>
   );
 }

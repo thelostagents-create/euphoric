@@ -12,7 +12,9 @@ import { AttachButton } from "./AttachButton";
 import { ReactionChips, ReactionPicker, longPressProps } from "./Reactions";
 import { LendStar } from "./LendStar";
 import { ChannelsModal } from "./ChannelsModal";
-import { PersonIcon, SettingsIcon } from "./Icons";
+import { ServerMembersModal } from "./ServerMembersModal";
+import { ReplyPreview, ReplyBar } from "./Reply";
+import { PersonIcon, SettingsIcon, ReplyArrowIcon } from "./Icons";
 import { displayName, serverStars } from "../social";
 import type { ChatNav } from "../App";
 
@@ -21,7 +23,9 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
   const me = state.users[state.currentUserId];
   const [highlight, setHighlight] = useState<string | null>(null);
   const [reactFor, setReactFor] = useState<string | null>(null);
+  const [replyTo, setReplyTo] = useState<string | null>(null);
   const [showChannels, setShowChannels] = useState(false);
+  const [showMembers, setShowMembers] = useState(false);
 
   const myServers = useMemo(
     () =>
@@ -122,8 +126,9 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
 
   function send() {
     if (!draft.trim() || muted) return;
-    dispatch({ type: "SEND_MESSAGE", channelId: channel!.id, content: draft });
+    dispatch({ type: "SEND_MESSAGE", channelId: channel!.id, content: draft, replyTo: replyTo ?? undefined });
     setDraft("");
+    setReplyTo(null);
   }
 
   // @-mention autocomplete: the partial handle being typed at the end of draft.
@@ -195,10 +200,10 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
             <div className="sub">#{channel.name}</div>
           </div>
           <div className="spacer" />
-          <span className="count-pill" title="Members in this server">
+          <button className="count-pill" onClick={() => setShowMembers(true)} title="View members">
             <PersonIcon size={13} />
             {server.members.filter((m) => !m.banned).length}
-          </span>
+          </button>
           <button className="star-pill" onClick={() => setShowLend(true)} title="Lend a Star">
             {serverStars(state, server.id)} ⭐
           </button>
@@ -253,11 +258,17 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
                   onClick={() => setSheetUser(m.authorId)}
                 />
                 <div className="body">
+                  {m.replyTo && (
+                    <ReplyPreview replyTo={m.replyTo} onJump={() => setHighlight(m.replyTo!)} />
+                  )}
                   <div className="meta">
                     <span className="name" onClick={() => setSheetUser(m.authorId)}>
                       {displayName(author)}
                     </span>
                     <span className="time">{timeAgo(m.createdAt)}</span>
+                    <button className="msg-action" title="React or reply" onClick={() => setReactFor(m.id)}>
+                      <ReplyArrowIcon size={15} />
+                    </button>
                     {blocked && (
                       <button
                         className="blocked-tag"
@@ -321,6 +332,7 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
               ))}
             </div>
           )}
+          {replyTo && <ReplyBar replyTo={replyTo} onCancel={() => setReplyTo(null)} />}
           <div className="composer">
             <AttachButton channelId={channel.id} disabled={muted} />
             <input
@@ -346,13 +358,26 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
         <JoinServerModal onClose={() => setShowJoin(false)} onJoined={(sid) => setServerId(sid)} />
       )}
       {showLend && <LendStar server={server} onClose={() => setShowLend(false)} />}
-      {reactFor && <ReactionPicker messageId={reactFor} onClose={() => setReactFor(null)} />}
+      {reactFor && (
+        <ReactionPicker
+          messageId={reactFor}
+          onReply={() => setReplyTo(reactFor)}
+          onClose={() => setReactFor(null)}
+        />
+      )}
       {showChannels && (
         <ChannelsModal
           server={server}
           currentChannelId={channel.id}
           onSelect={setChannelId}
           onClose={() => setShowChannels(false)}
+        />
+      )}
+      {showMembers && (
+        <ServerMembersModal
+          server={server}
+          onSelect={(uid) => setSheetUser(uid)}
+          onClose={() => setShowMembers(false)}
         />
       )}
     </div>
