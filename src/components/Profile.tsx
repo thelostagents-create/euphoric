@@ -1,5 +1,5 @@
 import { useStore } from "../store";
-import { tierBadge } from "./Modal";
+import { bannerStyle, tierBadge } from "./Modal";
 
 const FONTS = [
   { label: "Default", value: "system-ui" },
@@ -24,7 +24,8 @@ export function Profile() {
         <h1>Profile</h1>
       </div>
 
-      {/* Live preview — reflects supernova theming */}
+      {/* Live preview — reflects banner + supernova theming */}
+      <div className="profile-banner" style={bannerStyle(user)} />
       <div
         className="profile-hero"
         style={
@@ -34,7 +35,7 @@ export function Profile() {
         }
       >
         <img
-          className="avatar"
+          className="avatar overlap"
           src={user.avatar}
           alt=""
           style={{ borderColor: showTheme ? theme.accentColor : "var(--accent)" }}
@@ -83,6 +84,47 @@ export function Profile() {
           {!canGif && (
             <p className="muted" style={{ fontSize: 12, marginTop: 6 }}>
               Upgrade to Premium to use an animated GIF avatar.
+            </p>
+          )}
+        </div>
+
+        <div className="section-title">Banner</div>
+        <div className="card">
+          <div className="field" style={{ marginBottom: canGif ? 12 : 0 }}>
+            <label>Banner color</label>
+            <div className="row">
+              <input
+                type="color"
+                className="swatch"
+                value={user.banner.color}
+                onChange={(e) => dispatch({ type: "UPDATE_BANNER", color: e.target.value })}
+              />
+              <span className="muted" style={{ fontSize: 12 }}>
+                Everyone can pick a banner color.
+              </span>
+            </div>
+          </div>
+          {canGif ? (
+            <div className="field" style={{ marginBottom: 0 }}>
+              <label>Banner image URL (GIFs allowed ✨)</label>
+              <input
+                value={user.banner.image}
+                placeholder="https://…"
+                onChange={(e) => dispatch({ type: "UPDATE_BANNER", image: e.target.value })}
+              />
+              {user.banner.image && (
+                <button
+                  className="btn ghost sm"
+                  style={{ marginTop: 8 }}
+                  onClick={() => dispatch({ type: "UPDATE_BANNER", image: "" })}
+                >
+                  Remove image
+                </button>
+              )}
+            </div>
+          ) : (
+            <p className="muted" style={{ fontSize: 12, margin: "10px 0 0" }}>
+              Upgrade to <b>Premium</b> to set a banner image.
             </p>
           )}
         </div>

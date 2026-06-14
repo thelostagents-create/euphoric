@@ -209,9 +209,9 @@ textarea:focus {
 }
 
 .rail-icon.add {
-  color: var(--muted);
-  background: transparent;
-  border: 1px dashed var(--border);
+  color: var(--accent);
+  background: rgba(155, 123, 255, 0.12);
+  border: 1px dashed var(--accent);
   font-size: 26px;
 }
 
@@ -480,9 +480,19 @@ textarea:focus {
 }
 
 /* ---------- Profile ---------- */
+.profile-banner {
+  height: 130px;
+  background-size: cover;
+  background-position: center;
+}
+
 .profile-hero {
-  padding: 28px 18px;
+  padding: 0 18px 26px;
   text-align: center;
+}
+
+.profile-hero .avatar.overlap {
+  margin-top: -52px;
 }
 
 .profile-hero .avatar {

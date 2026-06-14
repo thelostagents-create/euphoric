@@ -18,6 +18,7 @@ function user(
     avatar: `https://api.dicebear.com/9.x/thumbs/svg?seed=${encodeURIComponent(username)}`,
     bio: "",
     tier: "free",
+    banner: { color: "#2a2440", image: "" },
     theme: { ...defaultTheme },
     blockedUserIds: [],
     ...partial,

@@ -29,6 +29,16 @@ export interface ProfileTheme {
   usernameFont: string;
 }
 
+/**
+ * Profile banner shown behind the avatar. Everyone can set a color; only
+ * premium/supernova members may set an image.
+ */
+export interface Banner {
+  color: string;
+  /** Image url — premium/supernova only. Empty = color only. */
+  image: string;
+}
+
 export interface User {
   id: string;
   username: string;
@@ -36,6 +46,7 @@ export interface User {
   avatar: string;
   bio: string;
   tier: Tier;
+  banner: Banner;
   theme: ProfileTheme;
   /** User ids this user has blocked. */
   blockedUserIds: string[];

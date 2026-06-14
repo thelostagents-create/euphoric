@@ -27,6 +27,7 @@ type Action =
   | { type: "CREATE_CHANNEL"; serverId: string; name: string }
   | { type: "UPDATE_PROFILE"; bio?: string; avatar?: string; username?: string }
   | { type: "UPDATE_THEME"; theme: Partial<ProfileTheme> }
+  | { type: "UPDATE_BANNER"; color?: string; image?: string }
   | { type: "SET_TIER"; tier: Tier }
   | { type: "TOGGLE_BLOCK"; userId: string }
   | { type: "CREATE_ROLE"; serverId: string; role: Omit<Role, "id" | "position"> }
@@ -131,6 +132,24 @@ function reducer(state: AppState, action: Action): AppState {
       return {
         ...state,
         users: { ...state.users, [me]: { ...u, theme: { ...u.theme, ...action.theme } } },
+      };
+    }
+
+    case "UPDATE_BANNER": {
+      const u = state.users[me];
+      // Only premium/supernova members may set a banner image.
+      const canImage = u.tier === "premium" || u.tier === "supernova";
+      const image =
+        action.image !== undefined && canImage ? action.image : u.banner.image;
+      return {
+        ...state,
+        users: {
+          ...state.users,
+          [me]: {
+            ...u,
+            banner: { color: action.color ?? u.banner.color, image },
+          },
+        },
       };
     }
 
@@ -267,10 +286,21 @@ function reducer(state: AppState, action: Action): AppState {
   }
 }
 
+/** Backfill fields added after a user's state was first persisted. */
+function migrate(state: AppState): AppState {
+  const users = Object.fromEntries(
+    Object.entries(state.users).map(([id, u]) => [
+      id,
+      { ...u, banner: u.banner ?? { color: "#2a2440", image: "" } },
+    ]),
+  );
+  return { ...state, users };
+}
+
 function loadState(): AppState {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw) as AppState;
+    if (raw) return migrate(JSON.parse(raw) as AppState);
   } catch {
     /* ignore corrupt storage */
   }

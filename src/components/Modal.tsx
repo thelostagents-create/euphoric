@@ -1,4 +1,5 @@
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
+import type { User } from "../types";
 
 export function Modal({
   title,
@@ -24,6 +25,19 @@ export function tierBadge(tier: string) {
   if (tier === "premium") return <span className="badge premium">Premium</span>;
   if (tier === "supernova") return <span className="badge supernova">Supernova</span>;
   return null;
+}
+
+/** Banner background: image only counts for premium/supernova members. */
+export function bannerStyle(user: User): CSSProperties {
+  const canImage = user.tier !== "free";
+  if (canImage && user.banner.image) {
+    return {
+      backgroundImage: `url(${user.banner.image})`,
+      backgroundSize: "cover",
+      backgroundPosition: "center",
+    };
+  }
+  return { background: user.banner.color };
 }
 
 export function timeAgo(iso: string): string {

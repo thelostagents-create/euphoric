@@ -1,5 +1,5 @@
 import { useStore } from "../store";
-import { Modal, tierBadge } from "./Modal";
+import { Modal, bannerStyle, tierBadge } from "./Modal";
 import { canModerate, getMember, isTimedOut } from "../permissions";
 import type { Server } from "../types";
 
@@ -36,12 +36,14 @@ export function UserSheet({
         style={{
           background: theme.backgroundColor,
           borderRadius: 16,
-          padding: 20,
+          overflow: "hidden",
           textAlign: "center",
           marginBottom: 14,
           color: theme.textColor,
         }}
       >
+        <div style={{ height: 84, ...bannerStyle(user) }} />
+        <div style={{ padding: "0 20px 20px" }}>
         <img
           src={user.avatar}
           alt=""
@@ -51,6 +53,7 @@ export function UserSheet({
             borderRadius: "50%",
             objectFit: "cover",
             border: `3px solid ${theme.accentColor}`,
+            marginTop: -44,
           }}
         />
         <div
@@ -68,6 +71,7 @@ export function UserSheet({
         {user.bio && (
           <p style={{ marginTop: 12, fontSize: 14, lineHeight: 1.5, opacity: 0.92 }}>{user.bio}</p>
         )}
+        </div>
       </div>
 
       {!isMe && (
