@@ -4,6 +4,7 @@ import { getMember, isTimedOut } from "../permissions";
 import { timeAgo } from "./Modal";
 import { UserSheet } from "./UserSheet";
 import { ServerManage } from "./ServerManage";
+import { CreateServerModal } from "./CreateServerModal";
 
 export function Chat() {
   const { state, dispatch } = useStore();
@@ -25,6 +26,7 @@ export function Chat() {
 
   const [sheetUser, setSheetUser] = useState<string | null>(null);
   const [showManage, setShowManage] = useState(false);
+  const [showCreate, setShowCreate] = useState(false);
   const [revealed, setRevealed] = useState<Set<string>>(new Set());
   const [draft, setDraft] = useState("");
   const endRef = useRef<HTMLDivElement>(null);
@@ -45,12 +47,27 @@ export function Chat() {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages.length, channel?.id]);
 
+  // When a server is added (e.g. just created), jump to it.
+  const prevCount = useRef(myServers.length);
+  useEffect(() => {
+    if (myServers.length > prevCount.current) {
+      setServerId(myServers[myServers.length - 1].id);
+    }
+    prevCount.current = myServers.length;
+  }, [myServers]);
+
   if (!server || !channel) {
     return (
-      <div className="center-empty">
-        <p>You're not in any servers yet.</p>
-        <p>Head to Discover to find a community, or create your own.</p>
-      </div>
+      <>
+        <div className="center-empty">
+          <p>You're not in any servers yet.</p>
+          <p>Head to Discover to find a community, or create your own.</p>
+          <button className="btn" style={{ marginTop: 14 }} onClick={() => setShowCreate(true)}>
+            Create a server
+          </button>
+        </div>
+        {showCreate && <CreateServerModal onClose={() => setShowCreate(false)} />}
+      </>
     );
   }
 
@@ -81,6 +98,9 @@ export function Chat() {
             {s.icon}
           </button>
         ))}
+        <button className="rail-icon add" onClick={() => setShowCreate(true)} title="Create a server">
+          +
+        </button>
       </div>
 
       <div className="chat-main">
@@ -179,6 +199,7 @@ export function Chat() {
         <UserSheet userId={sheetUser} server={server} onClose={() => setSheetUser(null)} />
       )}
       {showManage && <ServerManage server={server} onClose={() => setShowManage(false)} />}
+      {showCreate && <CreateServerModal onClose={() => setShowCreate(false)} />}
     </div>
   );
 }

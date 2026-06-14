@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { resetState, useStore } from "../store";
 import type { Tier } from "../types";
+import { CreateServerModal } from "./CreateServerModal";
 
 const TIERS: {
   id: Tier;
@@ -35,8 +36,7 @@ const TIERS: {
 export function Settings() {
   const { state, dispatch } = useStore();
   const user = state.users[state.currentUserId];
-  const [name, setName] = useState("");
-  const [icon, setIcon] = useState("✨");
+  const [showCreate, setShowCreate] = useState(false);
 
   const blocked = user.blockedUserIds
     .map((id) => state.users[id])
@@ -81,29 +81,10 @@ export function Settings() {
           native build.
         </p>
 
-        <div className="section-title">Create a server</div>
-        <div className="card">
-          <div className="row" style={{ gap: 8 }}>
-            <input
-              value={icon}
-              onChange={(e) => setIcon(e.target.value.slice(0, 2))}
-              style={{ width: 56, textAlign: "center" }}
-            />
-            <input value={name} placeholder="Server name" onChange={(e) => setName(e.target.value)} />
-          </div>
-          <button
-            className="btn full"
-            style={{ marginTop: 10 }}
-            disabled={!name.trim()}
-            onClick={() => {
-              dispatch({ type: "CREATE_SERVER", name, icon });
-              setName("");
-              setIcon("✨");
-            }}
-          >
-            Create server
-          </button>
-        </div>
+        <div className="section-title">Servers</div>
+        <button className="btn full" onClick={() => setShowCreate(true)}>
+          Create a server
+        </button>
 
         <div className="section-title">Blocked users</div>
         {blocked.length === 0 ? (
@@ -128,6 +109,8 @@ export function Settings() {
           Reset demo data
         </button>
       </div>
+
+      {showCreate && <CreateServerModal onClose={() => setShowCreate(false)} />}
     </div>
   );
 }
