@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useStore } from "../store";
 import { bannerStyle, tierBadge } from "./Modal";
 import { displayName, usernameTaken } from "../social";
-import { AccountSettings } from "./Settings";
 
 const FONTS = [
   { label: "Default", value: "system-ui" },
@@ -12,7 +11,7 @@ const FONTS = [
   { label: "Fantasy", value: "'Papyrus', fantasy" },
 ];
 
-export function Profile() {
+export function Profile({ onManageSubscription }: { onManageSubscription: () => void }) {
   const { state, dispatch } = useStore();
   const user = state.users[state.currentUserId];
   const canGif = user.tier === "premium" || user.tier === "supernova";
@@ -66,12 +65,7 @@ export function Profile() {
       </div>
 
       <div className="list">
-        <button
-          className="btn ghost full"
-          onClick={() =>
-            document.getElementById("subscription-section")?.scrollIntoView({ behavior: "smooth", block: "start" })
-          }
-        >
+        <button className="btn ghost full" onClick={onManageSubscription}>
           ⭐ Manage subscription
         </button>
 
@@ -220,8 +214,6 @@ export function Profile() {
             </div>
           </div>
         )}
-
-        <AccountSettings />
       </div>
     </div>
   );

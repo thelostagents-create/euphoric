@@ -4,7 +4,11 @@ import { areFriends, displayName, dmChannelId, friendsOf, mentionsOf, userByName
 import { timeAgo } from "./Modal";
 import { MessageText } from "./MessageText";
 
-export function Friends() {
+export function Friends({
+  onOpenMessage,
+}: {
+  onOpenMessage: (serverId: string, channelId: string, messageId: string) => void;
+}) {
   const { state } = useStore();
   const me = state.users[state.currentUserId];
   const [openDm, setOpenDm] = useState<string | null>(null);
@@ -31,7 +35,12 @@ export function Friends() {
           mentions.map((m) => {
             const author = state.users[m.authorId];
             return (
-              <div className="card" key={m.messageId} style={{ padding: 12 }}>
+              <div
+                className="card"
+                key={m.messageId}
+                style={{ padding: 12, cursor: "pointer" }}
+                onClick={() => onOpenMessage(m.serverId, m.channelId, m.messageId)}
+              >
                 <div className="row" style={{ gap: 8 }}>
                   <img src={author?.avatar} alt="" style={{ width: 30, height: 30, borderRadius: "50%" }} />
                   <div style={{ flex: 1, minWidth: 0 }}>

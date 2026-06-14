@@ -40,7 +40,21 @@ const TIERS: {
   },
 ];
 
-/** Account settings rendered inside the Profile tab (no own screen chrome). */
+/** Full Settings screen (its own tab). */
+export function Settings() {
+  return (
+    <div className="screen">
+      <div className="topbar">
+        <h1>Settings</h1>
+      </div>
+      <div className="list">
+        <AccountSettings />
+      </div>
+    </div>
+  );
+}
+
+/** Account settings sections, reusable without screen chrome. */
 export function AccountSettings() {
   const { state, dispatch } = useStore();
   const user = state.users[state.currentUserId];

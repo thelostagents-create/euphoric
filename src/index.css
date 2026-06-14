@@ -275,6 +275,13 @@ textarea:focus {
 .msg {
   display: flex;
   gap: 10px;
+  border-radius: 8px;
+  transition: background 0.4s;
+}
+
+.msg.highlight {
+  background: rgba(155, 123, 255, 0.16);
+  box-shadow: 0 0 0 6px rgba(155, 123, 255, 0.16);
 }
 
 .msg .avatar {

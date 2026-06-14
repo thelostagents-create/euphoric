@@ -5,14 +5,17 @@ import { timeAgo } from "./Modal";
 import { UserSheet } from "./UserSheet";
 import { ServerManage } from "./ServerManage";
 import { CreateServerModal } from "./CreateServerModal";
+import { JoinServerModal } from "./JoinServerModal";
 import { ServerIcon } from "./ServerIcon";
 import { MessageText } from "./MessageText";
 import { LendStar } from "./LendStar";
 import { displayName, serverStars } from "../social";
+import type { ChatNav } from "../App";
 
-export function Chat() {
+export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled?: () => void }) {
   const { state, dispatch } = useStore();
   const me = state.users[state.currentUserId];
+  const [highlight, setHighlight] = useState<string | null>(null);
 
   const myServers = useMemo(
     () =>
@@ -31,6 +34,7 @@ export function Chat() {
   const [sheetUser, setSheetUser] = useState<string | null>(null);
   const [showManage, setShowManage] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
+  const [showJoin, setShowJoin] = useState(false);
   const [showLend, setShowLend] = useState(false);
   const [revealed, setRevealed] = useState<Set<string>>(new Set());
   const [draft, setDraft] = useState("");
@@ -49,8 +53,30 @@ export function Chat() {
   );
 
   useEffect(() => {
+    if (highlight) return; // don't yank to the bottom while jumping to a mention
     endRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages.length, channel?.id]);
+  }, [messages.length, channel?.id, highlight]);
+
+  // Open the server/channel of a tapped notification and highlight the message.
+  useEffect(() => {
+    if (!nav) return;
+    setServerId(nav.serverId);
+    setChannelId(nav.channelId);
+    setHighlight(nav.messageId);
+    onNavHandled?.();
+  }, [nav]);
+
+  useEffect(() => {
+    if (!highlight) return;
+    const scroll = setTimeout(() => {
+      document.getElementById(`msg-${highlight}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 60);
+    const clear = setTimeout(() => setHighlight(null), 2600);
+    return () => {
+      clearTimeout(scroll);
+      clearTimeout(clear);
+    };
+  }, [highlight]);
 
   // When a server is added (e.g. just created), jump to it.
   const prevCount = useRef(myServers.length);
@@ -67,11 +93,19 @@ export function Chat() {
         <div className="center-empty">
           <p>You're not in any servers yet.</p>
           <p>Head to Discover to find a community, or create your own.</p>
-          <button className="btn" style={{ marginTop: 14 }} onClick={() => setShowCreate(true)}>
-            Create a server
-          </button>
+          <div className="row" style={{ justifyContent: "center", gap: 8, marginTop: 14 }}>
+            <button className="btn" onClick={() => setShowCreate(true)}>
+              Create a server
+            </button>
+            <button className="btn ghost" onClick={() => setShowJoin(true)}>
+              Join with a link
+            </button>
+          </div>
         </div>
         {showCreate && <CreateServerModal onClose={() => setShowCreate(false)} />}
+        {showJoin && (
+          <JoinServerModal onClose={() => setShowJoin(false)} onJoined={(sid) => setServerId(sid)} />
+        )}
       </>
     );
   }
@@ -127,6 +161,12 @@ export function Chat() {
         <button className="rail-icon add" onClick={() => setShowCreate(true)} title="Create a server">
           +
         </button>
+        <button className="rail-icon add" onClick={() => setShowJoin(true)} title="Join with an invite link">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+          </svg>
+        </button>
       </div>
 
       <div className="chat-main">
@@ -181,7 +221,13 @@ export function Chat() {
             const isRevealed = revealed.has(m.id);
             const canDelete = m.authorId === state.currentUserId || canDeleteOthers;
             return (
-              <div key={m.id} className={`msg ${blocked ? "blocked" : ""} ${isRevealed ? "revealed" : ""}`}>
+              <div
+                key={m.id}
+                id={`msg-${m.id}`}
+                className={`msg ${blocked ? "blocked" : ""} ${isRevealed ? "revealed" : ""} ${
+                  m.id === highlight ? "highlight" : ""
+                }`}
+              >
                 <img
                   className="avatar"
                   src={author?.avatar}
@@ -273,6 +319,9 @@ export function Chat() {
       )}
       {showManage && <ServerManage server={server} onClose={() => setShowManage(false)} />}
       {showCreate && <CreateServerModal onClose={() => setShowCreate(false)} />}
+      {showJoin && (
+        <JoinServerModal onClose={() => setShowJoin(false)} onJoined={(sid) => setServerId(sid)} />
+      )}
       {showLend && <LendStar server={server} onClose={() => setShowLend(false)} />}
     </div>
   );
