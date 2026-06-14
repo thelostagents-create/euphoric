@@ -2,14 +2,15 @@
   "name": "Euphoric",
   "short_name": "Euphoric",
   "description": "A minimal group chat with deep profile customization.",
-  "start_url": "/",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#0f0c1d",
   "theme_color": "#0f0c1d",
   "orientation": "portrait",
   "icons": [
     {
-      "src": "/icon.svg",
+      "src": "./icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"
