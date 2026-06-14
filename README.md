@@ -25,8 +25,12 @@ iOS port come in later passes.
   permission can delete anyone's.
 - **Block feature** — blocked users' messages and avatars are blurred (tap
   "reveal" to peek), and they can no longer contact you.
+- **Unique usernames** — each username can be claimed by only one person;
+  claim/change yours on the Profile screen with live availability feedback.
 - **Follows & friends** — follow anyone from their profile; a mutual follow
-  makes you friends (listed in Settings).
+  makes you friends. A dedicated **Friends tab** lets you add people by
+  username, see a **notification feed of who @-mentioned you** in servers, and
+  **DM your friends** one-on-one.
 - **Server boosts (⭐ Stars)** — Premium members get 1 Star, Supernova members
   get 2, to spend across servers. At **3 ⭐** a server unlocks an animated
   (GIF) icon; at **9 ⭐** it can set a custom invite code.

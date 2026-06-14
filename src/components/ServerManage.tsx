@@ -81,11 +81,11 @@ function OverviewTab({ server, canManage }: { server: Server; canManage: boolean
 
   return (
     <div>
-      {/* Boost / Stars */}
-      <div className="section-title">Boost · {stars} ⭐</div>
+      {/* Stars */}
+      <div className="section-title">Stars · {stars} ⭐</div>
       <div className="card">
         <p className="desc" style={{ marginBottom: 10 }}>
-          Members spend Stars to boost this server. Premium grants 1 Star, Supernova grants 2.
+          Members spend Stars on this server. Premium grants 1 Star, Supernova grants 2.
         </p>
         <div className="row" style={{ justifyContent: "space-between" }}>
           <div>

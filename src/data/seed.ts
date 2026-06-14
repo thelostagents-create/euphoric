@@ -152,5 +152,11 @@ export const seedState: AppState = {
     { id: "m5", channelId: "c_general", authorId: "luna", content: "ignore that lol", createdAt: ago(25) },
     { id: "m6", channelId: "c_music", authorId: "rex", content: "new album recs?", createdAt: ago(45) },
     { id: "m7", channelId: "c_dev_general", authorId: "nova", content: "shipped the new build 🎉", createdAt: ago(200) },
+    // Mentions of @you — surface in the Friends tab notification feed.
+    { id: "m8", channelId: "c_general", authorId: "rex", content: "@you you in for the game tonight?", createdAt: ago(20) },
+    { id: "m9", channelId: "c_dev_general", authorId: "nova", content: "hey @you can you review my PR?", createdAt: ago(15) },
+    // DM history with luna (a mutual friend).
+    { id: "d1", channelId: "dm:luna_me", authorId: "luna", content: "heyy! glad we're friends on here now 🌙", createdAt: ago(180) },
+    { id: "d2", channelId: "dm:luna_me", authorId: "me", content: "same! this place is cozy", createdAt: ago(175) },
   ],
 };

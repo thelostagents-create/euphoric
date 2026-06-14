@@ -46,7 +46,7 @@ export function CreateServerModal({ onClose }: { onClose: () => void }) {
           onChange={(e) => setIconImage(e.target.value)}
         />
         <p className="muted" style={{ fontSize: 11, marginTop: 5 }}>
-          Animated GIF icons unlock once the server reaches 3 ⭐ boosts.
+          Animated GIF icons unlock once the server reaches 3 ⭐ Stars.
         </p>
       </div>
 

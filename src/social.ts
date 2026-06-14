@@ -51,3 +51,61 @@ export function parseInviteCode(input: string): string {
 export function isGif(url: string): boolean {
   return /\.gif(\?|$)/i.test(url.trim());
 }
+
+/** Whether a username is already claimed by someone other than `exceptId`. */
+export function usernameTaken(state: AppState, name: string, exceptId: string): boolean {
+  const norm = name.trim().toLowerCase();
+  return Object.values(state.users).some(
+    (u) => u.id !== exceptId && u.username.trim().toLowerCase() === norm,
+  );
+}
+
+/** Stable channel id for the DM between two users. */
+export function dmChannelId(a: string, b: string): string {
+  return `dm:${[a, b].sort().join("_")}`;
+}
+
+/** Resolve a username to a user, ignoring case. */
+export function userByName(state: AppState, name: string): User | undefined {
+  const norm = name.trim().replace(/^@/, "").toLowerCase();
+  return Object.values(state.users).find((u) => u.username.toLowerCase() === norm);
+}
+
+export interface Mention {
+  messageId: string;
+  authorId: string;
+  serverId: string;
+  serverName: string;
+  channelId: string;
+  channelName: string;
+  content: string;
+  createdAt: string;
+}
+
+/** Server messages (not DMs) that @-mention the given user, newest first. */
+export function mentionsOf(state: AppState, userId: string): Mention[] {
+  const user = state.users[userId];
+  if (!user) return [];
+  const pattern = new RegExp(`@${user.username.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i");
+  const mentions: Mention[] = [];
+  for (const m of state.messages) {
+    if (m.channelId.startsWith("dm:")) continue;
+    if (m.authorId === userId) continue;
+    if (!pattern.test(m.content)) continue;
+    const server = state.servers.find((s) => s.channels.some((c) => c.id === m.channelId));
+    if (!server) continue;
+    const channel = server.channels.find((c) => c.id === m.channelId)!;
+    mentions.push({
+      messageId: m.id,
+      authorId: m.authorId,
+      serverId: server.id,
+      serverName: server.name,
+      channelId: channel.id,
+      channelName: channel.name,
+      content: m.content,
+      createdAt: m.createdAt,
+    });
+  }
+  return mentions.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+}
+

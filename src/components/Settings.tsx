@@ -25,7 +25,7 @@ const TIERS: {
       "Everything in Free",
       "Animated GIF profile picture",
       "Banner image",
-      "1 ⭐ Star to boost a server",
+      "1 ⭐ Star to spend on a server",
     ],
   },
   {
@@ -36,7 +36,7 @@ const TIERS: {
       "Everything in Premium",
       "Custom username font",
       "MySpace-style profile colors",
-      "2 ⭐ Stars to boost servers",
+      "2 ⭐ Stars to spend on servers",
     ],
   },
 ];

@@ -17,7 +17,7 @@ import type {
 } from "./types";
 import { seedState } from "./data/seed";
 import { can, canModerate } from "./permissions";
-import { isGif, serverStars, starsAvailable } from "./social";
+import { isGif, serverStars, starsAvailable, usernameTaken } from "./social";
 import { BOOST_ANIMATED_ICON, BOOST_CUSTOM_INVITE } from "./types";
 
 const STORAGE_KEY = "euphoric.state.v1";
@@ -34,6 +34,8 @@ type Action =
   | { type: "SET_TIER"; tier: Tier }
   | { type: "TOGGLE_BLOCK"; userId: string }
   | { type: "TOGGLE_FOLLOW"; userId: string }
+  | { type: "ADD_FRIEND"; userId: string }
+  | { type: "REMOVE_FRIEND"; userId: string }
   | { type: "ALLOCATE_STAR"; serverId: string; delta: number }
   | { type: "SET_SERVER_ICON"; serverId: string; iconImage: string }
   | { type: "SET_SERVER_INVITE"; serverId: string; invite: string }
@@ -49,6 +51,10 @@ type Action =
 
 function id(prefix: string): string {
   return `${prefix}_${Math.random().toString(36).slice(2, 9)}`;
+}
+
+function addUnique(list: string[], value: string): string[] {
+  return list.includes(value) ? list : [...list, value];
 }
 
 /** Random invite code, unique across existing servers. */
@@ -150,6 +156,12 @@ function reducer(state: AppState, action: Action): AppState {
 
     case "UPDATE_PROFILE": {
       const u = state.users[me];
+      // Usernames are unique — reject a change that collides with someone else.
+      let username = u.username;
+      if (action.username !== undefined) {
+        const next = action.username.trim();
+        if (next && !usernameTaken(state, next, me)) username = next;
+      }
       return {
         ...state,
         users: {
@@ -158,7 +170,7 @@ function reducer(state: AppState, action: Action): AppState {
             ...u,
             bio: action.bio ?? u.bio,
             avatar: action.avatar ?? u.avatar,
-            username: action.username ?? u.username,
+            username,
           },
         },
       };
@@ -210,6 +222,35 @@ function reducer(state: AppState, action: Action): AppState {
         ? u.following.filter((x) => x !== action.userId)
         : [...u.following, action.userId];
       return { ...state, users: { ...state.users, [me]: { ...u, following } } };
+    }
+
+    // Adding a friend makes the follow mutual (the other side "accepts").
+    case "ADD_FRIEND": {
+      const other = state.users[action.userId];
+      if (action.userId === me || !other) return state;
+      const u = state.users[me];
+      return {
+        ...state,
+        users: {
+          ...state.users,
+          [me]: { ...u, following: addUnique(u.following, action.userId) },
+          [action.userId]: { ...other, following: addUnique(other.following, me) },
+        },
+      };
+    }
+
+    case "REMOVE_FRIEND": {
+      const other = state.users[action.userId];
+      if (!other) return state;
+      const u = state.users[me];
+      return {
+        ...state,
+        users: {
+          ...state.users,
+          [me]: { ...u, following: u.following.filter((x) => x !== action.userId) },
+          [action.userId]: { ...other, following: other.following.filter((x) => x !== me) },
+        },
+      };
     }
 
     case "ALLOCATE_STAR": {

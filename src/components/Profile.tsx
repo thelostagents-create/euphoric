@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { useStore } from "../store";
 import { bannerStyle, tierBadge } from "./Modal";
+import { usernameTaken } from "../social";
 
 const FONTS = [
   { label: "Default", value: "system-ui" },
@@ -17,6 +19,13 @@ export function Profile() {
 
   const showTheme = canCustomize;
   const theme = user.theme;
+
+  // Usernames are unique and claimed explicitly.
+  const [nameDraft, setNameDraft] = useState(user.username);
+  const trimmed = nameDraft.trim();
+  const taken = !!trimmed && usernameTaken(state, trimmed, user.id);
+  const changed = trimmed !== user.username;
+  const canClaim = !!trimmed && !taken && changed;
 
   return (
     <div className="screen">
@@ -56,11 +65,30 @@ export function Profile() {
 
       <div className="list">
         <div className="field">
-          <label>Username</label>
-          <input
-            value={user.username}
-            onChange={(e) => dispatch({ type: "UPDATE_PROFILE", username: e.target.value })}
-          />
+          <label>Username (unique — one per person)</label>
+          <div className="row" style={{ gap: 8 }}>
+            <input
+              value={nameDraft}
+              onChange={(e) => setNameDraft(e.target.value)}
+              style={taken ? { borderColor: "var(--danger)" } : undefined}
+            />
+            <button
+              className="btn sm"
+              disabled={!canClaim}
+              onClick={() => dispatch({ type: "UPDATE_PROFILE", username: trimmed })}
+            >
+              Claim
+            </button>
+          </div>
+          {taken ? (
+            <p style={{ fontSize: 12, marginTop: 5, color: "var(--danger)" }}>
+              "{trimmed}" is already taken.
+            </p>
+          ) : (
+            changed && (
+              <p className="muted" style={{ fontSize: 12, marginTop: 5 }}>"{trimmed}" is available.</p>
+            )
+          )}
         </div>
 
         <div className="field">
