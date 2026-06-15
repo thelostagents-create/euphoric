@@ -32,6 +32,9 @@ type Action =
   | { type: "MARK_READ"; channelId: string }
   | { type: "DISMISS_NOTIFICATION"; messageId: string }
   | { type: "SET_ACCENT"; color: string }
+  | { type: "SET_LIGHT_MODE"; on: boolean }
+  | { type: "TRANSFER_OWNERSHIP"; serverId: string; userId: string }
+  | { type: "DELETE_SERVER"; serverId: string }
   | { type: "TOGGLE_PIN"; messageId: string }
   | { type: "TOGGLE_REACTION"; messageId: string; emoji: string }
   | { type: "SET_BLOCKED_WORDS"; serverId: string; words: string[] }
@@ -200,6 +203,40 @@ function reducer(state: AppState, action: Action): AppState {
     case "SET_ACCENT": {
       const u = state.users[me];
       return { ...state, users: { ...state.users, [me]: { ...u, appAccent: action.color } } };
+    }
+
+    case "SET_LIGHT_MODE": {
+      const u = state.users[me];
+      return { ...state, users: { ...state.users, [me]: { ...u, lightMode: action.on } } };
+    }
+
+    case "TRANSFER_OWNERSHIP": {
+      const server = state.servers.find((s) => s.id === action.serverId);
+      // Only the current owner can hand off, and only to a member.
+      if (!server || server.ownerId !== me) return state;
+      if (!server.members.some((m) => m.userId === action.userId && !m.banned)) return state;
+      return {
+        ...state,
+        servers: mapServer(state, action.serverId, (s) =>
+          withAudit({ ...s, ownerId: action.userId }, {
+            action: "Ownership",
+            actorId: me,
+            targetId: action.userId,
+            detail: "Transferred ownership",
+          }),
+        ),
+      };
+    }
+
+    case "DELETE_SERVER": {
+      const server = state.servers.find((s) => s.id === action.serverId);
+      if (!server || server.ownerId !== me) return state;
+      const channelIds = new Set(server.channels.map((c) => c.id));
+      return {
+        ...state,
+        servers: state.servers.filter((s) => s.id !== action.serverId),
+        messages: state.messages.filter((m) => !channelIds.has(m.channelId)),
+      };
     }
 
     case "TOGGLE_PIN": {
@@ -816,6 +853,7 @@ function migrate(state: AppState): AppState {
         lastRead: u.lastRead ?? {},
         dismissedNotifications: u.dismissedNotifications ?? [],
         appAccent: u.appAccent ?? "#9b7bff",
+        lightMode: u.lightMode ?? false,
         favoriteStickers: u.favoriteStickers ?? [],
         aesthetic: {
           enabled: false,

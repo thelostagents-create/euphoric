@@ -37,6 +37,10 @@ export function App() {
     if (accent) document.documentElement.style.setProperty("--accent", accent);
   }, [accent]);
 
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", me?.lightMode ? "light" : "dark");
+  }, [me?.lightMode]);
+
   // Unread notification (mention) count for the Friends tab badge.
   const notifCount = useMemo(
     () => mentionsOf(state, state.currentUserId).filter((m) => !me.dismissedNotifications.includes(m.messageId)).length,

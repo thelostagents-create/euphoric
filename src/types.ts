@@ -114,6 +114,8 @@ export interface User {
   dismissedNotifications: string[];
   /** Personal app accent color. */
   appAccent: string;
+  /** Light theme preference. */
+  lightMode: boolean;
   /** Sticker urls the user has favorited (shown first in the picker). */
   favoriteStickers: string[];
 }

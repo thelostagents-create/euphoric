@@ -48,6 +48,7 @@ function user(
     lastRead: {},
     dismissedNotifications: [],
     appAccent: "#9b7bff",
+    lightMode: false,
     favoriteStickers: [],
     ...partial,
   };

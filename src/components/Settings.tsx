@@ -64,6 +64,16 @@ export function AccountSettings() {
     <>
       <div className="section-title">Appearance</div>
       <div className="card">
+        <div className="row" style={{ justifyContent: "space-between", marginBottom: 12 }}>
+          <div>
+            <div style={{ fontWeight: 700 }}>Light mode</div>
+            <div className="muted" style={{ fontSize: 12 }}>Switch between dark and light themes.</div>
+          </div>
+          <button
+            className={`toggle ${user.lightMode ? "on" : ""}`}
+            onClick={() => dispatch({ type: "SET_LIGHT_MODE", on: !user.lightMode })}
+          />
+        </div>
         <label className="muted" style={{ fontSize: 12, fontWeight: 600 }}>App accent color</label>
         <div className="row" style={{ gap: 8, marginTop: 6 }}>
           <input

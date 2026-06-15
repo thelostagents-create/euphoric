@@ -298,6 +298,8 @@ function DmView({ friendId, onBack }: { friendId: string; onBack: () => void }) 
   const [draft, setDraft] = useState("");
   const [reactFor, setReactFor] = useState<string | null>(null);
   const [replyTo, setReplyTo] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState("");
   const [search, setSearch] = useState("");
   const [searching, setSearching] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
@@ -364,14 +366,41 @@ function DmView({ friendId, onBack }: { friendId: string; onBack: () => void }) 
                 <div className="meta">
                   <span className="name">{displayName(author)}</span>
                   <span className="time">{timeAgo(m.createdAt)}</span>
-                  <button className="msg-action" title="React or reply" onClick={() => setReactFor(m.id)}>
-                    <ReplyArrowIcon size={15} />
-                  </button>
+                  <span className="msg-tools">
+                    <button className="msg-action" title="React or reply" onClick={() => setReactFor(m.id)}>
+                      <ReplyArrowIcon size={14} />
+                    </button>
+                    {m.authorId === state.currentUserId && (
+                      <button className="msg-delete" title="Delete message" onClick={() => dispatch({ type: "DELETE_MESSAGE", messageId: m.id })}>
+                        <XIcon size={14} />
+                      </button>
+                    )}
+                  </span>
                 </div>
-                {m.content && (
-                  <div className="content">
-                    <MessageText content={m.content} users={state.users} meId={state.currentUserId} />
+                {editingId === m.id ? (
+                  <div className="row" style={{ gap: 8, marginTop: 4 }}>
+                    <input
+                      value={editDraft}
+                      autoFocus
+                      onChange={(e) => setEditDraft(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          dispatch({ type: "EDIT_MESSAGE", messageId: m.id, content: editDraft });
+                          setEditingId(null);
+                        }
+                        if (e.key === "Escape") setEditingId(null);
+                      }}
+                    />
+                    <button className="btn sm" onClick={() => { dispatch({ type: "EDIT_MESSAGE", messageId: m.id, content: editDraft }); setEditingId(null); }}>Save</button>
+                    <button className="btn ghost sm" onClick={() => setEditingId(null)}>Cancel</button>
                   </div>
+                ) : (
+                  m.content && (
+                    <div className="content">
+                      <MessageText content={m.content} users={state.users} meId={state.currentUserId} />
+                      {m.editedAt && <span className="muted" style={{ fontSize: 11 }}> (edited)</span>}
+                    </div>
+                  )
                 )}
                 {m.attachment && <MessageAttachment attachment={m.attachment} />}
                 <ReactionChips message={m} />
@@ -386,6 +415,14 @@ function DmView({ friendId, onBack }: { friendId: string; onBack: () => void }) 
         <ReactionPicker
           messageId={reactFor}
           onReply={() => setReplyTo(reactFor)}
+          onEdit={
+            messages.find((m) => m.id === reactFor)?.authorId === state.currentUserId
+              ? () => {
+                  setEditDraft(messages.find((m) => m.id === reactFor)?.content ?? "");
+                  setEditingId(reactFor);
+                }
+              : undefined
+          }
           onClose={() => setReactFor(null)}
         />
       )}

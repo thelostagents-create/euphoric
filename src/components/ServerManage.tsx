@@ -55,7 +55,7 @@ export function ServerManage({ server, onClose }: { server: Server; onClose: () 
         ))}
       </div>
 
-      {tab === "overview" && <OverviewTab server={server} canManage={canManageServer} />}
+      {tab === "overview" && <OverviewTab server={server} canManage={canManageServer} onClose={onClose} />}
       {tab === "roles" && <RolesTab server={server} canManage={canManageRoles} />}
       {tab === "channels" && <ChannelsTab server={server} canManage={canManageChannels} />}
       {tab === "members" && <MembersTab server={server} />}
@@ -72,7 +72,7 @@ export function ServerManage({ server, onClose }: { server: Server; onClose: () 
   );
 }
 
-function OverviewTab({ server, canManage }: { server: Server; canManage: boolean }) {
+function OverviewTab({ server, canManage, onClose }: { server: Server; canManage: boolean; onClose: () => void }) {
   const { state, dispatch } = useStore();
   const me = state.users[state.currentUserId];
   const stars = serverStars(state, server.id);
@@ -211,6 +211,58 @@ function OverviewTab({ server, canManage }: { server: Server; canManage: boolean
       )}
 
       {canManage && <DiscoverySection server={server} />}
+      {isOwner(server, me.id) && <OwnerZone server={server} onClose={onClose} />}
+    </div>
+  );
+}
+
+function OwnerZone({ server, onClose }: { server: Server; onClose: () => void }) {
+  const { state, dispatch } = useStore();
+  const [newOwner, setNewOwner] = useState("");
+  const candidates = server.members.filter((m) => !m.banned && m.userId !== server.ownerId);
+
+  return (
+    <div>
+      <div className="section-title">Owner zone</div>
+      <div className="field">
+        <label>Transfer ownership</label>
+        <div className="row" style={{ gap: 8 }}>
+          <select
+            value={newOwner}
+            onChange={(e) => setNewOwner(e.target.value)}
+            style={{ flex: 1, background: "var(--bg-3)", color: "var(--text)", border: "1px solid var(--border)", borderRadius: 10, padding: "10px 12px" }}
+          >
+            <option value="">Choose a member…</option>
+            {candidates.map((m) => (
+              <option key={m.userId} value={m.userId}>{displayName(state.users[m.userId])}</option>
+            ))}
+          </select>
+          <button
+            className="btn sm"
+            disabled={!newOwner}
+            onClick={() => {
+              const name = displayName(state.users[newOwner]);
+              if (confirm(`Make ${name} the owner? You'll lose owner control.`)) {
+                dispatch({ type: "TRANSFER_OWNERSHIP", serverId: server.id, userId: newOwner });
+                setNewOwner("");
+              }
+            }}
+          >
+            Transfer
+          </button>
+        </div>
+      </div>
+      <button
+        className="btn danger full"
+        onClick={() => {
+          if (confirm(`Delete ${server.name}? This permanently removes the party and its messages.`)) {
+            onClose();
+            dispatch({ type: "DELETE_SERVER", serverId: server.id });
+          }
+        }}
+      >
+        Delete party
+      </button>
     </div>
   );
 }
