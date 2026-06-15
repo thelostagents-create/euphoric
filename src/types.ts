@@ -32,7 +32,10 @@ export const ALL_PERMISSIONS: { id: Permission; label: string; desc: string }[] 
 
 /** Boost thresholds unlocked by spent Stars. */
 export const BOOST_ANIMATED_ICON = 3;
+export const BOOST_STICKERS = 6;
 export const BOOST_CUSTOM_INVITE = 9;
+/** Max custom stickers a boosted party can hold. */
+export const MAX_STICKERS = 10;
 
 /** Premium customization profile theme. Only meaningful for the supernova tier. */
 export interface ProfileTheme {
@@ -199,6 +202,8 @@ export interface Server {
   blockedWords: string[];
   auditLog: AuditEntry[];
   onboarding: Onboarding;
+  /** Custom sticker (gif) urls; uploadable once the party hits 6 Stars. */
+  stickers: string[];
 }
 
 /** A multi-person direct conversation between friends. */

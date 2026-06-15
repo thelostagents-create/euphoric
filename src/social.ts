@@ -75,6 +75,25 @@ export function isGif(url: string): boolean {
   return /\.gif(\?|$)/i.test(url.trim());
 }
 
+/**
+ * Stickers a user can send. Free users get only the current party's stickers;
+ * premium/supernova users get stickers from every party they're in.
+ */
+export function availableStickers(state: AppState, userId: string, serverId?: string): string[] {
+  const user = state.users[userId];
+  if (!user) return [];
+  const paid = user.tier !== "free";
+  if (paid) {
+    const all: string[] = [];
+    for (const s of state.servers) {
+      if (s.members.some((m) => m.userId === userId && !m.banned)) all.push(...s.stickers);
+    }
+    return all;
+  }
+  const server = serverId ? state.servers.find((s) => s.id === serverId) : undefined;
+  return server ? server.stickers : [];
+}
+
 /** Whether a username is already claimed by someone other than `exceptId`. */
 export function usernameTaken(state: AppState, name: string, exceptId: string): boolean {
   const norm = name.trim().toLowerCase();

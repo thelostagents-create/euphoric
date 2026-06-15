@@ -9,6 +9,7 @@ import { JoinServerModal } from "./JoinServerModal";
 import { ServerIcon } from "./ServerIcon";
 import { MessageText, MessageAttachment } from "./MessageText";
 import { AttachButton } from "./AttachButton";
+import { StickerButton } from "./StickerButton";
 import { ReactionChips, ReactionPicker, longPressProps } from "./Reactions";
 import { LendStar } from "./LendStar";
 import { ChannelsModal } from "./ChannelsModal";
@@ -436,6 +437,7 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
           ) : (
             <div className="composer">
               <AttachButton channelId={channel.id} disabled={muted} />
+              <StickerButton channelId={channel.id} serverId={server.id} />
               <input
                 value={draft}
                 placeholder={muted ? "You can't send messages right now" : `Message #${channel.name}  (try @)`}

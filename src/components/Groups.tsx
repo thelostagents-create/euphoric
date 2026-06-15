@@ -7,8 +7,9 @@ import { MessageText, MessageAttachment } from "./MessageText";
 import { AttachButton } from "./AttachButton";
 import { ReactionChips, ReactionPicker, longPressProps } from "./Reactions";
 import { ReplyPreview, ReplyBar } from "./Reply";
-import { ReplyArrowIcon } from "./Icons";
+import { ReplyArrowIcon, SearchIcon, SettingsIcon } from "./Icons";
 import { ImagePicker } from "./ImagePicker";
+import { StickerButton } from "./StickerButton";
 import { allowSend } from "../ratelimit";
 
 /** Group picture: image if set, otherwise the member count in a circle. */
@@ -183,12 +184,16 @@ export function GroupView({ groupId, onBack }: { groupId: string; onBack: () => 
   const [showAdd, setShowAdd] = useState(false);
   const [reactFor, setReactFor] = useState<string | null>(null);
   const [replyTo, setReplyTo] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [searching, setSearching] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
 
-  const messages = useMemo(
+  const allMessages = useMemo(
     () => state.messages.filter((m) => m.channelId === groupId),
     [state.messages, groupId],
   );
+  const q = search.trim().toLowerCase();
+  const messages = q ? allMessages.filter((m) => m.content.toLowerCase().includes(q)) : allMessages;
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -225,8 +230,19 @@ export function GroupView({ groupId, onBack }: { groupId: string; onBack: () => 
             {group.memberIds.length} members · {memberNames}
           </div>
         </div>
-        <button className="btn ghost sm" onClick={() => setShowAdd(true)}>⚙︎</button>
+        <button className="gear-btn" onClick={() => setSearching((v) => !v)} title="Search messages">
+          <SearchIcon size={20} />
+        </button>
+        <button className="gear-btn" onClick={() => setShowAdd(true)} title="Group settings">
+          <SettingsIcon size={24} />
+        </button>
       </div>
+
+      {searching && (
+        <div style={{ padding: "8px 12px", borderBottom: "1px solid var(--border)" }}>
+          <input autoFocus value={search} placeholder="Search this chat…" onChange={(e) => setSearch(e.target.value)} />
+        </div>
+      )}
 
       <div className="messages">
         {messages.length === 0 && <div className="center-empty">No messages yet. Say hi 👋</div>}
@@ -261,6 +277,7 @@ export function GroupView({ groupId, onBack }: { groupId: string; onBack: () => 
       {replyTo && <ReplyBar replyTo={replyTo} onCancel={() => setReplyTo(null)} />}
       <div className="composer">
         <AttachButton channelId={groupId} />
+        <StickerButton channelId={groupId} />
         <input
           value={draft}
           placeholder={`Message ${group.name}`}

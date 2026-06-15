@@ -5,6 +5,8 @@ import {
   ALL_PERMISSIONS,
   BOOST_ANIMATED_ICON,
   BOOST_CUSTOM_INVITE,
+  BOOST_STICKERS,
+  MAX_STICKERS,
   type Permission,
   type Role,
   type Server,
@@ -198,7 +200,62 @@ function OverviewTab({ server, canManage }: { server: Server; canManage: boolean
         </>
       )}
 
+      {canManage && <StickersSection server={server} />}
       {canManage && <DiscoverySection server={server} />}
+    </div>
+  );
+}
+
+function StickersSection({ server }: { server: Server }) {
+  const { state, dispatch } = useStore();
+  const stars = serverStars(state, server.id);
+  const unlocked = stars >= BOOST_STICKERS;
+  const [url, setUrl] = useState("");
+
+  return (
+    <div>
+      <div className="section-title">Stickers · {server.stickers.length}/{MAX_STICKERS}</div>
+      {!unlocked ? (
+        <p className="muted" style={{ fontSize: 12, margin: 0 }}>
+          Upload up to {MAX_STICKERS} sticker GIFs once this party reaches {BOOST_STICKERS} ⭐
+          (currently {stars} ⭐).
+        </p>
+      ) : (
+        <>
+          {server.stickers.length > 0 && (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 6, marginBottom: 8 }}>
+              {server.stickers.map((s, i) => (
+                <button
+                  key={i}
+                  className="sticker-cell"
+                  title="Remove sticker"
+                  onClick={() => dispatch({ type: "REMOVE_STICKER", serverId: server.id, index: i })}
+                >
+                  <img src={s} alt="" />
+                </button>
+              ))}
+            </div>
+          )}
+          {server.stickers.length < MAX_STICKERS && (
+            <div className="row" style={{ gap: 8 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <ImagePicker value={url} placeholder="sticker image/gif url" onChange={setUrl} accept="image/*" />
+              </div>
+              <button
+                className="btn sm"
+                disabled={!url.trim()}
+                onClick={() => {
+                  dispatch({ type: "ADD_STICKER", serverId: server.id, url });
+                  setUrl("");
+                }}
+              >
+                Add
+              </button>
+            </div>
+          )}
+          <p className="muted" style={{ fontSize: 11, marginTop: 6 }}>Tap a sticker to remove it.</p>
+        </>
+      )}
     </div>
   );
 }

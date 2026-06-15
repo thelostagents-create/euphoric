@@ -27,8 +27,10 @@ iOS port come in later passes.
   tagged); members with the *Delete Messages* permission can delete anyone's.
 - **Unread indicators** — dots on servers, channels, and conversations with
   new messages, cleared when you open them.
-- **Search & pins** — search a party's messages, or toggle to browse all
-  pinned messages; tap a result to jump to it.
+- **Search & pins** — search a party's messages (or DMs/group chats), or
+  toggle to browse all pinned messages; tap a result to jump to it.
+- **Stickers** — parties unlock 10 sticker uploads at 6 ⭐; free members use
+  their party's stickers, premium members use stickers from all their parties.
 - **@staff ping** — `@staff` notifies everyone holding a staff role.
 
 > Terminology note: in the UI, servers are called **partys** and channels are

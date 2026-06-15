@@ -165,6 +165,11 @@ const servers: Server[] = [
     blockedWords: ["spam"],
     auditLog: [],
     onboarding: { enabled: true, cosmeticRoleIds: ["r_gamer", "r_music"] },
+    stickers: [
+      "https://api.dicebear.com/9.x/fun-emoji/svg?seed=party",
+      "https://api.dicebear.com/9.x/fun-emoji/svg?seed=love",
+      "https://api.dicebear.com/9.x/fun-emoji/svg?seed=cool",
+    ],
     members: [
       { userId: "me", roleIds: ["r_everyone", "r_admin"] },
       { userId: "luna", roleIds: ["r_everyone", "r_mod"] },
@@ -201,6 +206,7 @@ const servers: Server[] = [
     blockedWords: [],
     auditLog: [],
     onboarding: { enabled: false, cosmeticRoleIds: [] },
+    stickers: [],
     members: [
       { userId: "nova", roleIds: ["r_dev_everyone"] },
       { userId: "me", roleIds: ["r_dev_everyone"] },

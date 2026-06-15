@@ -6,7 +6,8 @@ import { MessageText, MessageAttachment } from "./MessageText";
 import { AttachButton } from "./AttachButton";
 import { ReactionChips, ReactionPicker, longPressProps } from "./Reactions";
 import { ReplyPreview, ReplyBar } from "./Reply";
-import { ReplyArrowIcon } from "./Icons";
+import { ReplyArrowIcon, SearchIcon } from "./Icons";
+import { StickerButton } from "./StickerButton";
 import { allowSend } from "../ratelimit";
 import { CreateGroupModal, GroupView, GroupAvatar } from "./Groups";
 import type { GroupChat, Message } from "../types";
@@ -29,6 +30,7 @@ export function Friends({
   const [openDm, setOpenDm] = useState<string | null>(null);
   const [openGroup, setOpenGroup] = useState<string | null>(null);
   const [showCreateGroup, setShowCreateGroup] = useState(false);
+  const [showFriends, setShowFriends] = useState(false);
 
   const friends = useMemo(() => friendsOf(state, me.id), [state, me.id]);
   const myGroups = useMemo(
@@ -134,6 +136,27 @@ export function Friends({
           </p>
         )}
 
+        {/* Friendships — collapsed behind a button to keep things tidy */}
+        <button
+          className="btn ghost full"
+          style={{ marginTop: 10 }}
+          onClick={() => setShowFriends((v) => !v)}
+        >
+          👥 Friends · {friends.length} {showFriends ? "▲" : "▼"}
+        </button>
+        {showFriends &&
+          (friends.length === 0 ? (
+            <p className="muted" style={{ fontSize: 13 }}>Add friends by username below.</p>
+          ) : (
+            friends.map((f) => (
+              <div className="row" key={f.id} style={{ marginTop: 8, cursor: "pointer" }} onClick={() => setOpenDm(f.id)}>
+                <img src={f.avatar} alt="" style={{ width: 32, height: 32, borderRadius: "50%" }} />
+                <span style={{ flex: 1, fontWeight: 600 }}>{displayName(f)}</span>
+                <span className="badge staff">Friend</span>
+              </div>
+            ))
+          ))}
+
         <AddFriend />
 
         {/* Unified messages: DMs + group chats, most recent first */}
@@ -227,12 +250,16 @@ function DmView({ friendId, onBack }: { friendId: string; onBack: () => void }) 
   const [draft, setDraft] = useState("");
   const [reactFor, setReactFor] = useState<string | null>(null);
   const [replyTo, setReplyTo] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [searching, setSearching] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
 
-  const messages = useMemo(
+  const allMessages = useMemo(
     () => state.messages.filter((m) => m.channelId === channelId),
     [state.messages, channelId],
   );
+  const sq = search.trim().toLowerCase();
+  const messages = sq ? allMessages.filter((m) => m.content.toLowerCase().includes(sq)) : allMessages;
   const blocked = me.blockedUserIds.includes(friendId);
 
   useEffect(() => {
@@ -257,6 +284,9 @@ function DmView({ friendId, onBack }: { friendId: string; onBack: () => void }) 
         <img src={friend?.avatar} alt="" style={{ width: 28, height: 28, borderRadius: "50%" }} />
         <h2>{displayName(friend)}</h2>
         <div className="spacer" />
+        <button className="gear-btn" onClick={() => setSearching((v) => !v)} title="Search messages">
+          <SearchIcon size={20} />
+        </button>
         <button
           className="btn ghost sm"
           onClick={() => {
@@ -267,6 +297,12 @@ function DmView({ friendId, onBack }: { friendId: string; onBack: () => void }) 
           Unfriend
         </button>
       </div>
+
+      {searching && (
+        <div style={{ padding: "8px 12px", borderBottom: "1px solid var(--border)" }}>
+          <input autoFocus value={search} placeholder="Search this chat…" onChange={(e) => setSearch(e.target.value)} />
+        </div>
+      )}
 
       <div className="messages">
         {messages.length === 0 && <div className="center-empty">No messages yet. Say hi 👋</div>}
@@ -313,6 +349,7 @@ function DmView({ friendId, onBack }: { friendId: string; onBack: () => void }) 
           {replyTo && <ReplyBar replyTo={replyTo} onCancel={() => setReplyTo(null)} />}
           <div className="composer">
             <AttachButton channelId={channelId} />
+            <StickerButton channelId={channelId} />
             <input
               value={draft}
               placeholder={`Message ${displayName(friend)}`}

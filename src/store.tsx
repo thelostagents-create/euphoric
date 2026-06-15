@@ -21,7 +21,7 @@ import type {
 import { seedState } from "./data/seed";
 import { can, canModerate } from "./permissions";
 import { isGif, serverStars, starsAvailable, usernameTaken } from "./social";
-import { BOOST_ANIMATED_ICON, BOOST_CUSTOM_INVITE } from "./types";
+import { BOOST_ANIMATED_ICON, BOOST_CUSTOM_INVITE, BOOST_STICKERS, MAX_STICKERS } from "./types";
 
 const STORAGE_KEY = "euphoric.state.v1";
 
@@ -36,6 +36,8 @@ type Action =
   | { type: "SET_BLOCKED_WORDS"; serverId: string; words: string[] }
   | { type: "SET_ONBOARDING"; serverId: string; enabled: boolean; cosmeticRoleIds: string[] }
   | { type: "COMPLETE_ONBOARDING"; serverId: string }
+  | { type: "ADD_STICKER"; serverId: string; url: string }
+  | { type: "REMOVE_STICKER"; serverId: string; index: number }
   | { type: "MOVE_CHANNEL"; serverId: string; channelId: string; dir: -1 | 1 }
   | { type: "DELETE_CHANNEL"; serverId: string; channelId: string }
   | { type: "CREATE_SERVER"; name: string; icon: string; iconImage?: string }
@@ -333,6 +335,7 @@ function reducer(state: AppState, action: Action): AppState {
         blockedWords: [],
         auditLog: [],
         onboarding: { enabled: false, cosmeticRoleIds: [] },
+        stickers: [],
       };
       return { ...state, servers: [...state.servers, server] };
     }
@@ -732,6 +735,30 @@ function reducer(state: AppState, action: Action): AppState {
       };
     }
 
+    case "ADD_STICKER": {
+      const server = state.servers.find((s) => s.id === action.serverId);
+      if (!server || !can(server, me, "MANAGE_SERVER")) return state;
+      // Requires the boost threshold, and caps the count.
+      if (serverStars(state, action.serverId) < BOOST_STICKERS) return state;
+      if (server.stickers.length >= MAX_STICKERS || !action.url) return state;
+      return {
+        ...state,
+        servers: mapServer(state, action.serverId, (s) => ({ ...s, stickers: [...s.stickers, action.url] })),
+      };
+    }
+
+    case "REMOVE_STICKER": {
+      const server = state.servers.find((s) => s.id === action.serverId);
+      if (!server || !can(server, me, "MANAGE_SERVER")) return state;
+      return {
+        ...state,
+        servers: mapServer(state, action.serverId, (s) => ({
+          ...s,
+          stickers: s.stickers.filter((_, i) => i !== action.index),
+        })),
+      };
+    }
+
     case "UPDATE_DISCOVERY": {
       return {
         ...state,
@@ -800,6 +827,7 @@ function migrate(state: AppState): AppState {
     blockedWords: s.blockedWords ?? [],
     auditLog: s.auditLog ?? [],
     onboarding: s.onboarding ?? { enabled: false, cosmeticRoleIds: [] },
+    stickers: s.stickers ?? [],
     channels: s.channels.map((c) => ({ ...c, sendRoleIds: c.sendRoleIds ?? [], viewRoleIds: c.viewRoleIds ?? [] })),
     roles: s.roles.map((r) => ({ ...r, mentionable: r.mentionable ?? false })),
   }));
