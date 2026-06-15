@@ -70,8 +70,15 @@ export interface Aesthetic {
   dislikes: string;
   beforeFollow: string;
   doNotFollow: string;
+  /** Custom box headers. */
+  likesTitle: string;
+  dislikesTitle: string;
+  beforeTitle: string;
+  dnfTitle: string;
   /** Up to 6 gallery image urls/data-urls. */
   gallery: string[];
+  /** A server the user reps; its icon links to joining it. */
+  repServerId: string;
 }
 
 export interface User {

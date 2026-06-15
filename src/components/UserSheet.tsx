@@ -45,17 +45,20 @@ export function UserSheet({
           <div style={{ textAlign: "center", marginTop: 8 }}>{tierBadge(user.tier)}</div>
         </div>
       ) : (
-        <div
-          style={{
-            background: theme.backgroundColor,
-            borderRadius: 16,
-            overflow: "hidden",
-            textAlign: "center",
-            marginBottom: 14,
-            color: theme.textColor,
-          }}
-        >
-          <div style={{ height: 110, ...bannerStyle(user) }} />
+        <div style={{ marginBottom: 14 }}>
+          {user.blurb && (
+            <div className="blurb-block" style={{ color: user.blurbColor, marginBottom: 10 }}>{user.blurb}</div>
+          )}
+          <div
+            style={{
+              background: theme.backgroundColor,
+              borderRadius: 16,
+              overflow: "hidden",
+              textAlign: "center",
+              color: theme.textColor,
+            }}
+          >
+            <div style={{ height: 110, ...bannerStyle(user) }} />
           <div style={{ padding: "0 20px 20px" }}>
             <img
               src={user.avatar}
@@ -86,11 +89,8 @@ export function UserSheet({
               <p style={{ marginTop: 12, fontSize: 14, lineHeight: 1.5, opacity: 0.92 }}>{user.bio}</p>
             )}
           </div>
+          </div>
         </div>
-      )}
-
-      {user.blurb && (
-        <div className="blurb-block" style={{ color: user.blurbColor }}>{user.blurb}</div>
       )}
 
       {!isMe && !isBlocked && (

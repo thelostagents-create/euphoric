@@ -737,7 +737,7 @@ function migrate(state: AppState): AppState {
         following: u.following ?? [],
         starAllocations: u.starAllocations ?? {},
         onboarded: u.onboarded ?? [],
-        aesthetic: u.aesthetic ?? {
+        aesthetic: {
           enabled: false,
           title: "",
           bgColor: "#dfe9d6",
@@ -748,7 +748,13 @@ function migrate(state: AppState): AppState {
           dislikes: "",
           beforeFollow: "",
           doNotFollow: "",
+          likesTitle: "Likes",
+          dislikesTitle: "Dislikes",
+          beforeTitle: "Before you follow",
+          dnfTitle: "Do not follow if…",
           gallery: [],
+          repServerId: "",
+          ...((u.aesthetic ?? {}) as Partial<Aesthetic>),
         },
       },
     ]),

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useStore } from "../store";
 import { bannerStyle, tierBadge } from "./Modal";
 import { displayName, usernameTaken } from "../social";
+import { getMember } from "../permissions";
 import { ImagePicker } from "./ImagePicker";
 import { AestheticProfile } from "./AestheticProfile";
 
@@ -32,6 +33,7 @@ export function Profile({ onManageSubscription }: { onManageSubscription: () => 
     g[i] = url;
     setAesthetic({ gallery: g });
   }
+  const myServers = state.servers.filter((s) => getMember(s, user.id));
 
   // Usernames are unique and claimed explicitly.
   const [nameDraft, setNameDraft] = useState(user.username);
@@ -83,6 +85,12 @@ export function Profile({ onManageSubscription }: { onManageSubscription: () => 
       <div className="list">
         <button className="btn ghost full" onClick={onManageSubscription}>
           ⭐ Manage subscription
+        </button>
+        <button
+          className="btn ghost full"
+          onClick={() => document.getElementById("aesthetic-section")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+        >
+          🎨 Aesthetic Avatars
         </button>
 
         <div className="field">
@@ -263,7 +271,7 @@ export function Profile({ onManageSubscription }: { onManageSubscription: () => 
           </div>
         )}
 
-        <div className="section-title">Aesthetic Avatars</div>
+        <div className="section-title" id="aesthetic-section">Aesthetic Avatars</div>
         {!canCustomize ? (
           <div className="card">
             <p className="desc" style={{ margin: 0 }}>
@@ -294,6 +302,26 @@ export function Profile({ onManageSubscription }: { onManageSubscription: () => 
                   <input value={a.title} placeholder="your space ✨" onChange={(e) => setAesthetic({ title: e.target.value })} />
                 </div>
 
+                <div className="field">
+                  <label>Profile picture {canGif ? "(GIFs allowed ✨)" : ""}</label>
+                  <ImagePicker value={user.avatar} placeholder="https://…" onChange={(v) => dispatch({ type: "UPDATE_PROFILE", avatar: v })} />
+                </div>
+                <div className="field">
+                  <label>Banner image</label>
+                  <ImagePicker value={user.banner.image} placeholder="https://…" onChange={(v) => dispatch({ type: "UPDATE_BANNER", image: v })} />
+                  {user.banner.image && (
+                    <input
+                      type="range"
+                      min={0}
+                      max={100}
+                      value={user.banner.position}
+                      onChange={(e) => dispatch({ type: "UPDATE_BANNER", position: Number(e.target.value) })}
+                      style={{ width: "100%", marginTop: 8 }}
+                    />
+                  )}
+                </div>
+
+                <div className="section-title" style={{ marginTop: 6 }}>Colors</div>
                 <div className="row" style={{ gap: 12 }}>
                   <HexField label="Background" value={a.bgColor} onChange={(v) => setAesthetic({ bgColor: v })} />
                   <HexField label="Card" value={a.cardColor} onChange={(v) => setAesthetic({ cardColor: v })} />
@@ -303,22 +331,11 @@ export function Profile({ onManageSubscription }: { onManageSubscription: () => 
                   <HexField label="Text" value={a.textColor} onChange={(v) => setAesthetic({ textColor: v })} />
                 </div>
 
-                <div className="field" style={{ marginTop: 12 }}>
-                  <label>Likes</label>
-                  <input value={a.likes} onChange={(e) => setAesthetic({ likes: e.target.value })} />
-                </div>
-                <div className="field">
-                  <label>Dislikes</label>
-                  <input value={a.dislikes} onChange={(e) => setAesthetic({ dislikes: e.target.value })} />
-                </div>
-                <div className="field">
-                  <label>Before you follow</label>
-                  <textarea rows={2} value={a.beforeFollow} onChange={(e) => setAesthetic({ beforeFollow: e.target.value })} />
-                </div>
-                <div className="field">
-                  <label>Do not follow if…</label>
-                  <textarea rows={2} value={a.doNotFollow} onChange={(e) => setAesthetic({ doNotFollow: e.target.value })} />
-                </div>
+                <div className="section-title" style={{ marginTop: 6 }}>Boxes (rename any header)</div>
+                <BoxEditor headerValue={a.likesTitle} onHeader={(v) => setAesthetic({ likesTitle: v })} bodyValue={a.likes} onBody={(v) => setAesthetic({ likes: v })} />
+                <BoxEditor headerValue={a.dislikesTitle} onHeader={(v) => setAesthetic({ dislikesTitle: v })} bodyValue={a.dislikes} onBody={(v) => setAesthetic({ dislikes: v })} />
+                <BoxEditor headerValue={a.beforeTitle} onHeader={(v) => setAesthetic({ beforeTitle: v })} bodyValue={a.beforeFollow} onBody={(v) => setAesthetic({ beforeFollow: v })} multiline />
+                <BoxEditor headerValue={a.dnfTitle} onHeader={(v) => setAesthetic({ dnfTitle: v })} bodyValue={a.doNotFollow} onBody={(v) => setAesthetic({ doNotFollow: v })} multiline />
 
                 <div className="field">
                   <label>Gallery images (up to 6)</label>
@@ -328,11 +345,62 @@ export function Profile({ onManageSubscription }: { onManageSubscription: () => 
                     </div>
                   ))}
                 </div>
+
+                <div className="field">
+                  <label>Rep a server (its icon links to joining it)</label>
+                  <div className="chips">
+                    <button
+                      className={`chip ${a.repServerId === "" ? "accent" : ""}`}
+                      onClick={() => setAesthetic({ repServerId: "" })}
+                    >
+                      None
+                    </button>
+                    {myServers.map((s) => (
+                      <button
+                        key={s.id}
+                        className={`chip ${a.repServerId === s.id ? "accent" : ""}`}
+                        onClick={() => setAesthetic({ repServerId: s.id })}
+                      >
+                        {s.icon} {s.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </>
             )}
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function BoxEditor({
+  headerValue,
+  onHeader,
+  bodyValue,
+  onBody,
+  multiline,
+}: {
+  headerValue: string;
+  onHeader: (v: string) => void;
+  bodyValue: string;
+  onBody: (v: string) => void;
+  multiline?: boolean;
+}) {
+  return (
+    <div className="field">
+      <input
+        value={headerValue}
+        onChange={(e) => onHeader(e.target.value)}
+        placeholder="Header"
+        style={{ fontWeight: 700, marginBottom: 6 }}
+      />
+      {multiline ? (
+        <textarea rows={2} value={bodyValue} onChange={(e) => onBody(e.target.value)} />
+      ) : (
+        <input value={bodyValue} onChange={(e) => onBody(e.target.value)} />
+      )}
     </div>
   );
 }
