@@ -101,7 +101,7 @@ export function Profile({ onManageSubscription }: { onManageSubscription: () => 
         </div>
 
         <div className="field">
-          <label>Nickname (shown in chat — set this if you couldn't get the username you wanted)</label>
+          <label>Nickname</label>
           <input
             value={user.nickname}
             placeholder={user.username}

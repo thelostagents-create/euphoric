@@ -67,3 +67,12 @@ export function canSendInChannel(server: Server, userId: string, channel: Channe
   if (!member) return false;
   return channel.sendRoleIds.some((rid) => member.roleIds.includes(rid));
 }
+
+/** Whether a user can see a channel. Empty `viewRoleIds` = visible to all. */
+export function canViewChannel(server: Server, userId: string, channel: Channel): boolean {
+  if (!channel.viewRoleIds || channel.viewRoleIds.length === 0) return true;
+  if (isOwner(server, userId) || can(server, userId, "MANAGE_CHANNELS")) return true;
+  const member = getMember(server, userId);
+  if (!member) return false;
+  return channel.viewRoleIds.some((rid) => member.roleIds.includes(rid));
+}

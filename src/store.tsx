@@ -39,6 +39,8 @@ type Action =
   | { type: "CREATE_CHANNEL"; serverId: string; name: string }
   | { type: "UPDATE_PROFILE"; bio?: string; avatar?: string; username?: string; nickname?: string; blurb?: string; blurbColor?: string }
   | { type: "SET_CHANNEL_SEND_ROLES"; serverId: string; channelId: string; roleIds: string[] }
+  | { type: "SET_CHANNEL_VIEW_ROLES"; serverId: string; channelId: string; roleIds: string[] }
+  | { type: "MOVE_ROLE"; serverId: string; roleId: string; dir: -1 | 1 }
   | { type: "UPDATE_THEME"; theme: Partial<ProfileTheme> }
   | { type: "UPDATE_BANNER"; color?: string; image?: string; position?: number }
   | { type: "SET_TIER"; tier: Tier }
@@ -212,6 +214,41 @@ function reducer(state: AppState, action: Action): AppState {
       };
     }
 
+    case "SET_CHANNEL_VIEW_ROLES": {
+      return {
+        ...state,
+        servers: mapServer(state, action.serverId, (s) => ({
+          ...s,
+          channels: s.channels.map((c) =>
+            c.id === action.channelId ? { ...c, viewRoleIds: action.roleIds } : c,
+          ),
+        })),
+      };
+    }
+
+    case "MOVE_ROLE": {
+      return {
+        ...state,
+        servers: mapServer(state, action.serverId, (s) => {
+          // Roles are displayed highest-position first; swap with the neighbor.
+          const sorted = [...s.roles].sort((a, b) => b.position - a.position);
+          const i = sorted.findIndex((r) => r.id === action.roleId);
+          const j = i + action.dir;
+          if (i < 0 || j < 0 || j >= sorted.length) return s;
+          // @everyone stays pinned to the bottom.
+          if (sorted[i].name === "@everyone" || sorted[j].name === "@everyone") return s;
+          const pi = sorted[i].position;
+          const pj = sorted[j].position;
+          return {
+            ...s,
+            roles: s.roles.map((r) =>
+              r.id === sorted[i].id ? { ...r, position: pj } : r.id === sorted[j].id ? { ...r, position: pi } : r,
+            ),
+          };
+        }),
+      };
+    }
+
     case "DELETE_CHANNEL": {
       const server = state.servers.find((s) => s.id === action.serverId);
       // Keep at least one channel around.
@@ -253,7 +290,7 @@ function reducer(state: AppState, action: Action): AppState {
         iconImage: action.iconImage && !isGif(action.iconImage) ? action.iconImage : "",
         invite: newInviteCode(state.servers),
         ownerId: me,
-        channels: [{ id: id("c"), name: "general", sendRoleIds: [] }],
+        channels: [{ id: id("c"), name: "general", sendRoleIds: [], viewRoleIds: [] }],
         roles: [everyoneRole, automodRole],
         members: [
           { userId: me, roleIds: [everyoneRole.id] },
@@ -288,7 +325,7 @@ function reducer(state: AppState, action: Action): AppState {
         ...state,
         servers: mapServer(state, action.serverId, (s) => ({
           ...s,
-          channels: [...s.channels, { id: id("c"), name: action.name.trim().replace(/\s+/g, "-").toLowerCase(), sendRoleIds: [] }],
+          channels: [...s.channels, { id: id("c"), name: action.name.trim().replace(/\s+/g, "-").toLowerCase(), sendRoleIds: [], viewRoleIds: [] }],
         })),
       };
     }
@@ -699,7 +736,7 @@ function migrate(state: AppState): AppState {
     blockedWords: s.blockedWords ?? [],
     auditLog: s.auditLog ?? [],
     onboarding: s.onboarding ?? { enabled: false, cosmeticRoleIds: [] },
-    channels: s.channels.map((c) => ({ ...c, sendRoleIds: c.sendRoleIds ?? [] })),
+    channels: s.channels.map((c) => ({ ...c, sendRoleIds: c.sendRoleIds ?? [], viewRoleIds: c.viewRoleIds ?? [] })),
     roles: s.roles.map((r) => ({ ...r, mentionable: r.mentionable ?? false })),
   }));
   const groups = (state.groups ?? []).map((g) => ({

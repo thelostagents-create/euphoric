@@ -73,9 +73,9 @@ const servers: Server[] = [
     description: "A cozy place to hang out, share music, and chat about anything.",
     keywords: ["chill", "music", "hangout", "community"],
     channels: [
-      { id: "c_general", name: "general", sendRoleIds: [] },
-      { id: "c_music", name: "music", sendRoleIds: [] },
-      { id: "c_introductions", name: "introductions", sendRoleIds: [] },
+      { id: "c_general", name: "general", sendRoleIds: [], viewRoleIds: [] },
+      { id: "c_music", name: "music", sendRoleIds: [], viewRoleIds: [] },
+      { id: "c_introductions", name: "introductions", sendRoleIds: [], viewRoleIds: [] },
     ],
     roles: [
       {
@@ -146,8 +146,8 @@ const servers: Server[] = [
     description: "Builders, designers and tinkerers helping each other ship.",
     keywords: ["coding", "programming", "tech", "design", "indie"],
     channels: [
-      { id: "c_dev_general", name: "general", sendRoleIds: [] },
-      { id: "c_help", name: "help", sendRoleIds: [] },
+      { id: "c_dev_general", name: "general", sendRoleIds: [], viewRoleIds: [] },
+      { id: "c_help", name: "help", sendRoleIds: [], viewRoleIds: [] },
     ],
     roles: [
       {

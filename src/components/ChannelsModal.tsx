@@ -1,3 +1,5 @@
+import { useStore } from "../store";
+import { canViewChannel } from "../permissions";
 import { Modal } from "./Modal";
 import { OnboardingRoles } from "./Onboarding";
 import type { Server } from "../types";
@@ -14,6 +16,8 @@ export function ChannelsModal({
   onSelect: (channelId: string) => void;
   onClose: () => void;
 }) {
+  const { state } = useStore();
+  const visible = server.channels.filter((c) => canViewChannel(server, state.currentUserId, c));
   return (
     <Modal title={`${server.name} · channels`} onClose={onClose}>
       {server.onboarding.enabled && (
@@ -22,7 +26,7 @@ export function ChannelsModal({
           <OnboardingRoles server={server} />
         </div>
       )}
-      {server.channels.map((c) => (
+      {visible.map((c) => (
         <button
           key={c.id}
           className={`channel ${c.id === currentChannelId ? "active" : ""}`}

@@ -106,6 +106,8 @@ export interface Channel {
   name: string;
   /** Role ids allowed to send messages. Empty = everyone can talk. */
   sendRoleIds: string[];
+  /** Role ids allowed to see the channel. Empty = everyone can see. */
+  viewRoleIds: string[];
 }
 
 export interface Attachment {

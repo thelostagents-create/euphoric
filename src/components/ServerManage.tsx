@@ -14,7 +14,7 @@ import { displayName, inviteLink, isGif, serverStars, starsAvailable } from "../
 import { ImagePicker } from "./ImagePicker";
 import { timeAgo } from "./Modal";
 
-type Tab = "overview" | "roles" | "channels" | "members" | "automod" | "onboarding" | "audit" | "discovery";
+type Tab = "overview" | "roles" | "channels" | "members" | "automod" | "onboarding" | "audit";
 
 export function ServerManage({ server, onClose }: { server: Server; onClose: () => void }) {
   const { state } = useStore();
@@ -36,7 +36,6 @@ export function ServerManage({ server, onClose }: { server: Server; onClose: () 
     { id: "automod", label: "AutoMod" },
     { id: "onboarding", label: "Onboarding" },
     { id: "audit", label: "Audit Log" },
-    { id: "discovery", label: "Discovery" },
   ];
 
   return (
@@ -60,12 +59,6 @@ export function ServerManage({ server, onClose }: { server: Server; onClose: () 
       {tab === "automod" && <AutoModTab server={server} canManage={canManageAutomod} />}
       {tab === "onboarding" && <OnboardingTab server={server} canManage={canManageOnboarding} />}
       {tab === "audit" && <AuditTab server={server} />}
-      {tab === "discovery" &&
-        (canManageServer ? (
-          <DiscoveryTab server={server} />
-        ) : (
-          <p className="muted">You need the Manage Server permission.</p>
-        ))}
     </Modal>
   );
 }
@@ -204,6 +197,8 @@ function OverviewTab({ server, canManage }: { server: Server; canManage: boolean
           </div>
         </>
       )}
+
+      {canManage && <DiscoverySection server={server} />}
     </div>
   );
 }
@@ -233,11 +228,22 @@ function RolesTab({ server, canManage }: { server: Server; canManage: boolean })
         Staff roles bundle moderation powers (kick / ban / timeout). Higher roles outrank lower
         ones for moderation.
       </p>
-      {[...server.roles]
-        .sort((a, b) => b.position - a.position)
-        .map((role) => (
-          <RoleCard key={role.id} server={server} role={role} />
-        ))}
+      {(() => {
+        const sorted = [...server.roles].sort((a, b) => b.position - a.position);
+        const movable = sorted.filter((r) => r.name !== "@everyone");
+        return sorted.map((role) => {
+          const mi = movable.findIndex((r) => r.id === role.id);
+          return (
+            <RoleCard
+              key={role.id}
+              server={server}
+              role={role}
+              canUp={mi > 0}
+              canDown={mi >= 0 && mi < movable.length - 1}
+            />
+          );
+        });
+      })()}
       <div className="row" style={{ gap: 8, marginTop: 12 }}>
         <button className="btn ghost full" onClick={() => addRole(false)}>
           + Role
@@ -250,7 +256,17 @@ function RolesTab({ server, canManage }: { server: Server; canManage: boolean })
   );
 }
 
-function RoleCard({ server, role }: { server: Server; role: Role }) {
+function RoleCard({
+  server,
+  role,
+  canUp,
+  canDown,
+}: {
+  server: Server;
+  role: Role;
+  canUp: boolean;
+  canDown: boolean;
+}) {
   const { dispatch } = useStore();
   const isEveryone = role.name === "@everyone";
 
@@ -286,6 +302,24 @@ function RoleCard({ server, role }: { server: Server; role: Role }) {
           style={{ color: role.color, fontWeight: 700 }}
         />
         {role.staff && <span className="badge staff">Staff</span>}
+        {!isEveryone && (
+          <>
+            <button
+              className="btn ghost sm"
+              disabled={!canUp}
+              onClick={() => dispatch({ type: "MOVE_ROLE", serverId: server.id, roleId: role.id, dir: -1 })}
+            >
+              ↑
+            </button>
+            <button
+              className="btn ghost sm"
+              disabled={!canDown}
+              onClick={() => dispatch({ type: "MOVE_ROLE", serverId: server.id, roleId: role.id, dir: 1 })}
+            >
+              ↓
+            </button>
+          </>
+        )}
       </div>
 
       <div className="chips" style={{ marginTop: 10 }}>
@@ -401,10 +435,36 @@ function ChannelsTab({ server, canManage }: { server: Server; canManage: boolean
                 );
               })}
           </div>
-          <p className="muted" style={{ fontSize: 11, margin: "6px 0 0" }}>
-            No roles selected = everyone can talk. Selecting roles restricts posting to them
-            (admins can always post).
-          </p>
+
+          <div style={{ fontSize: 12, color: "var(--muted)", margin: "10px 0 5px", fontWeight: 600 }}>
+            Who can see {c.viewRoleIds.length === 0 ? "· everyone" : ""}
+          </div>
+          <div className="chips">
+            {server.roles
+              .filter((r) => r.name !== "@everyone")
+              .map((r) => {
+                const on = c.viewRoleIds.includes(r.id);
+                return (
+                  <button
+                    key={r.id}
+                    className={`chip ${on ? "accent" : ""}`}
+                    style={on ? { color: r.color } : undefined}
+                    onClick={() =>
+                      dispatch({
+                        type: "SET_CHANNEL_VIEW_ROLES",
+                        serverId: server.id,
+                        channelId: c.id,
+                        roleIds: on
+                          ? c.viewRoleIds.filter((x) => x !== r.id)
+                          : [...c.viewRoleIds, r.id],
+                      })
+                    }
+                  >
+                    {on ? "✓ " : ""}{r.name}
+                  </button>
+                );
+              })}
+          </div>
         </div>
       ))}
       <div className="row" style={{ gap: 8, marginTop: 10 }}>
@@ -606,7 +666,7 @@ function MembersTab({ server }: { server: Server }) {
   );
 }
 
-function DiscoveryTab({ server }: { server: Server }) {
+function DiscoverySection({ server }: { server: Server }) {
   const { dispatch } = useStore();
   const [discoverable, setDiscoverable] = useState(server.discoverable);
   const [description, setDescription] = useState(server.description);
@@ -627,6 +687,7 @@ function DiscoveryTab({ server }: { server: Server }) {
 
   return (
     <div>
+      <div className="section-title">Discovery</div>
       <div className="row" style={{ justifyContent: "space-between", marginBottom: 14 }}>
         <div>
           <div style={{ fontWeight: 700 }}>List in Discovery</div>

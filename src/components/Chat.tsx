@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useStore } from "../store";
-import { can, canSendInChannel, getMember, isTimedOut } from "../permissions";
+import { can, canSendInChannel, canViewChannel, getMember, isTimedOut } from "../permissions";
 import { timeAgo } from "./Modal";
 import { UserSheet } from "./UserSheet";
 import { ServerManage } from "./ServerManage";
@@ -42,8 +42,13 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
 
   const [serverId, setServerId] = useState(myServers[0]?.id ?? "");
   const server = myServers.find((s) => s.id === serverId) ?? myServers[0];
-  const [channelId, setChannelId] = useState(server?.channels[0]?.id ?? "");
-  const channel = server?.channels.find((c) => c.id === channelId) ?? server?.channels[0];
+  // Only channels the current user is allowed to see.
+  const visibleChannels = useMemo(
+    () => (server ? server.channels.filter((c) => canViewChannel(server, state.currentUserId, c)) : []),
+    [server, state.currentUserId],
+  );
+  const [channelId, setChannelId] = useState(visibleChannels[0]?.id ?? "");
+  const channel = visibleChannels.find((c) => c.id === channelId) ?? visibleChannels[0];
 
   const [sheetUser, setSheetUser] = useState<string | null>(null);
   const [showManage, setShowManage] = useState(false);
@@ -54,12 +59,12 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
   const [draft, setDraft] = useState("");
   const endRef = useRef<HTMLDivElement>(null);
 
-  // Keep channel selection valid as the active server changes.
+  // Keep channel selection valid (and visible) as the active server changes.
   useEffect(() => {
-    if (server && !server.channels.some((c) => c.id === channelId)) {
-      setChannelId(server.channels[0]?.id ?? "");
+    if (visibleChannels.length && !visibleChannels.some((c) => c.id === channelId)) {
+      setChannelId(visibleChannels[0].id);
     }
-  }, [server, channelId]);
+  }, [visibleChannels, channelId]);
 
   const messages = useMemo(
     () => state.messages.filter((m) => m.channelId === channel?.id),
@@ -243,7 +248,7 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
           >
             ☰ Channels
           </button>
-          {server.channels.map((c) => (
+          {visibleChannels.map((c) => (
             <button
               key={c.id}
               className={`channel ${c.id === channel.id ? "active" : ""}`}
