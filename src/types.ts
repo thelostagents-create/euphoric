@@ -114,6 +114,8 @@ export interface User {
   dismissedNotifications: string[];
   /** Personal app accent color. */
   appAccent: string;
+  /** Sticker urls the user has favorited (shown first in the picker). */
+  favoriteStickers: string[];
 }
 
 export interface Role {
@@ -198,6 +200,8 @@ export interface Server {
   invite: string;
   /** Discovery opt-in. */
   discoverable: boolean;
+  /** Verified parties surface under the bold #verified tag in Explore. */
+  verified: boolean;
   description: string;
   keywords: string[];
   /** AutoMod blocked words (lowercased). */

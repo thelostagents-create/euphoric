@@ -383,6 +383,7 @@ textarea:focus {
 }
 
 .sticker-cell {
+  position: relative;
   aspect-ratio: 1;
   border-radius: 10px;
   background: var(--bg-3);
@@ -390,6 +391,24 @@ textarea:focus {
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  cursor: pointer;
+}
+
+.sticker-star {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  font-size: 14px;
+  line-height: 1;
+  color: #ffd36b;
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+}
+
+.sticker-star.on {
+  color: #ffcf3f;
 }
 
 .sticker-cell img {

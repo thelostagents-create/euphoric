@@ -48,6 +48,7 @@ function user(
     lastRead: {},
     dismissedNotifications: [],
     appAccent: "#9b7bff",
+    favoriteStickers: [],
     ...partial,
   };
 }
@@ -109,6 +110,7 @@ const servers: Server[] = [
     invite: "lounge1",
     ownerId: "me",
     discoverable: true,
+    verified: true,
     description: "A cozy place to hang out, share music, and chat about anything.",
     keywords: ["chill", "music", "hangout", "community"],
     channels: [
@@ -187,6 +189,7 @@ const servers: Server[] = [
     invite: "devden",
     ownerId: "nova",
     discoverable: true,
+    verified: false,
     description: "Builders, designers and tinkerers helping each other ship.",
     keywords: ["coding", "programming", "tech", "design", "indie"],
     channels: [

@@ -4,6 +4,8 @@ import { getMember } from "../permissions";
 import { parseInviteCode, serverStars } from "../social";
 import { ServerIcon } from "./ServerIcon";
 
+const VERIFIED = "★verified";
+
 export function Discover() {
   const { state, dispatch } = useStore();
   const [q, setQ] = useState("");
@@ -23,12 +25,15 @@ export function Discover() {
     setInvite("");
   }
 
+  // Only show parties once a tag is picked / search typed (keeps the list light).
+  const active = q.trim() !== "";
   const results = useMemo(() => {
     const query = q.trim().toLowerCase();
+    if (!query) return [];
     return state.servers
       .filter((s) => s.discoverable)
       .filter((s) => {
-        if (!query) return true;
+        if (query === VERIFIED) return s.verified;
         return (
           s.name.toLowerCase().includes(query) ||
           s.description.toLowerCase().includes(query) ||
@@ -73,6 +78,13 @@ export function Discover() {
           placeholder="Search partys by keyword…"
         />
         <div className="chips">
+          <button
+            className={`chip ${q === VERIFIED ? "accent" : ""}`}
+            style={{ fontWeight: 800 }}
+            onClick={() => setQ(q === VERIFIED ? "" : VERIFIED)}
+          >
+            #verified
+          </button>
           {allKeywords.map((k) => (
             <button key={k} className={`chip ${q === k ? "accent" : ""}`} onClick={() => setQ(q === k ? "" : k)}>
               #{k}
@@ -80,7 +92,12 @@ export function Discover() {
           ))}
         </div>
 
-        {results.length === 0 && <div className="center-empty">No partys match “{q}”.</div>}
+        {!active && (
+          <div className="center-empty">Pick a tag or search to find partys.</div>
+        )}
+        {active && results.length === 0 && (
+          <div className="center-empty">No partys match {q === VERIFIED ? "#verified" : `“${q}”`}.</div>
+        )}
 
         {results.map((s) => {
           const joined = !!getMember(s, state.currentUserId);
@@ -103,7 +120,10 @@ export function Discover() {
                   <ServerIcon server={s} size={26} />
                 </span>
                 <div style={{ flex: 1 }}>
-                  <h3>{s.name}</h3>
+                  <h3>
+                    {s.name}
+                    {s.verified && <span style={{ color: "var(--accent)", marginLeft: 5 }} title="Verified">✓</span>}
+                  </h3>
                   <div className="muted" style={{ fontSize: 12 }}>
                     {s.members.length} members{serverStars(state, s.id) > 0 ? ` · ${serverStars(state, s.id)} ⭐` : ""}
                   </div>

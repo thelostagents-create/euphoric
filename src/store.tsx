@@ -39,6 +39,7 @@ type Action =
   | { type: "COMPLETE_ONBOARDING"; serverId: string }
   | { type: "ADD_STICKER"; serverId: string; url: string }
   | { type: "REMOVE_STICKER"; serverId: string; index: number }
+  | { type: "TOGGLE_FAVORITE_STICKER"; url: string }
   | { type: "MOVE_CHANNEL"; serverId: string; channelId: string; dir: -1 | 1 }
   | { type: "DELETE_CHANNEL"; serverId: string; channelId: string }
   | { type: "CREATE_SERVER"; name: string; icon: string; iconImage?: string }
@@ -339,6 +340,7 @@ function reducer(state: AppState, action: Action): AppState {
           { userId: "automod", roleIds: [everyoneRole.id, automodRole.id] },
         ],
         discoverable: false,
+        verified: false,
         description: "",
         keywords: [],
         blockedWords: [],
@@ -768,6 +770,14 @@ function reducer(state: AppState, action: Action): AppState {
       };
     }
 
+    case "TOGGLE_FAVORITE_STICKER": {
+      const u = state.users[me];
+      const favs = u.favoriteStickers.includes(action.url)
+        ? u.favoriteStickers.filter((x) => x !== action.url)
+        : [...u.favoriteStickers, action.url];
+      return { ...state, users: { ...state.users, [me]: { ...u, favoriteStickers: favs } } };
+    }
+
     case "UPDATE_DISCOVERY": {
       return {
         ...state,
@@ -806,6 +816,7 @@ function migrate(state: AppState): AppState {
         lastRead: u.lastRead ?? {},
         dismissedNotifications: u.dismissedNotifications ?? [],
         appAccent: u.appAccent ?? "#9b7bff",
+        favoriteStickers: u.favoriteStickers ?? [],
         aesthetic: {
           enabled: false,
           title: "",
@@ -834,6 +845,7 @@ function migrate(state: AppState): AppState {
     ...s,
     iconImage: s.iconImage ?? "",
     invite: s.invite ?? newInviteCode(state.servers),
+    verified: s.verified ?? false,
     blockedWords: s.blockedWords ?? [],
     auditLog: s.auditLog ?? [],
     onboarding: s.onboarding ?? { enabled: false, cosmeticRoleIds: [] },
