@@ -105,6 +105,10 @@ export interface User {
   starAllocations: Record<string, number>;
   /** Server ids whose onboarding this user has completed. */
   onboarded: string[];
+  /** Last-read timestamp per channel/DM/group id. */
+  lastRead: Record<string, string>;
+  /** Personal app accent color. */
+  appAccent: string;
 }
 
 export interface Role {
@@ -154,6 +158,8 @@ export interface Message {
   /** Id of the message this one replies to. */
   replyTo?: string;
   pinned?: boolean;
+  /** Set when the message has been edited. */
+  editedAt?: string;
 }
 
 export interface AuditEntry {

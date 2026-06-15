@@ -17,7 +17,7 @@ import { OnboardingModal } from "./Onboarding";
 import { allowSend } from "../ratelimit";
 import { ReplyPreview, ReplyBar } from "./Reply";
 import { PersonIcon, SettingsIcon, ReplyArrowIcon, XIcon } from "./Icons";
-import { displayName, serverStars } from "../social";
+import { displayName, serverStars, isUnread, serverUnread } from "../social";
 import type { ChatNav } from "../App";
 
 export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled?: () => void }) {
@@ -30,6 +30,8 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
   const [showMembers, setShowMembers] = useState(false);
   const [notice, setNotice] = useState("");
   const [obDismissed, setObDismissed] = useState<Set<string>>(new Set());
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState("");
 
   const myServers = useMemo(
     () =>
@@ -75,6 +77,11 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
     if (highlight) return; // don't yank to the bottom while jumping to a mention
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages.length, channel?.id, highlight]);
+
+  // Mark the open channel read.
+  useEffect(() => {
+    if (channel) dispatch({ type: "MARK_READ", channelId: channel.id });
+  }, [channel?.id, messages.length]);
 
   // Open the server/channel of a tapped notification and highlight the message.
   useEffect(() => {
@@ -192,9 +199,10 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
             className={`rail-icon ${s.id === server.id ? "active" : ""}`}
             onClick={() => setServerId(s.id)}
             title={s.name}
-            style={s.iconImage ? { overflow: "hidden", padding: 0 } : undefined}
+            style={{ position: "relative", ...(s.iconImage ? { overflow: "visible", padding: 0 } : {}) }}
           >
             <ServerIcon server={s} />
+            {serverUnread(state, state.currentUserId, s) && <span className="unread-dot" />}
           </button>
         ))}
         <button className="rail-icon add" onClick={() => setShowCreate(true)} title="Create a server">
@@ -256,6 +264,7 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
               onClick={() => setChannelId(c.id)}
             >
               # {c.name}
+              {c.id !== channel.id && isUnread(state, state.currentUserId, c.id) && <span className="chan-dot" />}
             </button>
           ))}
           <button className="channel" style={{ width: "auto", flex: "0 0 auto" }} onClick={createChannel}>
@@ -324,16 +333,44 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
                       )}
                     </span>
                   </div>
-                  {m.content && (
-                    <div className="content">
-                      <MessageText
-                        content={m.content}
-                        users={state.users}
-                        meId={state.currentUserId}
-                        roles={mentionableRoles}
-                        myRoleIds={myRoleIds}
+                  {editingId === m.id ? (
+                    <div className="row" style={{ gap: 8, marginTop: 4 }}>
+                      <input
+                        value={editDraft}
+                        autoFocus
+                        onChange={(e) => setEditDraft(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            dispatch({ type: "EDIT_MESSAGE", messageId: m.id, content: editDraft });
+                            setEditingId(null);
+                          }
+                          if (e.key === "Escape") setEditingId(null);
+                        }}
                       />
+                      <button
+                        className="btn sm"
+                        onClick={() => {
+                          dispatch({ type: "EDIT_MESSAGE", messageId: m.id, content: editDraft });
+                          setEditingId(null);
+                        }}
+                      >
+                        Save
+                      </button>
+                      <button className="btn ghost sm" onClick={() => setEditingId(null)}>Cancel</button>
                     </div>
+                  ) : (
+                    m.content && (
+                      <div className="content">
+                        <MessageText
+                          content={m.content}
+                          users={state.users}
+                          meId={state.currentUserId}
+                          roles={mentionableRoles}
+                          myRoleIds={myRoleIds}
+                        />
+                        {m.editedAt && <span className="muted" style={{ fontSize: 11 }}> (edited)</span>}
+                      </div>
+                    )
                   )}
                   {m.attachment && <MessageAttachment attachment={m.attachment} />}
                   <ReactionChips message={m} />
@@ -413,6 +450,15 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
           onReply={() => setReplyTo(reactFor)}
           onPin={canPin ? () => dispatch({ type: "TOGGLE_PIN", messageId: reactFor }) : undefined}
           pinned={messages.find((m) => m.id === reactFor)?.pinned}
+          onEdit={
+            messages.find((m) => m.id === reactFor)?.authorId === state.currentUserId
+              ? () => {
+                  const msg = messages.find((m) => m.id === reactFor);
+                  setEditDraft(msg?.content ?? "");
+                  setEditingId(reactFor);
+                }
+              : undefined
+          }
           onClose={() => setReactFor(null)}
         />
       )}

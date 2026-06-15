@@ -430,7 +430,28 @@ textarea:focus {
   margin-left: auto;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 2px;
+}
+
+.unread-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--accent-2);
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  border: 2px solid var(--bg);
+}
+
+.chan-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent-2);
+  display: inline-block;
+  margin-left: 6px;
+  vertical-align: middle;
 }
 
 .msg-delete {

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useStore } from "../store";
-import { areFriends, displayName, dmChannelId, friendsOf, mentionsOf, userByName } from "../social";
+import { areFriends, displayName, dmChannelId, friendsOf, isUnread, mentionsOf, userByName } from "../social";
 import { timeAgo } from "./Modal";
 import { MessageText, MessageAttachment } from "./MessageText";
 import { AttachButton } from "./AttachButton";
@@ -44,11 +44,12 @@ export function Friends({
       [...state.messages].reverse().find((x) => x.channelId === channelId);
 
     type Convo =
-      | { kind: "dm"; key: string; id: string; title: string; avatar: string; preview: string; time?: string }
-      | { kind: "group"; key: string; id: string; title: string; group: GroupChat; preview: string; time?: string };
+      | { kind: "dm"; key: string; id: string; title: string; avatar: string; preview: string; time?: string; unread: boolean }
+      | { kind: "group"; key: string; id: string; title: string; group: GroupChat; preview: string; time?: string; unread: boolean };
 
     const dmConvos: Convo[] = friends.map((f) => {
-      const last = lastIn(dmChannelId(me.id, f.id));
+      const cid = dmChannelId(me.id, f.id);
+      const last = lastIn(cid);
       return {
         kind: "dm",
         key: `dm-${f.id}`,
@@ -57,6 +58,7 @@ export function Friends({
         avatar: f.avatar,
         preview: preview(last, "Say hi 👋"),
         time: last?.createdAt,
+        unread: isUnread(state, me.id, cid),
       };
     });
 
@@ -70,6 +72,7 @@ export function Friends({
         group: g,
         preview: preview(last, `${g.memberIds.length} members`),
         time: last?.createdAt,
+        unread: isUnread(state, me.id, g.id),
       };
     });
 
@@ -158,7 +161,10 @@ export function Friends({
                   <GroupAvatar group={c.group} />
                 )}
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontWeight: 700 }}>{c.title}</div>
+                  <div style={{ fontWeight: 700 }}>
+                    {c.title}
+                    {c.unread && <span className="chan-dot" />}
+                  </div>
                   <div className="muted" style={{ fontSize: 12, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {c.preview}
                   </div>
@@ -232,6 +238,10 @@ function DmView({ friendId, onBack }: { friendId: string; onBack: () => void }) 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages.length]);
+
+  useEffect(() => {
+    dispatch({ type: "MARK_READ", channelId });
+  }, [channelId, messages.length]);
 
   function send() {
     if (!draft.trim() || blocked || !allowSend()) return;

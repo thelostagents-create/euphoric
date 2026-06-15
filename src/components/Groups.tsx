@@ -194,6 +194,10 @@ export function GroupView({ groupId, onBack }: { groupId: string; onBack: () => 
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages.length]);
 
+  useEffect(() => {
+    dispatch({ type: "MARK_READ", channelId: groupId });
+  }, [groupId, messages.length]);
+
   if (!group) {
     onBack();
     return null;

@@ -1,5 +1,21 @@
 import type { AppState, Server, Tier, User } from "./types";
-import { can } from "./permissions";
+import { can, canViewChannel } from "./permissions";
+
+/** Whether a channel/DM/group has messages newer than the user last read it. */
+export function isUnread(state: AppState, userId: string, channelId: string): boolean {
+  const last = state.users[userId]?.lastRead[channelId];
+  const lastMs = last ? new Date(last).getTime() : 0;
+  return state.messages.some(
+    (m) => m.channelId === channelId && m.authorId !== userId && new Date(m.createdAt).getTime() > lastMs,
+  );
+}
+
+/** Whether any visible channel in the server is unread. */
+export function serverUnread(state: AppState, userId: string, server: Server): boolean {
+  return server.channels.some(
+    (c) => canViewChannel(server, userId, c) && isUnread(state, userId, c.id),
+  );
+}
 
 /** Total Stars a member of a given tier is granted to spend. */
 export function starCapacity(tier: Tier): number {

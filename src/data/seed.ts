@@ -45,6 +45,8 @@ function user(
     following: [],
     starAllocations: {},
     onboarded: [],
+    lastRead: {},
+    appAccent: "#9b7bff",
     ...partial,
   };
 }

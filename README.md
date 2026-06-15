@@ -23,8 +23,11 @@ iOS port come in later passes.
   on lower-ranked members; nobody can act on the owner).
 - **Moderation** — kick, ban, and timeout members from a user's profile sheet.
   Timed-out users can't send messages.
-- **Messages** — delete your own messages; members with the *Delete Messages*
-  permission can delete anyone's.
+- **Messages** — edit and delete your own messages (edited messages are
+  tagged); members with the *Delete Messages* permission can delete anyone's.
+- **Unread indicators** — dots on servers, channels, and conversations with
+  new messages, cleared when you open them.
+- **App accent** — pick your own app accent color (with hex) in Settings.
 - **Block feature** — blocked users' messages and avatars are blurred (tap
   "reveal" to peek), and they can no longer contact you.
 - **Unique usernames + nicknames** — each username can be claimed by only one

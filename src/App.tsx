@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useStore } from "./store";
 import { Chat } from "./components/Chat";
 import { Friends } from "./components/Friends";
 import { Discover } from "./components/Discover";
@@ -24,8 +25,15 @@ const TABS: { id: Tab; icon: (p: { size?: number }) => JSX.Element; label: strin
 ];
 
 export function App() {
+  const { state } = useStore();
   const [tab, setTab] = useState<Tab>("chat");
   const [nav, setNav] = useState<ChatNav | null>(null);
+
+  // Apply the user's chosen app accent color.
+  const accent = state.users[state.currentUserId]?.appAccent;
+  useEffect(() => {
+    if (accent) document.documentElement.style.setProperty("--accent", accent);
+  }, [accent]);
 
   return (
     <div className="app">

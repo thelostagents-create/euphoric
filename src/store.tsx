@@ -28,6 +28,9 @@ const STORAGE_KEY = "euphoric.state.v1";
 type Action =
   | { type: "SEND_MESSAGE"; channelId: string; content: string; attachment?: Attachment; replyTo?: string }
   | { type: "DELETE_MESSAGE"; messageId: string }
+  | { type: "EDIT_MESSAGE"; messageId: string; content: string }
+  | { type: "MARK_READ"; channelId: string }
+  | { type: "SET_ACCENT"; color: string }
   | { type: "TOGGLE_PIN"; messageId: string }
   | { type: "TOGGLE_REACTION"; messageId: string; emoji: string }
   | { type: "SET_BLOCKED_WORDS"; serverId: string; words: string[] }
@@ -159,6 +162,32 @@ function reducer(state: AppState, action: Action): AppState {
         ...state,
         messages: state.messages.filter((m) => m.id !== action.messageId),
       };
+    }
+
+    case "EDIT_MESSAGE": {
+      const content = action.content.trim();
+      if (!content) return state;
+      return {
+        ...state,
+        messages: state.messages.map((m) =>
+          m.id === action.messageId && m.authorId === me
+            ? { ...m, content, editedAt: new Date().toISOString() }
+            : m,
+        ),
+      };
+    }
+
+    case "MARK_READ": {
+      const u = state.users[me];
+      return {
+        ...state,
+        users: { ...state.users, [me]: { ...u, lastRead: { ...u.lastRead, [action.channelId]: new Date().toISOString() } } },
+      };
+    }
+
+    case "SET_ACCENT": {
+      const u = state.users[me];
+      return { ...state, users: { ...state.users, [me]: { ...u, appAccent: action.color } } };
     }
 
     case "TOGGLE_PIN": {
@@ -738,6 +767,8 @@ function migrate(state: AppState): AppState {
         following: u.following ?? [],
         starAllocations: u.starAllocations ?? {},
         onboarded: u.onboarded ?? [],
+        lastRead: u.lastRead ?? {},
+        appAccent: u.appAccent ?? "#9b7bff",
         aesthetic: {
           enabled: false,
           title: "",

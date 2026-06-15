@@ -62,6 +62,24 @@ export function AccountSettings() {
 
   return (
     <>
+      <div className="section-title">Appearance</div>
+      <div className="card">
+        <label className="muted" style={{ fontSize: 12, fontWeight: 600 }}>App accent color</label>
+        <div className="row" style={{ gap: 8, marginTop: 6 }}>
+          <input
+            type="color"
+            className="swatch"
+            value={user.appAccent}
+            onChange={(e) => dispatch({ type: "SET_ACCENT", color: e.target.value })}
+          />
+          <input
+            value={user.appAccent}
+            placeholder="#9b7bff"
+            onChange={(e) => dispatch({ type: "SET_ACCENT", color: e.target.value })}
+          />
+        </div>
+      </div>
+
       <div className="section-title" id="subscription-section">Subscription</div>
       {TIERS.map((t) => {
         const active = user.tier === t.id;
