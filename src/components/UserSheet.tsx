@@ -2,6 +2,7 @@ import { useStore } from "../store";
 import { Modal, bannerStyle, tierBadge } from "./Modal";
 import { canModerate, getMember, isTimedOut } from "../permissions";
 import { areFriends, displayName } from "../social";
+import { AestheticProfile } from "./AestheticProfile";
 import type { Server } from "../types";
 
 export function UserSheet({
@@ -34,50 +35,59 @@ export function UserSheet({
   const member = server && getMember(server, userId);
   const timedOut = isTimedOut(member);
 
+  const aesthetic = user.aesthetic.enabled && supernova;
+
   return (
     <Modal title="" onClose={onClose}>
-      <div
-        style={{
-          background: theme.backgroundColor,
-          borderRadius: 16,
-          overflow: "hidden",
-          textAlign: "center",
-          marginBottom: 14,
-          color: theme.textColor,
-        }}
-      >
-        <div style={{ height: 110, ...bannerStyle(user) }} />
-        <div style={{ padding: "0 20px 20px" }}>
-        <img
-          src={user.avatar}
-          alt=""
-          style={{
-            width: 88,
-            height: 88,
-            borderRadius: "50%",
-            objectFit: "cover",
-            border: `3px solid ${theme.accentColor}`,
-            marginTop: -44,
-          }}
-        />
+      {aesthetic ? (
+        <div style={{ marginBottom: 14 }}>
+          <AestheticProfile user={user} />
+          <div style={{ textAlign: "center", marginTop: 8 }}>{tierBadge(user.tier)}</div>
+        </div>
+      ) : (
         <div
           style={{
-            fontSize: 24,
-            fontWeight: 800,
-            marginTop: 10,
-            fontFamily: supernova ? user.theme.usernameFont : "inherit",
-            color: theme.accentColor,
+            background: theme.backgroundColor,
+            borderRadius: 16,
+            overflow: "hidden",
+            textAlign: "center",
+            marginBottom: 14,
+            color: theme.textColor,
           }}
         >
-          {displayName(user)}
+          <div style={{ height: 110, ...bannerStyle(user) }} />
+          <div style={{ padding: "0 20px 20px" }}>
+            <img
+              src={user.avatar}
+              alt=""
+              style={{
+                width: 88,
+                height: 88,
+                borderRadius: "50%",
+                objectFit: "cover",
+                border: `3px solid ${theme.accentColor}`,
+                marginTop: -44,
+              }}
+            />
+            <div
+              style={{
+                fontSize: 24,
+                fontWeight: 800,
+                marginTop: 10,
+                fontFamily: supernova ? user.theme.usernameFont : "inherit",
+                color: theme.accentColor,
+              }}
+            >
+              {displayName(user)}
+            </div>
+            <div className="muted" style={{ fontSize: 13, marginTop: 2 }}>@{user.username}</div>
+            <div style={{ marginTop: 4 }}>{tierBadge(user.tier)}</div>
+            {user.bio && (
+              <p style={{ marginTop: 12, fontSize: 14, lineHeight: 1.5, opacity: 0.92 }}>{user.bio}</p>
+            )}
+          </div>
         </div>
-        <div className="muted" style={{ fontSize: 13, marginTop: 2 }}>@{user.username}</div>
-        <div style={{ marginTop: 4 }}>{tierBadge(user.tier)}</div>
-        {user.bio && (
-          <p style={{ marginTop: 12, fontSize: 14, lineHeight: 1.5, opacity: 0.92 }}>{user.bio}</p>
-        )}
-        </div>
-      </div>
+      )}
 
       {user.blurb && (
         <div className="blurb-block" style={{ color: user.blurbColor }}>{user.blurb}</div>

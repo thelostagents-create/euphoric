@@ -3,6 +3,7 @@ import { useStore } from "../store";
 import { bannerStyle, tierBadge } from "./Modal";
 import { displayName, usernameTaken } from "../social";
 import { ImagePicker } from "./ImagePicker";
+import { AestheticProfile } from "./AestheticProfile";
 
 const FONTS = [
   { label: "Default", value: "system-ui" },
@@ -20,6 +21,17 @@ export function Profile({ onManageSubscription }: { onManageSubscription: () => 
 
   const showTheme = canCustomize;
   const theme = user.theme;
+  const a = user.aesthetic;
+
+  function setAesthetic(patch: Partial<typeof a>) {
+    dispatch({ type: "UPDATE_AESTHETIC", patch });
+  }
+  function setGalleryAt(i: number, url: string) {
+    const g = [...a.gallery];
+    while (g.length < 6) g.push("");
+    g[i] = url;
+    setAesthetic({ gallery: g });
+  }
 
   // Usernames are unique and claimed explicitly.
   const [nameDraft, setNameDraft] = useState(user.username);
@@ -250,6 +262,96 @@ export function Profile({ onManageSubscription }: { onManageSubscription: () => 
             </div>
           </div>
         )}
+
+        <div className="section-title">Aesthetic Avatars</div>
+        {!canCustomize ? (
+          <div className="card">
+            <p className="desc" style={{ margin: 0 }}>
+              Aesthetic Avatars — a custom, fill-in profile card — is a <b>Supernova</b> feature.
+            </p>
+          </div>
+        ) : (
+          <div className="card">
+            <div className="row" style={{ justifyContent: "space-between", marginBottom: 12 }}>
+              <div>
+                <div style={{ fontWeight: 700 }}>Aesthetic profile</div>
+                <div className="muted" style={{ fontSize: 12 }}>Replace your profile with a custom card.</div>
+              </div>
+              <button
+                className={`toggle ${a.enabled ? "on" : ""}`}
+                onClick={() => setAesthetic({ enabled: !a.enabled })}
+              />
+            </div>
+
+            {a.enabled && (
+              <>
+                <div style={{ marginBottom: 12 }}>
+                  <AestheticProfile user={user} />
+                </div>
+
+                <div className="field">
+                  <label>Title</label>
+                  <input value={a.title} placeholder="your space ✨" onChange={(e) => setAesthetic({ title: e.target.value })} />
+                </div>
+
+                <div className="row" style={{ gap: 12 }}>
+                  <HexField label="Background" value={a.bgColor} onChange={(v) => setAesthetic({ bgColor: v })} />
+                  <HexField label="Card" value={a.cardColor} onChange={(v) => setAesthetic({ cardColor: v })} />
+                </div>
+                <div className="row" style={{ gap: 12, marginTop: 8 }}>
+                  <HexField label="Accent" value={a.accentColor} onChange={(v) => setAesthetic({ accentColor: v })} />
+                  <HexField label="Text" value={a.textColor} onChange={(v) => setAesthetic({ textColor: v })} />
+                </div>
+
+                <div className="field" style={{ marginTop: 12 }}>
+                  <label>Likes</label>
+                  <input value={a.likes} onChange={(e) => setAesthetic({ likes: e.target.value })} />
+                </div>
+                <div className="field">
+                  <label>Dislikes</label>
+                  <input value={a.dislikes} onChange={(e) => setAesthetic({ dislikes: e.target.value })} />
+                </div>
+                <div className="field">
+                  <label>Before you follow</label>
+                  <textarea rows={2} value={a.beforeFollow} onChange={(e) => setAesthetic({ beforeFollow: e.target.value })} />
+                </div>
+                <div className="field">
+                  <label>Do not follow if…</label>
+                  <textarea rows={2} value={a.doNotFollow} onChange={(e) => setAesthetic({ doNotFollow: e.target.value })} />
+                </div>
+
+                <div className="field">
+                  <label>Gallery images (up to 6)</label>
+                  {[0, 1, 2, 3, 4, 5].map((i) => (
+                    <div key={i} style={{ marginBottom: 6 }}>
+                      <ImagePicker value={a.gallery[i] ?? ""} placeholder={`image ${i + 1}`} onChange={(v) => setGalleryAt(i, v)} />
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function HexField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div style={{ flex: 1, minWidth: 0 }}>
+      <div className="muted" style={{ fontSize: 11, marginBottom: 4, fontWeight: 600 }}>{label}</div>
+      <div className="row" style={{ gap: 6 }}>
+        <input type="color" className="swatch" value={value} onChange={(e) => onChange(e.target.value)} />
+        <input value={value} placeholder="#aabbcc" onChange={(e) => onChange(e.target.value)} />
       </div>
     </div>
   );

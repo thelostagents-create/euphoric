@@ -7,6 +7,7 @@ import {
   type ReactNode,
 } from "react";
 import type {
+  Aesthetic,
   AppState,
   Attachment,
   GroupChat,
@@ -43,6 +44,7 @@ type Action =
   | { type: "MOVE_ROLE"; serverId: string; roleId: string; dir: -1 | 1 }
   | { type: "UPDATE_THEME"; theme: Partial<ProfileTheme> }
   | { type: "UPDATE_BANNER"; color?: string; image?: string; position?: number }
+  | { type: "UPDATE_AESTHETIC"; patch: Partial<Aesthetic> }
   | { type: "SET_TIER"; tier: Tier }
   | { type: "TOGGLE_BLOCK"; userId: string }
   | { type: "TOGGLE_FOLLOW"; userId: string }
@@ -385,6 +387,17 @@ function reducer(state: AppState, action: Action): AppState {
       };
     }
 
+    case "UPDATE_AESTHETIC": {
+      const u = state.users[me];
+      const patch = { ...action.patch };
+      // Only supernova members may turn it on.
+      if (patch.enabled && u.tier !== "supernova") patch.enabled = false;
+      return {
+        ...state,
+        users: { ...state.users, [me]: { ...u, aesthetic: { ...u.aesthetic, ...patch } } },
+      };
+    }
+
     case "SET_TIER": {
       const u = state.users[me];
       return { ...state, users: { ...state.users, [me]: { ...u, tier: action.tier } } };
@@ -724,6 +737,19 @@ function migrate(state: AppState): AppState {
         following: u.following ?? [],
         starAllocations: u.starAllocations ?? {},
         onboarded: u.onboarded ?? [],
+        aesthetic: u.aesthetic ?? {
+          enabled: false,
+          title: "",
+          bgColor: "#dfe9d6",
+          cardColor: "#ffffff",
+          accentColor: "#a9c49a",
+          textColor: "#4a5a44",
+          likes: "",
+          dislikes: "",
+          beforeFollow: "",
+          doNotFollow: "",
+          gallery: [],
+        },
       },
     ]),
   );

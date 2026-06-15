@@ -55,6 +55,25 @@ export interface Banner {
   position: number;
 }
 
+/**
+ * "Aesthetic avatars" — a customizable profile-card layout (Supernova only).
+ * Banner/avatar come from the main profile; everything else is freeform.
+ */
+export interface Aesthetic {
+  enabled: boolean;
+  title: string;
+  bgColor: string;
+  cardColor: string;
+  accentColor: string;
+  textColor: string;
+  likes: string;
+  dislikes: string;
+  beforeFollow: string;
+  doNotFollow: string;
+  /** Up to 6 gallery image urls/data-urls. */
+  gallery: string[];
+}
+
 export interface User {
   id: string;
   /** Unique handle used for @mentions and friend-adds. */
@@ -70,6 +89,7 @@ export interface User {
   tier: Tier;
   banner: Banner;
   theme: ProfileTheme;
+  aesthetic: Aesthetic;
   /** User ids this user has blocked. */
   blockedUserIds: string[];
   /** User ids this user follows. A mutual follow = friends. */

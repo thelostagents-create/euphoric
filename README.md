@@ -63,6 +63,9 @@ iOS port come in later passes.
   marks members who've lent a ⭐ Star.
 - **Profile blurb** — a short, color-customizable status shown as a translucent
   block on your profile.
+- **Aesthetic Avatars (Supernova)** — an optional custom profile card with
+  fill-in boxes (likes/dislikes, before-you-follow, do-not-follow), an image
+  gallery, and hex-code color theming, reusing your main avatar + banner.
 - **Server boosts (⭐ Stars)** — Premium members get 1 Star, Supernova members
   get 2, to spend across servers. A server's Star count shows as a tappable
   pill in the chat header — tap it to lend a Star. At **3 ⭐** a server unlocks
