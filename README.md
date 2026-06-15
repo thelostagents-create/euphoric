@@ -125,9 +125,40 @@ src/
     Modal.tsx         # shared modal + helpers
 ```
 
-## Notes / next steps
+## Backend (Supabase) — full-stack MVP
+
+The app runs in **local demo mode** out of the box (state in `localStorage`).
+Point it at a Supabase project to turn on real accounts and (incrementally)
+real-time multi-user data.
+
+**Setup**
+
+1. Create a free project at [supabase.com](https://supabase.com).
+2. In the **SQL editor**, run `supabase/migrations/0001_init.sql` (full schema +
+   row-level security + an auto-create-profile trigger).
+3. Auth → Providers: enable **Email** (and Apple later for iOS).
+4. Database → Replication: enable Realtime for the tables you want live
+   (`messages`, `members`, `channels`, …).
+5. Copy `.env.example` to `.env.local` and fill in **Project URL** and **anon
+   key** (Project Settings → API).
+6. `npm run dev`. With keys present you'll get a **login/sign-up screen**;
+   without them it stays in demo mode. (Set the same two vars as repo secrets /
+   build env for the deployed build.)
+
+**Migration status (staged — "migrate everything")**
+
+- ✅ Phase 1 (this pass): database schema for the whole model, row-level
+  security, the Supabase client, **email auth** with a gate (+ "demo mode"
+  escape hatch), and a profile row auto-created on sign-up.
+- ⏳ Next: back profiles, parties/lounges/roles/members and **live messages**
+  with the DB + realtime; then DMs/groups, follows/blocks, stars, stickers,
+  automod, audit log, onboarding.
+
+The data layer is being moved behind `src/lib/supabase.ts` so each feature's
+reads/writes swap from the local reducer to Supabase queries + realtime
+subscriptions without changing the UI components.
+
+## Notes
 
 - Payments are stubbed (no charge). Real money flows through **Apple In-App
   Purchase** in the native build.
-- No real-time backend yet — messages live in local state. A future pass adds
-  auth, a database, and websockets.
