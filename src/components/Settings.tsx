@@ -12,7 +12,7 @@ const TIERS: {
     id: "free",
     name: "Free",
     price: "$0",
-    perks: ["Partys, lounges & roles", "Profile colors & static banner", "Join unlimited partys"],
+    perks: ["Parties, lounges & roles", "Profile colors & static banner", "Join unlimited parties"],
   },
   {
     id: "premium",
@@ -32,7 +32,7 @@ const TIERS: {
     perks: [
       "Everything in Premium",
       "Aesthetic Avatars profiles",
-      "2 ⭐ Stars to spend on partys",
+      "2 ⭐ Stars to spend on parties",
     ],
   },
 ];

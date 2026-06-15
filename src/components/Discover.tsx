@@ -75,7 +75,7 @@ export function Discover() {
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Search partys by keyword…"
+          placeholder="Search parties by keyword…"
         />
         <div className="chips">
           <button
@@ -93,10 +93,10 @@ export function Discover() {
         </div>
 
         {!active && (
-          <div className="center-empty">Pick a tag or search to find partys.</div>
+          <div className="center-empty">Pick a tag or search to find parties.</div>
         )}
         {active && results.length === 0 && (
-          <div className="center-empty">No partys match {q === VERIFIED ? "#verified" : `“${q}”`}.</div>
+          <div className="center-empty">No parties match {q === VERIFIED ? "#verified" : `“${q}”`}.</div>
         )}
 
         {results.map((s) => {

@@ -145,6 +145,13 @@ export interface Member {
   banned?: boolean;
 }
 
+export interface ForumPost {
+  id: string;
+  title: string;
+  authorId: string;
+  createdAt: string;
+}
+
 export interface Channel {
   id: string;
   name: string;
@@ -152,6 +159,9 @@ export interface Channel {
   sendRoleIds: string[];
   /** Role ids allowed to see the channel. Empty = everyone can see. */
   viewRoleIds: string[];
+  /** Forum-style channel: holds posts (sub-threads) instead of a flat feed. */
+  forum?: boolean;
+  posts?: ForumPost[];
 }
 
 export interface Attachment {

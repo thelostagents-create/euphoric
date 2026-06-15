@@ -20,7 +20,7 @@ import type {
 } from "./types";
 import { seedState } from "./data/seed";
 import { can, canModerate } from "./permissions";
-import { isGif, serverStars, starsAvailable, usernameTaken } from "./social";
+import { DEFAULT_STICKERS, isGif, serverStars, starsAvailable, usernameTaken } from "./social";
 import { BOOST_ANIMATED_ICON, BOOST_CUSTOM_INVITE, BOOST_STICKERS, MAX_STICKERS } from "./types";
 
 const STORAGE_KEY = "euphoric.state.v1";
@@ -41,6 +41,7 @@ type Action =
   | { type: "SET_ONBOARDING"; serverId: string; enabled: boolean; cosmeticRoleIds: string[] }
   | { type: "COMPLETE_ONBOARDING"; serverId: string }
   | { type: "ADD_STICKER"; serverId: string; url: string }
+  | { type: "SET_STICKER"; serverId: string; index: number; url: string }
   | { type: "REMOVE_STICKER"; serverId: string; index: number }
   | { type: "TOGGLE_FAVORITE_STICKER"; url: string }
   | { type: "MOVE_CHANNEL"; serverId: string; channelId: string; dir: -1 | 1 }
@@ -52,6 +53,8 @@ type Action =
   | { type: "SET_CHANNEL_SEND_ROLES"; serverId: string; channelId: string; roleIds: string[] }
   | { type: "SET_CHANNEL_VIEW_ROLES"; serverId: string; channelId: string; roleIds: string[] }
   | { type: "MOVE_ROLE"; serverId: string; roleId: string; dir: -1 | 1 }
+  | { type: "SET_CHANNEL_FORUM"; serverId: string; channelId: string; forum: boolean }
+  | { type: "CREATE_POST"; serverId: string; channelId: string; id: string; title: string }
   | { type: "UPDATE_THEME"; theme: Partial<ProfileTheme> }
   | { type: "UPDATE_BANNER"; color?: string; image?: string; position?: number }
   | { type: "UPDATE_AESTHETIC"; patch: Partial<Aesthetic> }
@@ -306,6 +309,35 @@ function reducer(state: AppState, action: Action): AppState {
       };
     }
 
+    case "SET_CHANNEL_FORUM": {
+      const server = state.servers.find((s) => s.id === action.serverId);
+      if (!server || !can(server, me, "MANAGE_CHANNELS")) return state;
+      return {
+        ...state,
+        servers: mapServer(state, action.serverId, (s) => ({
+          ...s,
+          channels: s.channels.map((c) =>
+            c.id === action.channelId ? { ...c, forum: action.forum, posts: c.posts ?? [] } : c,
+          ),
+        })),
+      };
+    }
+
+    case "CREATE_POST": {
+      const title = action.title.trim();
+      if (!title) return state;
+      const post = { id: action.id, title, authorId: me, createdAt: new Date().toISOString() };
+      return {
+        ...state,
+        servers: mapServer(state, action.serverId, (s) => ({
+          ...s,
+          channels: s.channels.map((c) =>
+            c.id === action.channelId ? { ...c, posts: [post, ...(c.posts ?? [])] } : c,
+          ),
+        })),
+      };
+    }
+
     case "MOVE_ROLE": {
       return {
         ...state,
@@ -383,7 +415,7 @@ function reducer(state: AppState, action: Action): AppState {
         blockedWords: [],
         auditLog: [],
         onboarding: { enabled: false, cosmeticRoleIds: [] },
-        stickers: [],
+        stickers: [...DEFAULT_STICKERS],
       };
       return { ...state, servers: [...state.servers, server] };
     }
@@ -648,7 +680,10 @@ function reducer(state: AppState, action: Action): AppState {
       return {
         ...state,
         servers: mapServer(state, action.serverId, (s) => {
-          const position = Math.max(0, ...s.roles.map((r) => r.position)) + 10;
+          // New roles join at the bottom of the hierarchy (just above @everyone,
+          // which sits at position 0).
+          const others = s.roles.filter((r) => r.name !== "@everyone").map((r) => r.position);
+          const position = others.length ? Math.min(...others) / 2 : 10;
           return { ...s, roles: [...s.roles, { ...action.role, id: id("r"), position }] };
         }),
       };
@@ -795,9 +830,25 @@ function reducer(state: AppState, action: Action): AppState {
       };
     }
 
-    case "REMOVE_STICKER": {
+    // Replace a sticker. The first 3 (starters) are always editable; slots
+    // beyond that need the boost.
+    case "SET_STICKER": {
       const server = state.servers.find((s) => s.id === action.serverId);
       if (!server || !can(server, me, "MANAGE_SERVER")) return state;
+      if (action.index >= 3 && serverStars(state, action.serverId) < BOOST_STICKERS) return state;
+      return {
+        ...state,
+        servers: mapServer(state, action.serverId, (s) => ({
+          ...s,
+          stickers: s.stickers.map((v, i) => (i === action.index ? action.url : v)),
+        })),
+      };
+    }
+
+    case "REMOVE_STICKER": {
+      const server = state.servers.find((s) => s.id === action.serverId);
+      // Starter stickers (0-2) stay; only uploaded ones can be removed.
+      if (!server || !can(server, me, "MANAGE_SERVER") || action.index < 3) return state;
       return {
         ...state,
         servers: mapServer(state, action.serverId, (s) => ({
@@ -889,7 +940,10 @@ function migrate(state: AppState): AppState {
     blockedWords: s.blockedWords ?? [],
     auditLog: s.auditLog ?? [],
     onboarding: s.onboarding ?? { enabled: false, cosmeticRoleIds: [] },
-    stickers: s.stickers ?? [],
+    stickers: (() => {
+      const ex = s.stickers ?? [];
+      return ex.length >= 3 ? ex : [...DEFAULT_STICKERS.slice(0, 3 - ex.length), ...ex];
+    })(),
     channels: s.channels.map((c) => ({ ...c, sendRoleIds: c.sendRoleIds ?? [], viewRoleIds: c.viewRoleIds ?? [] })),
     roles: s.roles.map((r) => ({ ...r, mentionable: r.mentionable ?? false })),
   }));

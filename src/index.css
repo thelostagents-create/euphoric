@@ -337,6 +337,15 @@ textarea:focus {
 }
 
 /* ---------- Messages ---------- */
+.forum-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-2);
+}
+
 .messages {
   flex: 1;
   overflow-y: auto;
@@ -610,6 +619,12 @@ textarea:focus {
 
 .composer input {
   border-radius: 20px;
+}
+
+.msg-link {
+  color: var(--accent);
+  text-decoration: underline;
+  word-break: break-all;
 }
 
 .mention {

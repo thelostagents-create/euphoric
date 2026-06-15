@@ -33,10 +33,22 @@ export function MessageText({
   const roleByName = new Map<string, Role>();
   roles.forEach((r) => roleByName.set(r.name.toLowerCase(), r));
 
-  const parts = content.split(/(@\w+)/g);
+  // Split on @mentions and URLs so each can render specially.
+  const parts = content.split(/(@\w+|https?:\/\/[^\s]+)/g);
   return (
     <>
       {parts.map((part, i) => {
+        // URLs: render images inline, other links as clickable anchors.
+        if (/^https?:\/\//.test(part)) {
+          if (/\.(png|jpe?g|gif|webp|avif)(\?[^\s]*)?$/i.test(part)) {
+            return <img key={i} className="attachment" src={part} alt="" />;
+          }
+          return (
+            <a key={i} className="msg-link" href={part} target="_blank" rel="noopener noreferrer">
+              {part}
+            </a>
+          );
+        }
         const m = /^@(\w+)$/.exec(part);
         const token = m?.[1].toLowerCase();
         if (token === "everyone" || token === "staff") {

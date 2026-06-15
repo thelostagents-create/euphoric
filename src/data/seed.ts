@@ -215,7 +215,11 @@ const servers: Server[] = [
     blockedWords: [],
     auditLog: [],
     onboarding: { enabled: false, cosmeticRoleIds: [] },
-    stickers: [],
+    stickers: [
+      "https://api.dicebear.com/9.x/fun-emoji/svg?seed=hi",
+      "https://api.dicebear.com/9.x/fun-emoji/svg?seed=yay",
+      "https://api.dicebear.com/9.x/fun-emoji/svg?seed=wow",
+    ],
     members: [
       { userId: "nova", roleIds: ["r_dev_everyone"] },
       { userId: "me", roleIds: ["r_dev_everyone"] },

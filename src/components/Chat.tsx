@@ -54,6 +54,11 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
   );
   const [channelId, setChannelId] = useState(visibleChannels[0]?.id ?? "");
   const channel = visibleChannels.find((c) => c.id === channelId) ?? visibleChannels[0];
+  // For forum lounges, the currently-open post (a sub-thread).
+  const [openPost, setOpenPost] = useState<string | null>(null);
+  const posts = channel?.posts ?? [];
+  const activeChannelId = channel?.forum && openPost ? openPost : channel?.id;
+  const inForumList = !!channel?.forum && !openPost;
 
   const [sheetUser, setSheetUser] = useState<string | null>(null);
   const [showManage, setShowManage] = useState(false);
@@ -72,19 +77,24 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
   }, [visibleChannels, channelId]);
 
   const messages = useMemo(
-    () => state.messages.filter((m) => m.channelId === channel?.id),
-    [state.messages, channel?.id],
+    () => state.messages.filter((m) => m.channelId === activeChannelId),
+    [state.messages, activeChannelId],
   );
+
+  // Leaving a forum post / switching channels closes the open post.
+  useEffect(() => {
+    setOpenPost(null);
+  }, [channel?.id]);
 
   useEffect(() => {
     if (highlight) return; // don't yank to the bottom while jumping to a mention
     endRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages.length, channel?.id, highlight]);
+  }, [messages.length, activeChannelId, highlight]);
 
-  // Mark the open channel read.
+  // Mark the open channel/post read.
   useEffect(() => {
-    if (channel) dispatch({ type: "MARK_READ", channelId: channel.id });
-  }, [channel?.id, messages.length]);
+    if (activeChannelId) dispatch({ type: "MARK_READ", channelId: activeChannelId });
+  }, [activeChannelId, messages.length]);
 
   // Open the server/channel of a tapped notification and highlight the message.
   useEffect(() => {
@@ -120,7 +130,7 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
     return (
       <>
         <div className="center-empty">
-          <p>You're not in any partys yet.</p>
+          <p>You're not in any parties yet.</p>
           <p>Head to Explore to find a community, or create your own.</p>
           <div className="row" style={{ justifyContent: "center", gap: 8, marginTop: 14 }}>
             <button className="btn" onClick={() => setShowCreate(true)}>
@@ -144,6 +154,7 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
   const canDeleteOthers = can(server, state.currentUserId, "DELETE_MESSAGES");
   const canTalk = canSendInChannel(server, state.currentUserId, channel);
   const canPin = can(server, state.currentUserId, "PIN_MESSAGES");
+  const canManageChannels = can(server, state.currentUserId, "MANAGE_CHANNELS");
   const myRoleIds = myMember?.roleIds ?? [];
   const mentionableRoles = server.roles.filter((r) => r.mentionable);
 
@@ -159,7 +170,7 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
       return;
     }
     const blocked = server.blockedWords.find((w) => w && draft.toLowerCase().includes(w));
-    dispatch({ type: "SEND_MESSAGE", channelId: channel!.id, content: draft, replyTo: replyTo ?? undefined });
+    dispatch({ type: "SEND_MESSAGE", channelId: activeChannelId!, content: draft, replyTo: replyTo ?? undefined });
     if (blocked) flash(`AutoMod blocked your message (contains "${blocked}").`);
     setDraft("");
     setReplyTo(null);
@@ -277,11 +288,62 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
               {c.id !== channel.id && isUnread(state, state.currentUserId, c.id) && <span className="chan-dot" />}
             </button>
           ))}
-          <button className="channel" style={{ width: "auto", flex: "0 0 auto" }} onClick={createChannel}>
-            +
-          </button>
+          {canManageChannels && (
+            <button className="channel" style={{ width: "auto", flex: "0 0 auto" }} onClick={createChannel}>
+              +
+            </button>
+          )}
         </div>
 
+        {channel.forum && (
+          <div className="forum-bar">
+            {openPost ? (
+              <>
+                <button className="btn ghost sm" onClick={() => setOpenPost(null)}>‹ Posts</button>
+                <span style={{ fontWeight: 700, marginLeft: 8 }}>
+                  {posts.find((p) => p.id === openPost)?.title}
+                </span>
+              </>
+            ) : (
+              <>
+                <span style={{ flex: 1, fontWeight: 700 }}>📋 {posts.length} post{posts.length === 1 ? "" : "s"}</span>
+                {canTalk && (
+                  <button
+                    className="btn sm"
+                    onClick={() => {
+                      const title = prompt("New post title");
+                      if (title?.trim()) {
+                        const id = `p_${Math.random().toString(36).slice(2, 9)}`;
+                        dispatch({ type: "CREATE_POST", serverId: server.id, channelId: channel.id, id, title });
+                        setOpenPost(id);
+                      }
+                    }}
+                  >
+                    + New post
+                  </button>
+                )}
+              </>
+            )}
+          </div>
+        )}
+
+        {inForumList ? (
+          <div className="messages">
+            {posts.length === 0 && <div className="center-empty">No posts yet. Start one 📋</div>}
+            {posts.map((p) => {
+              const author = state.users[p.authorId];
+              const count = state.messages.filter((m) => m.channelId === p.id).length;
+              return (
+                <div className="card" key={p.id} style={{ padding: 12, cursor: "pointer" }} onClick={() => setOpenPost(p.id)}>
+                  <div style={{ fontWeight: 700 }}>{p.title}</div>
+                  <div className="muted" style={{ fontSize: 12, marginTop: 2 }}>
+                    by {displayName(author)} · {count} message{count === 1 ? "" : "s"} · {timeAgo(p.createdAt)}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
         <div className="messages">
           {messages.length === 0 && <div className="center-empty">No messages yet. Say hi 👋</div>}
           {messages.map((m) => {
@@ -390,6 +452,7 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
           })}
           <div ref={endRef} />
         </div>
+        )}
 
         {muted && (
           <div className="timeout-banner">
@@ -398,6 +461,7 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
         )}
         {notice && <div className="timeout-banner">{notice}</div>}
 
+        {!inForumList && (
         <div style={{ position: "relative" }}>
           {(showEveryone || showStaff || roleSuggestions.length > 0 || mentionSuggestions.length > 0) && (
             <div className="mention-popup">
@@ -436,8 +500,8 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
             <div className="timeout-banner">Only certain roles can talk in #{channel.name}.</div>
           ) : (
             <div className="composer">
-              <AttachButton channelId={channel.id} disabled={muted} />
-              <StickerButton channelId={channel.id} serverId={server.id} onInsertEmoji={(e) => setDraft((d) => d + e)} />
+              <AttachButton channelId={activeChannelId!} disabled={muted} />
+              <StickerButton channelId={activeChannelId!} serverId={server.id} onInsertEmoji={(e) => setDraft((d) => d + e)} />
               <input
                 value={draft}
                 placeholder={muted ? "You can't send messages right now" : `Message #${channel.name}  (try @)`}
@@ -451,6 +515,7 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
             </div>
           )}
         </div>
+        )}
       </div>
 
       {sheetUser && (

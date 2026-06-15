@@ -272,25 +272,47 @@ function StickersSection({ server }: { server: Server }) {
   const stars = serverStars(state, server.id);
   const unlocked = stars >= BOOST_STICKERS;
   const [url, setUrl] = useState("");
+  const starters = server.stickers.slice(0, 3);
+  const extras = server.stickers.slice(3);
 
   return (
     <div>
-      <div className="section-title">Stickers · {server.stickers.length}/{MAX_STICKERS}</div>
+      <div className="section-title">Starter stickers</div>
+      <p className="muted" style={{ fontSize: 12, margin: "0 0 8px" }}>
+        Every party has 3 stickers — edit them any time.
+      </p>
+      {starters.map((s, i) => (
+        <div className="row" key={i} style={{ gap: 8, marginBottom: 6 }}>
+          <span className="sticker-cell" style={{ width: 44, height: 44, flex: "0 0 auto" }}>
+            {s && <img src={s} alt="" />}
+          </span>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <ImagePicker
+              value={s}
+              placeholder="sticker image/gif url"
+              accept="image/*"
+              onChange={(v) => dispatch({ type: "SET_STICKER", serverId: server.id, index: i, url: v })}
+            />
+          </div>
+        </div>
+      ))}
+
+      <div className="section-title">More stickers · {server.stickers.length}/{MAX_STICKERS}</div>
       {!unlocked ? (
         <p className="muted" style={{ fontSize: 12, margin: 0 }}>
-          Upload up to {MAX_STICKERS} sticker GIFs once this party reaches {BOOST_STICKERS} ⭐
+          Upload up to {MAX_STICKERS} stickers once this party reaches {BOOST_STICKERS} ⭐
           (currently {stars} ⭐).
         </p>
       ) : (
         <>
-          {server.stickers.length > 0 && (
+          {extras.length > 0 && (
             <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 6, marginBottom: 8 }}>
-              {server.stickers.map((s, i) => (
+              {extras.map((s, i) => (
                 <button
                   key={i}
                   className="sticker-cell"
                   title="Remove sticker"
-                  onClick={() => dispatch({ type: "REMOVE_STICKER", serverId: server.id, index: i })}
+                  onClick={() => dispatch({ type: "REMOVE_STICKER", serverId: server.id, index: i + 3 })}
                 >
                   <img src={s} alt="" />
                 </button>
@@ -314,7 +336,7 @@ function StickersSection({ server }: { server: Server }) {
               </button>
             </div>
           )}
-          <p className="muted" style={{ fontSize: 11, marginTop: 6 }}>Tap a sticker to remove it.</p>
+          <p className="muted" style={{ fontSize: 11, marginTop: 6 }}>Tap an uploaded sticker to remove it.</p>
         </>
       )}
     </div>
@@ -521,6 +543,16 @@ function ChannelsTab({ server, canManage }: { server: Server; canManage: boolean
               onClick={() => dispatch({ type: "DELETE_CHANNEL", serverId: server.id, channelId: c.id })}
             >
               Delete
+            </button>
+          </div>
+
+          <div className="chips" style={{ marginTop: 8 }}>
+            <button
+              className={`chip ${c.forum ? "accent" : ""}`}
+              title="Forum lounge: holds posts (threads) instead of a flat chat"
+              onClick={() => dispatch({ type: "SET_CHANNEL_FORUM", serverId: server.id, channelId: c.id, forum: !c.forum })}
+            >
+              {c.forum ? "✓ " : ""}Forum
             </button>
           </div>
 

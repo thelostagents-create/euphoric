@@ -1,6 +1,6 @@
 import { useStore } from "../store";
 import { Modal, bannerStyle, tierBadge } from "./Modal";
-import { canModerate, getMember, isTimedOut } from "../permissions";
+import { can, canModerate, getMember, isOwner, isTimedOut } from "../permissions";
 import { areFriends, displayName } from "../social";
 import { AestheticProfile } from "./AestheticProfile";
 import type { Server } from "../types";
@@ -33,6 +33,8 @@ export function UserSheet({
   const canMod = server && canModerate(server, state.currentUserId, userId);
   const member = server && getMember(server, userId);
   const timedOut = isTimedOut(member);
+  const canAssignRoles =
+    !!server && (isOwner(server, state.currentUserId) || can(server, state.currentUserId, "MANAGE_ROLES"));
 
   const aesthetic = user.aesthetic.enabled && supernova;
 
@@ -172,6 +174,31 @@ export function UserSheet({
             >
               Ban
             </button>
+          </div>
+        </>
+      )}
+
+      {server && member && canAssignRoles && (
+        <>
+          <div className="section-title">Roles</div>
+          <div className="chips">
+            {server.roles
+              .filter((r) => r.name !== "@everyone")
+              .map((r) => {
+                const on = member.roleIds.includes(r.id);
+                return (
+                  <button
+                    key={r.id}
+                    className={`chip ${on ? "accent" : ""}`}
+                    style={on ? { color: r.color } : undefined}
+                    onClick={() =>
+                      dispatch({ type: "ASSIGN_ROLE", serverId: server.id, userId, roleId: r.id, on: !on })
+                    }
+                  >
+                    {on ? "✓ " : ""}{r.name}
+                  </button>
+                );
+              })}
           </div>
         </>
       )}
