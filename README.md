@@ -1,7 +1,6 @@
 # Euphoric
 
-A minimal group-chat app inspired by old-school Discord's simplicity, with
-deep premium profile customization.
+A minimal group-chat app with deep premium profile customization.
 
 This is the **web (PWA) foundation** — a mobile-first, installable web app
 that runs in Safari on iPhone and can be added to the home screen. It uses
