@@ -16,7 +16,7 @@ import { displayName, inviteLink, isGif, serverStars, starsAvailable } from "../
 import { ImagePicker } from "./ImagePicker";
 import { timeAgo } from "./Modal";
 
-type Tab = "overview" | "roles" | "channels" | "members" | "automod" | "onboarding" | "audit";
+type Tab = "overview" | "roles" | "channels" | "members" | "stickers" | "automod" | "onboarding" | "audit";
 
 export function ServerManage({ server, onClose }: { server: Server; onClose: () => void }) {
   const { state } = useStore();
@@ -35,6 +35,7 @@ export function ServerManage({ server, onClose }: { server: Server; onClose: () 
     { id: "roles", label: "Roles & Staff" },
     { id: "channels", label: "Lounges" },
     { id: "members", label: "Members" },
+    { id: "stickers", label: "Stickers" },
     { id: "automod", label: "AutoMod" },
     { id: "onboarding", label: "Onboarding" },
     { id: "audit", label: "Audit Log" },
@@ -58,6 +59,12 @@ export function ServerManage({ server, onClose }: { server: Server; onClose: () 
       {tab === "roles" && <RolesTab server={server} canManage={canManageRoles} />}
       {tab === "channels" && <ChannelsTab server={server} canManage={canManageChannels} />}
       {tab === "members" && <MembersTab server={server} />}
+      {tab === "stickers" &&
+        (canManageServer ? (
+          <StickersSection server={server} />
+        ) : (
+          <p className="muted">You need the Manage Party permission.</p>
+        ))}
       {tab === "automod" && <AutoModTab server={server} canManage={canManageAutomod} />}
       {tab === "onboarding" && <OnboardingTab server={server} canManage={canManageOnboarding} />}
       {tab === "audit" && <AuditTab server={server} />}
@@ -200,7 +207,6 @@ function OverviewTab({ server, canManage }: { server: Server; canManage: boolean
         </>
       )}
 
-      {canManage && <StickersSection server={server} />}
       {canManage && <DiscoverySection server={server} />}
     </div>
   );

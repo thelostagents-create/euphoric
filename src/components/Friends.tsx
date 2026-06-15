@@ -25,7 +25,7 @@ export function Friends({
 }: {
   onOpenMessage: (serverId: string, channelId: string, messageId: string) => void;
 }) {
-  const { state } = useStore();
+  const { state, dispatch } = useStore();
   const me = state.users[state.currentUserId];
   const [openDm, setOpenDm] = useState<string | null>(null);
   const [openGroup, setOpenGroup] = useState<string | null>(null);
@@ -33,6 +33,18 @@ export function Friends({
   const [showFriends, setShowFriends] = useState(false);
 
   const friends = useMemo(() => friendsOf(state, me.id), [state, me.id]);
+  // Incoming requests: people who follow you that you don't follow back.
+  const pendingRequests = useMemo(
+    () =>
+      Object.values(state.users).filter(
+        (u) =>
+          u.id !== me.id &&
+          u.following.includes(me.id) &&
+          !me.following.includes(u.id) &&
+          !me.blockedUserIds.includes(u.id),
+      ),
+    [state.users, me],
+  );
   const myGroups = useMemo(
     () => state.groups.filter((g) => g.memberIds.includes(me.id)),
     [state.groups, me.id],
@@ -136,23 +148,25 @@ export function Friends({
           </p>
         )}
 
-        {/* Friendships — collapsed behind a button to keep things tidy */}
+        {/* Pending requests — people who've added you, collapsed to stay tidy */}
         <button
           className="btn ghost full"
           style={{ marginTop: 10 }}
           onClick={() => setShowFriends((v) => !v)}
         >
-          👥 Friends · {friends.length} {showFriends ? "▲" : "▼"}
+          👋 Pending requests · {pendingRequests.length} {showFriends ? "▲" : "▼"}
         </button>
         {showFriends &&
-          (friends.length === 0 ? (
-            <p className="muted" style={{ fontSize: 13 }}>Add friends by username below.</p>
+          (pendingRequests.length === 0 ? (
+            <p className="muted" style={{ fontSize: 13 }}>No pending friend requests.</p>
           ) : (
-            friends.map((f) => (
-              <div className="row" key={f.id} style={{ marginTop: 8, cursor: "pointer" }} onClick={() => setOpenDm(f.id)}>
-                <img src={f.avatar} alt="" style={{ width: 32, height: 32, borderRadius: "50%" }} />
-                <span style={{ flex: 1, fontWeight: 600 }}>{displayName(f)}</span>
-                <span className="badge staff">Friend</span>
+            pendingRequests.map((u) => (
+              <div className="row" key={u.id} style={{ marginTop: 8 }}>
+                <img src={u.avatar} alt="" style={{ width: 32, height: 32, borderRadius: "50%" }} />
+                <span style={{ flex: 1, fontWeight: 600 }}>{displayName(u)}</span>
+                <button className="btn sm" onClick={() => dispatch({ type: "ADD_FRIEND", userId: u.id })}>
+                  Accept
+                </button>
               </div>
             ))
           ))}

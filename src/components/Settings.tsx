@@ -32,7 +32,7 @@ const TIERS: {
     perks: [
       "Everything in Premium",
       "Aesthetic Avatars profiles",
-      "2 ⭐ Stars to spend on partys",
+      "10 ⭐ Stars to spend on partys",
     ],
   },
 ];

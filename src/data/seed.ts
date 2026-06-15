@@ -94,7 +94,7 @@ const users: Record<string, User> = {
     following: ["me"],
     starAllocations: { s_lounge: 1 },
   }),
-  rex: user("rex", "rex", { bio: "ttrpg goblin" }),
+  rex: user("rex", "rex", { bio: "ttrpg goblin", following: ["me"] }),
   nova: user("nova", "nova_dev", { nickname: "Nova ⚡", bio: "shipping bugs since 2015" }),
   spammer: user("spammer", "totally_not_spam", { bio: "DM me for crypto 🚀" }),
 };
