@@ -19,7 +19,7 @@ export function ChannelsModal({
   const { state } = useStore();
   const visible = server.channels.filter((c) => canViewChannel(server, state.currentUserId, c));
   return (
-    <Modal title={`${server.name} · channels`} onClose={onClose}>
+    <Modal title={`${server.name} · lounges`} onClose={onClose}>
       {server.onboarding.enabled && (
         <div className="card" style={{ marginBottom: 12 }}>
           <div style={{ fontWeight: 700, marginBottom: 6 }}>Pick your roles</div>

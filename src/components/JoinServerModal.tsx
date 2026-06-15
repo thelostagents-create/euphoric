@@ -19,7 +19,7 @@ export function JoinServerModal({
     if (!code) return;
     const target = state.servers.find((s) => s.invite === code);
     if (!target) {
-      setError("No server found for that link.");
+      setError("No party found for that link.");
       return;
     }
     dispatch({ type: "JOIN_SERVER", serverId: target.id });
@@ -28,7 +28,7 @@ export function JoinServerModal({
   }
 
   return (
-    <Modal title="Join a server" onClose={onClose}>
+    <Modal title="Join a party" onClose={onClose}>
       <p className="muted" style={{ marginTop: 0, fontSize: 13 }}>
         Paste an invite link or code to join.
       </p>
@@ -47,7 +47,7 @@ export function JoinServerModal({
       </div>
       {error && <p style={{ fontSize: 12, color: "var(--danger)", marginTop: -4 }}>{error}</p>}
       <button className="btn full" disabled={!link.trim()} onClick={join}>
-        Join server
+        Join party
       </button>
     </Modal>
   );

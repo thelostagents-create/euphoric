@@ -430,7 +430,11 @@ textarea:focus {
   margin-left: auto;
   display: inline-flex;
   align-items: center;
-  gap: 2px;
+  gap: 0;
+}
+
+.msg-tools button {
+  padding: 0 1px;
 }
 
 .unread-dot {

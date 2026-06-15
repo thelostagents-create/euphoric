@@ -27,6 +27,12 @@ iOS port come in later passes.
   tagged); members with the *Delete Messages* permission can delete anyone's.
 - **Unread indicators** — dots on servers, channels, and conversations with
   new messages, cleared when you open them.
+- **Search & pins** — search a party's messages, or toggle to browse all
+  pinned messages; tap a result to jump to it.
+- **@staff ping** — `@staff` notifies everyone holding a staff role.
+
+> Terminology note: in the UI, servers are called **partys** and channels are
+> called **lounges** (the code still uses `server`/`channel`).
 - **App accent** — pick your own app accent color (with hex) in Settings.
 - **Block feature** — blocked users' messages and avatars are blurred (tap
   "reveal" to peek), and they can no longer contact you.

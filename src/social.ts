@@ -110,6 +110,7 @@ export interface Mention {
 }
 
 const EVERYONE_RE = /@everyone\b/i;
+const STAFF_RE = /@staff\b/i;
 
 function escapeRe(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -136,9 +137,12 @@ export function mentionsOf(state: AppState, userId: string): Mention[] {
     const direct = namePattern.test(m.content);
     const everyone =
       !direct && EVERYONE_RE.test(m.content) && can(server, m.authorId, "MENTION_EVERYONE");
+    // @staff pings everyone holding a staff role.
+    const isStaff = member.roleIds.some((rid) => server.roles.find((r) => r.id === rid)?.staff);
+    const staff = !direct && !everyone && isStaff && STAFF_RE.test(m.content);
     // A mentionable role the user holds, pinged in this message.
     const role =
-      !direct && !everyone
+      !direct && !everyone && !staff
         ? server.roles.find(
             (r) =>
               r.mentionable &&
@@ -146,7 +150,7 @@ export function mentionsOf(state: AppState, userId: string): Mention[] {
               new RegExp(`@${escapeRe(r.name)}\\b`, "i").test(m.content),
           )
         : undefined;
-    if (!direct && !everyone && !role) continue;
+    if (!direct && !everyone && !staff && !role) continue;
 
     const channel = server.channels.find((c) => c.id === m.channelId)!;
     mentions.push({
@@ -159,7 +163,7 @@ export function mentionsOf(state: AppState, userId: string): Mention[] {
       content: m.content,
       createdAt: m.createdAt,
       everyone,
-      roleName: role?.name,
+      roleName: staff ? "staff" : role?.name,
     });
   }
   return mentions.sort((a, b) => b.createdAt.localeCompare(a.createdAt));

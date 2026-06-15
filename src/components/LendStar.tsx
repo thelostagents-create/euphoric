@@ -15,7 +15,7 @@ export function LendStar({ server, onClose }: { server: Server; onClose: () => v
       <div style={{ textAlign: "center", padding: "4px 0 14px" }}>
         <div style={{ fontSize: 40 }}>⭐</div>
         <div style={{ fontSize: 28, fontWeight: 800 }}>{stars}</div>
-        <div className="muted" style={{ fontSize: 13 }}>Stars on this server</div>
+        <div className="muted" style={{ fontSize: 13 }}>Stars on this party</div>
       </div>
 
       <div className="row" style={{ justifyContent: "center", gap: 10, marginBottom: 12 }}>

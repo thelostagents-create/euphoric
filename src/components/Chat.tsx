@@ -12,6 +12,7 @@ import { AttachButton } from "./AttachButton";
 import { ReactionChips, ReactionPicker, longPressProps } from "./Reactions";
 import { LendStar } from "./LendStar";
 import { ChannelsModal } from "./ChannelsModal";
+import { SearchModal } from "./SearchModal";
 import { ServerMembersModal } from "./ServerMembersModal";
 import { OnboardingModal } from "./Onboarding";
 import { allowSend } from "../ratelimit";
@@ -28,6 +29,7 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [showChannels, setShowChannels] = useState(false);
   const [showMembers, setShowMembers] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
   const [notice, setNotice] = useState("");
   const [obDismissed, setObDismissed] = useState<Set<string>>(new Set());
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -117,11 +119,11 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
     return (
       <>
         <div className="center-empty">
-          <p>You're not in any servers yet.</p>
+          <p>You're not in any partys yet.</p>
           <p>Head to Discover to find a community, or create your own.</p>
           <div className="row" style={{ justifyContent: "center", gap: 8, marginTop: 14 }}>
             <button className="btn" onClick={() => setShowCreate(true)}>
-              Create a server
+              Create a party
             </button>
             <button className="btn ghost" onClick={() => setShowJoin(true)}>
               Join with a link
@@ -168,6 +170,7 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
   const canMentionEveryone = can(server, state.currentUserId, "MENTION_EVERYONE");
   const showEveryone =
     mentionQuery !== null && canMentionEveryone && "everyone".startsWith(mentionQuery);
+  const showStaff = mentionQuery !== null && "staff".startsWith(mentionQuery);
   const mentionSuggestions =
     mentionQuery === null
       ? []
@@ -186,7 +189,7 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
   }
 
   function createChannel() {
-    const name = prompt("New channel name");
+    const name = prompt("New lounge name");
     if (name) dispatch({ type: "CREATE_CHANNEL", serverId: server!.id, name });
   }
 
@@ -205,7 +208,7 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
             {serverUnread(state, state.currentUserId, s) && <span className="unread-dot" />}
           </button>
         ))}
-        <button className="rail-icon add" onClick={() => setShowCreate(true)} title="Create a server">
+        <button className="rail-icon add" onClick={() => setShowCreate(true)} title="Create a party">
           +
         </button>
         <button className="rail-icon add" onClick={() => setShowJoin(true)} title="Join with an invite link">
@@ -240,10 +243,16 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
             <PersonIcon size={13} />
             {server.members.filter((m) => !m.banned).length}
           </button>
+          <button className="gear-btn" onClick={() => setShowSearch(true)} title="Search messages">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="7" />
+              <path d="m21 21-4.3-4.3" />
+            </svg>
+          </button>
           <button className="star-pill" onClick={() => setShowLend(true)} title="Lend a Star">
             {serverStars(state, server.id)} ⭐
           </button>
-          <button className="gear-btn" onClick={() => setShowManage(true)} title="Server settings">
+          <button className="gear-btn" onClick={() => setShowManage(true)} title="Party settings">
             <SettingsIcon size={24} />
           </button>
         </div>
@@ -254,7 +263,7 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
             style={{ width: "auto", flex: "0 0 auto", fontWeight: 700 }}
             onClick={() => setShowChannels(true)}
           >
-            ☰ Channels
+            ☰ Lounges
           </button>
           {visibleChannels.map((c) => (
             <button
@@ -320,7 +329,7 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
                     )}
                     <span className="msg-tools">
                       <button className="msg-action" title="React or reply" onClick={() => setReactFor(m.id)}>
-                        <ReplyArrowIcon size={15} />
+                        <ReplyArrowIcon size={14} />
                       </button>
                       {canDelete && (
                         <button
@@ -328,7 +337,7 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
                           title={m.authorId === state.currentUserId ? "Delete your message" : "Delete message"}
                           onClick={() => dispatch({ type: "DELETE_MESSAGE", messageId: m.id })}
                         >
-                          <XIcon size={13} />
+                          <XIcon size={14} />
                         </button>
                       )}
                     </span>
@@ -389,13 +398,20 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
         {notice && <div className="timeout-banner">{notice}</div>}
 
         <div style={{ position: "relative" }}>
-          {(showEveryone || roleSuggestions.length > 0 || mentionSuggestions.length > 0) && (
+          {(showEveryone || showStaff || roleSuggestions.length > 0 || mentionSuggestions.length > 0) && (
             <div className="mention-popup">
               {showEveryone && (
                 <button className="mention-option" onClick={() => pickMention("everyone")}>
                   <span className="mention-everyone-ico">📣</span>
                   <span className="dn">everyone</span>
-                  <span className="muted" style={{ fontSize: 12 }}>notify the whole server</span>
+                  <span className="muted" style={{ fontSize: 12 }}>notify the whole party</span>
+                </button>
+              )}
+              {showStaff && (
+                <button className="mention-option" onClick={() => pickMention("staff")}>
+                  <span className="mention-everyone-ico">🛡️</span>
+                  <span className="dn">staff</span>
+                  <span className="muted" style={{ fontSize: 12 }}>ping all staff roles</span>
                 </button>
               )}
               {roleSuggestions.map((r) => (
@@ -475,6 +491,16 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
           server={server}
           onSelect={(uid) => setSheetUser(uid)}
           onClose={() => setShowMembers(false)}
+        />
+      )}
+      {showSearch && (
+        <SearchModal
+          server={server}
+          onJump={(cid, mid) => {
+            setChannelId(cid);
+            setHighlight(mid);
+          }}
+          onClose={() => setShowSearch(false)}
         />
       )}
       {server.onboarding.enabled &&

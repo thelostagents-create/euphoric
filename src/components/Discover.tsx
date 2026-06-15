@@ -15,7 +15,7 @@ export function Discover() {
     if (!code) return;
     const target = state.servers.find((s) => s.invite === code);
     if (!target) {
-      setInviteMsg("No server found for that invite.");
+      setInviteMsg("No party found for that invite.");
       return;
     }
     dispatch({ type: "JOIN_SERVER", serverId: target.id });
@@ -70,7 +70,7 @@ export function Discover() {
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Search servers by keyword…"
+          placeholder="Search partys by keyword…"
         />
         <div className="chips">
           {allKeywords.map((k) => (
@@ -80,7 +80,7 @@ export function Discover() {
           ))}
         </div>
 
-        {results.length === 0 && <div className="center-empty">No servers match “{q}”.</div>}
+        {results.length === 0 && <div className="center-empty">No partys match “{q}”.</div>}
 
         {results.map((s) => {
           const joined = !!getMember(s, state.currentUserId);

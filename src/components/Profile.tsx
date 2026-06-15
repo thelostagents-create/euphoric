@@ -304,7 +304,7 @@ export function Profile({ onManageSubscription }: { onManageSubscription: () => 
                 </div>
 
                 <div className="field">
-                  <label>Rep a server (its icon links to joining it)</label>
+                  <label>Rep a party (its icon links to joining it)</label>
                   <div className="chips">
                     <button
                       className={`chip ${a.repServerId === "" ? "accent" : ""}`}

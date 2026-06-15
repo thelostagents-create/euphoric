@@ -24,10 +24,10 @@ export const ALL_PERMISSIONS: { id: Permission; label: string; desc: string }[] 
   { id: "PIN_MESSAGES", label: "Pin Messages", desc: "Pin and unpin messages in channels." },
   { id: "MENTION_EVERYONE", label: "Mention @everyone", desc: "Ping and alert everyone in the server." },
   { id: "MANAGE_ROLES", label: "Manage Roles", desc: "Create, edit and assign roles." },
-  { id: "MANAGE_CHANNELS", label: "Manage Channels", desc: "Create and delete channels." },
+  { id: "MANAGE_CHANNELS", label: "Manage Lounges", desc: "Create and delete lounges." },
   { id: "MANAGE_AUTOMOD", label: "Manage AutoMod", desc: "Configure blocked words." },
   { id: "MANAGE_ONBOARDING", label: "Manage Onboarding", desc: "Set up the new-member onboarding screen." },
-  { id: "MANAGE_SERVER", label: "Manage Server", desc: "Edit server settings, invite and discovery." },
+  { id: "MANAGE_SERVER", label: "Manage Party", desc: "Edit party settings, invite and discovery." },
 ];
 
 /** Boost thresholds unlocked by spent Stars. */

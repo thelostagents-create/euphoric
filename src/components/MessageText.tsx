@@ -39,10 +39,10 @@ export function MessageText({
       {parts.map((part, i) => {
         const m = /^@(\w+)$/.exec(part);
         const token = m?.[1].toLowerCase();
-        if (token === "everyone") {
+        if (token === "everyone" || token === "staff") {
           return (
             <span key={i} className="mention mention-me">
-              @everyone
+              @{token}
             </span>
           );
         }

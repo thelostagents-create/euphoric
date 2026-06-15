@@ -31,7 +31,7 @@ export function ServerManage({ server, onClose }: { server: Server; onClose: () 
   const tabs: { id: Tab; label: string }[] = [
     { id: "overview", label: "Overview" },
     { id: "roles", label: "Roles & Staff" },
-    { id: "channels", label: "Channels" },
+    { id: "channels", label: "Lounges" },
     { id: "members", label: "Members" },
     { id: "automod", label: "AutoMod" },
     { id: "onboarding", label: "Onboarding" },
@@ -95,7 +95,7 @@ function OverviewTab({ server, canManage }: { server: Server; canManage: boolean
         </p>
         <div className="row" style={{ justifyContent: "space-between" }}>
           <div>
-            <div style={{ fontWeight: 700 }}>Your Stars on this server: {mine}</div>
+            <div style={{ fontWeight: 700 }}>Your Stars on this party: {mine}</div>
             <div className="muted" style={{ fontSize: 12 }}>{available} available to spend</div>
           </div>
           <div className="row" style={{ gap: 6 }}>
@@ -144,7 +144,7 @@ function OverviewTab({ server, canManage }: { server: Server; canManage: boolean
                 value={customInvite}
                 disabled={!customInviteUnlocked}
                 onChange={(e) => setCustomInvite(e.target.value)}
-                placeholder="my-cool-server"
+                placeholder="my-cool-party"
               />
               <button
                 className="btn sm"
@@ -163,7 +163,7 @@ function OverviewTab({ server, canManage }: { server: Server; canManage: boolean
       {/* Server icon */}
       {canManage && (
         <>
-          <div className="section-title">Server icon</div>
+          <div className="section-title">Party icon</div>
           <div className="card">
             <div className="field" style={{ marginBottom: 8 }}>
               <label>Icon — import or paste a URL {animatedUnlocked ? "(GIFs allowed ✨)" : "(static only)"}</label>
@@ -372,12 +372,12 @@ function ChannelsTab({ server, canManage }: { server: Server; canManage: boolean
   const { dispatch } = useStore();
   const [name, setName] = useState("");
 
-  if (!canManage) return <p className="muted">You need the Manage Channels permission.</p>;
+  if (!canManage) return <p className="muted">You need the Manage Lounges permission.</p>;
 
   return (
     <div>
       <p className="muted" style={{ fontSize: 13, marginTop: 0 }}>
-        Reorder channels with the arrows, or remove them. The order here is the order shown in chat.
+        Reorder lounges with the arrows, or remove them. The order here is the order shown in chat.
       </p>
       {server.channels.map((c, i) => (
         <div className="card" key={c.id} style={{ marginBottom: 8, padding: 10 }}>
@@ -468,7 +468,7 @@ function ChannelsTab({ server, canManage }: { server: Server; canManage: boolean
         </div>
       ))}
       <div className="row" style={{ gap: 8, marginTop: 10 }}>
-        <input value={name} placeholder="new-channel" onChange={(e) => setName(e.target.value)} />
+        <input value={name} placeholder="new-lounge" onChange={(e) => setName(e.target.value)} />
         <button
           className="btn sm"
           disabled={!name.trim()}
@@ -691,7 +691,7 @@ function DiscoverySection({ server }: { server: Server }) {
       <div className="row" style={{ justifyContent: "space-between", marginBottom: 14 }}>
         <div>
           <div style={{ fontWeight: 700 }}>List in Discovery</div>
-          <div className="muted" style={{ fontSize: 12 }}>Let anyone find this server.</div>
+          <div className="muted" style={{ fontSize: 12 }}>Let anyone find this party.</div>
         </div>
         <button
           className={`toggle ${discoverable ? "on" : ""}`}

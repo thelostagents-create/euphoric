@@ -44,7 +44,7 @@ export function OnboardingModal({ server, onDone }: { server: Server; onDone: ()
     <Modal title={`Welcome to ${server.name}!`} onClose={onDone}>
       <p className="muted" style={{ marginTop: 0 }}>
         Pick a few roles to personalize your profile here. You can change these any time from
-        the Channels menu.
+        the Lounges menu.
       </p>
       <OnboardingRoles server={server} />
       <button

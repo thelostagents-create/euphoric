@@ -18,9 +18,9 @@ export function CreateServerModal({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <Modal title="Create a server" onClose={onClose}>
+    <Modal title="Create a party" onClose={onClose}>
       <p className="muted" style={{ marginTop: 0, fontSize: 13 }}>
-        Give it a name and an icon. You can add channels and roles afterwards.
+        Give it a name and an icon. You can add lounges and roles afterwards.
       </p>
 
       <div className="field">
@@ -43,12 +43,12 @@ export function CreateServerModal({ onClose }: { onClose: () => void }) {
         <label>Or use an image (optional)</label>
         <ImagePicker value={iconImage} placeholder="https://… (static image)" onChange={setIconImage} />
         <p className="muted" style={{ fontSize: 11, marginTop: 5 }}>
-          Animated GIF icons unlock once the server reaches 3 ⭐ Stars.
+          Animated GIF icons unlock once the party reaches 3 ⭐ Stars.
         </p>
       </div>
 
       <div className="field">
-        <label>Server name</label>
+        <label>Party name</label>
         <input
           autoFocus
           value={name}
@@ -59,7 +59,7 @@ export function CreateServerModal({ onClose }: { onClose: () => void }) {
       </div>
 
       <button className="btn full" disabled={!name.trim()} onClick={create}>
-        Create server
+        Create party
       </button>
     </Modal>
   );
