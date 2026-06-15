@@ -46,7 +46,7 @@ export function Discover() {
   return (
     <div className="screen">
       <div className="topbar">
-        <h1>Discover</h1>
+        <h1>Explore</h1>
       </div>
       <div className="list">
         <div className="card">

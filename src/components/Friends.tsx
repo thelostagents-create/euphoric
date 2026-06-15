@@ -6,7 +6,7 @@ import { MessageText, MessageAttachment } from "./MessageText";
 import { AttachButton } from "./AttachButton";
 import { ReactionChips, ReactionPicker, longPressProps } from "./Reactions";
 import { ReplyPreview, ReplyBar } from "./Reply";
-import { ReplyArrowIcon, SearchIcon } from "./Icons";
+import { ReplyArrowIcon, SearchIcon, XIcon } from "./Icons";
 import { StickerButton } from "./StickerButton";
 import { allowSend } from "../ratelimit";
 import { CreateGroupModal, GroupView, GroupAvatar } from "./Groups";
@@ -49,8 +49,11 @@ export function Friends({
     () => state.groups.filter((g) => g.memberIds.includes(me.id)),
     [state.groups, me.id],
   );
-  const allMentions = useMemo(() => mentionsOf(state, me.id), [state, me.id]);
-  const mentions = allMentions.slice(0, 3); // only the 3 most recent
+  // Mentions that haven't been dismissed.
+  const mentions = useMemo(
+    () => mentionsOf(state, me.id).filter((m) => !me.dismissedNotifications.includes(m.messageId)),
+    [state, me.id, me.dismissedNotifications],
+  );
 
   // Unified conversation list (DMs + groups), newest activity first.
   const conversations = useMemo(() => {
@@ -106,23 +109,32 @@ export function Friends({
         <h1>Friends</h1>
       </div>
       <div className="list">
-        {/* Notifications: 3 most recent mentions in servers */}
-        <div className="section-title">Notifications</div>
+        {/* Notifications: mentions in parties — clearable, opening closes one */}
+        <div className="section-title">Notifications · {mentions.length}</div>
         {mentions.length === 0 ? (
           <p className="muted">No one has mentioned you yet.</p>
         ) : (
           mentions.map((m) => {
             const author = state.users[m.authorId];
             return (
-              <div
-                className="card"
-                key={m.messageId}
-                style={{ padding: 12, cursor: "pointer" }}
-                onClick={() => onOpenMessage(m.serverId, m.channelId, m.messageId)}
-              >
+              <div className="card" key={m.messageId} style={{ padding: 12 }}>
                 <div className="row" style={{ gap: 8 }}>
-                  <img src={author?.avatar} alt="" style={{ width: 30, height: 30, borderRadius: "50%" }} />
-                  <div style={{ flex: 1, minWidth: 0 }}>
+                  <img
+                    src={author?.avatar}
+                    alt=""
+                    style={{ width: 30, height: 30, borderRadius: "50%", cursor: "pointer" }}
+                    onClick={() => {
+                      dispatch({ type: "DISMISS_NOTIFICATION", messageId: m.messageId });
+                      onOpenMessage(m.serverId, m.channelId, m.messageId);
+                    }}
+                  />
+                  <div
+                    style={{ flex: 1, minWidth: 0, cursor: "pointer" }}
+                    onClick={() => {
+                      dispatch({ type: "DISMISS_NOTIFICATION", messageId: m.messageId });
+                      onOpenMessage(m.serverId, m.channelId, m.messageId);
+                    }}
+                  >
                     <div style={{ fontSize: 13 }}>
                       <b>{displayName(author)}</b>{" "}
                       <span className="muted">
@@ -137,15 +149,18 @@ export function Friends({
                     <div className="muted" style={{ fontSize: 13, marginTop: 2 }}>{m.content}</div>
                   </div>
                   <span className="time">{timeAgo(m.createdAt)}</span>
+                  <button
+                    className="msg-delete"
+                    title="Clear notification"
+                    style={{ display: "inline-flex", alignItems: "center" }}
+                    onClick={() => dispatch({ type: "DISMISS_NOTIFICATION", messageId: m.messageId })}
+                  >
+                    <XIcon size={14} />
+                  </button>
                 </div>
               </div>
             );
           })
-        )}
-        {allMentions.length > 3 && (
-          <p className="muted" style={{ fontSize: 12, margin: "2px 0 0" }}>
-            +{allMentions.length - 3} older notification{allMentions.length - 3 === 1 ? "" : "s"}
-          </p>
         )}
 
         {/* Friends — collapsed; incoming requests shown at the top */}
@@ -382,7 +397,7 @@ function DmView({ friendId, onBack }: { friendId: string; onBack: () => void }) 
           {replyTo && <ReplyBar replyTo={replyTo} onCancel={() => setReplyTo(null)} />}
           <div className="composer">
             <AttachButton channelId={channelId} />
-            <StickerButton channelId={channelId} />
+            <StickerButton channelId={channelId} onInsertEmoji={(e) => setDraft((d) => d + e)} />
             <input
               value={draft}
               placeholder={`Message ${displayName(friend)}`}

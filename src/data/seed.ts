@@ -46,6 +46,7 @@ function user(
     starAllocations: {},
     onboarded: [],
     lastRead: {},
+    dismissedNotifications: [],
     appAccent: "#9b7bff",
     ...partial,
   };

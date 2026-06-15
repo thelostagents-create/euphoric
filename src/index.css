@@ -191,6 +191,23 @@ textarea:focus {
   height: 22px;
 }
 
+.tab-badge {
+  position: absolute;
+  top: -6px;
+  right: -10px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--danger);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 /* ---------- Buttons ---------- */
 .btn {
   background: var(--accent);
@@ -379,6 +396,23 @@ textarea:focus {
   width: 100%;
   height: 100%;
   object-fit: contain;
+}
+
+.emoji-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.emoji-btn {
+  font-size: 26px;
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+}
+
+.emoji-btn:hover {
+  background: var(--bg-3);
 }
 
 .attachment {

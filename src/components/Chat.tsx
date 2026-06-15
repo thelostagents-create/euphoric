@@ -121,7 +121,7 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
       <>
         <div className="center-empty">
           <p>You're not in any partys yet.</p>
-          <p>Head to Discover to find a community, or create your own.</p>
+          <p>Head to Explore to find a community, or create your own.</p>
           <div className="row" style={{ justifyContent: "center", gap: 8, marginTop: 14 }}>
             <button className="btn" onClick={() => setShowCreate(true)}>
               Create a party
@@ -437,7 +437,7 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
           ) : (
             <div className="composer">
               <AttachButton channelId={channel.id} disabled={muted} />
-              <StickerButton channelId={channel.id} serverId={server.id} />
+              <StickerButton channelId={channel.id} serverId={server.id} onInsertEmoji={(e) => setDraft((d) => d + e)} />
               <input
                 value={draft}
                 placeholder={muted ? "You can't send messages right now" : `Message #${channel.name}  (try @)`}

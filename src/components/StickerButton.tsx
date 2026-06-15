@@ -2,8 +2,18 @@ import { useState } from "react";
 import { useStore } from "../store";
 import { availableStickers } from "../social";
 
-/** Emoji/sticker button that sends a party sticker as an image attachment. */
-export function StickerButton({ channelId, serverId }: { channelId: string; serverId?: string }) {
+const COMMON_EMOJIS = ["👍", "👎", "😄", "😢", "😭", "😂", "❤️", "🔥", "🎉", "😮", "😡", "🙏", "👀", "✨"];
+
+/** Emoji/sticker button: send a sticker image or insert an emoji into the draft. */
+export function StickerButton({
+  channelId,
+  serverId,
+  onInsertEmoji,
+}: {
+  channelId: string;
+  serverId?: string;
+  onInsertEmoji?: (emoji: string) => void;
+}) {
   const { state, dispatch } = useStore();
   const [open, setOpen] = useState(false);
   const stickers = availableStickers(state, state.currentUserId, serverId);
@@ -28,19 +38,32 @@ export function StickerButton({ channelId, serverId }: { channelId: string; serv
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-handle" />
             <h2>Stickers</h2>
-            {stickers.length === 0 ? (
-              <p className="muted">
-                No stickers available here. Parties unlock 10 sticker uploads at 6 ⭐, and Premium
-                members can use stickers from all their parties.
-              </p>
-            ) : (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8 }}>
-                {stickers.map((url, i) => (
-                  <button key={i} className="sticker-cell" onClick={() => send(url)}>
-                    <img src={url} alt="sticker" />
-                  </button>
-                ))}
-              </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8 }}>
+              {stickers.map((url, i) => (
+                <button key={i} className="sticker-cell" onClick={() => send(url)}>
+                  <img src={url} alt="sticker" />
+                </button>
+              ))}
+            </div>
+
+            {onInsertEmoji && (
+              <>
+                <div className="section-title">Emoji</div>
+                <div className="emoji-row">
+                  {COMMON_EMOJIS.map((e) => (
+                    <button
+                      key={e}
+                      className="emoji-btn"
+                      onClick={() => {
+                        onInsertEmoji(e);
+                        setOpen(false);
+                      }}
+                    >
+                      {e}
+                    </button>
+                  ))}
+                </div>
+              </>
             )}
           </div>
         </div>

@@ -277,7 +277,7 @@ export function GroupView({ groupId, onBack }: { groupId: string; onBack: () => 
       {replyTo && <ReplyBar replyTo={replyTo} onCancel={() => setReplyTo(null)} />}
       <div className="composer">
         <AttachButton channelId={groupId} />
-        <StickerButton channelId={groupId} />
+        <StickerButton channelId={groupId} onInsertEmoji={(e) => setDraft((d) => d + e)} />
         <input
           value={draft}
           placeholder={`Message ${group.name}`}

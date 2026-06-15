@@ -30,6 +30,7 @@ type Action =
   | { type: "DELETE_MESSAGE"; messageId: string }
   | { type: "EDIT_MESSAGE"; messageId: string; content: string }
   | { type: "MARK_READ"; channelId: string }
+  | { type: "DISMISS_NOTIFICATION"; messageId: string }
   | { type: "SET_ACCENT"; color: string }
   | { type: "TOGGLE_PIN"; messageId: string }
   | { type: "TOGGLE_REACTION"; messageId: string; emoji: string }
@@ -184,6 +185,14 @@ function reducer(state: AppState, action: Action): AppState {
       return {
         ...state,
         users: { ...state.users, [me]: { ...u, lastRead: { ...u.lastRead, [action.channelId]: new Date().toISOString() } } },
+      };
+    }
+
+    case "DISMISS_NOTIFICATION": {
+      const u = state.users[me];
+      return {
+        ...state,
+        users: { ...state.users, [me]: { ...u, dismissedNotifications: addUnique(u.dismissedNotifications, action.messageId) } },
       };
     }
 
@@ -795,6 +804,7 @@ function migrate(state: AppState): AppState {
         starAllocations: u.starAllocations ?? {},
         onboarded: u.onboarded ?? [],
         lastRead: u.lastRead ?? {},
+        dismissedNotifications: u.dismissedNotifications ?? [],
         appAccent: u.appAccent ?? "#9b7bff",
         aesthetic: {
           enabled: false,

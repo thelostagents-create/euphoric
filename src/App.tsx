@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useStore } from "./store";
+import { mentionsOf } from "./social";
 import { Chat } from "./components/Chat";
 import { Friends } from "./components/Friends";
 import { Discover } from "./components/Discover";
@@ -19,7 +20,7 @@ export interface ChatNav {
 const TABS: { id: Tab; icon: (p: { size?: number }) => JSX.Element; label: string }[] = [
   { id: "chat", icon: ChatIcon, label: "Chat" },
   { id: "friends", icon: FriendsIcon, label: "Friends" },
-  { id: "discover", icon: DiscoverIcon, label: "Discover" },
+  { id: "discover", icon: DiscoverIcon, label: "Explore" },
   { id: "profile", icon: ProfileIcon, label: "Profile" },
   { id: "settings", icon: SettingsIcon, label: "Settings" },
 ];
@@ -30,10 +31,17 @@ export function App() {
   const [nav, setNav] = useState<ChatNav | null>(null);
 
   // Apply the user's chosen app accent color.
-  const accent = state.users[state.currentUserId]?.appAccent;
+  const me = state.users[state.currentUserId];
+  const accent = me?.appAccent;
   useEffect(() => {
     if (accent) document.documentElement.style.setProperty("--accent", accent);
   }, [accent]);
+
+  // Unread notification (mention) count for the Friends tab badge.
+  const notifCount = useMemo(
+    () => mentionsOf(state, state.currentUserId).filter((m) => !me.dismissedNotifications.includes(m.messageId)).length,
+    [state, me],
+  );
 
   return (
     <div className="app">
@@ -59,7 +67,10 @@ export function App() {
               className={tab === t.id ? "active" : ""}
               onClick={() => setTab(t.id)}
             >
-              <span className="ico"><Icon size={22} /></span>
+              <span className="ico" style={{ position: "relative" }}>
+                <Icon size={22} />
+                {t.id === "friends" && notifCount > 0 && <span className="tab-badge">{notifCount}</span>}
+              </span>
               {t.label}
             </button>
           );

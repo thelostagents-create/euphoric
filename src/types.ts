@@ -110,6 +110,8 @@ export interface User {
   onboarded: string[];
   /** Last-read timestamp per channel/DM/group id. */
   lastRead: Record<string, string>;
+  /** Message ids whose mention notification has been dismissed. */
+  dismissedNotifications: string[];
   /** Personal app accent color. */
   appAccent: string;
 }

@@ -75,23 +75,31 @@ export function isGif(url: string): boolean {
   return /\.gif(\?|$)/i.test(url.trim());
 }
 
+/** Three free stickers every party (and DM) gets out of the box. */
+export const DEFAULT_STICKERS = [
+  "https://api.dicebear.com/9.x/fun-emoji/svg?seed=hi",
+  "https://api.dicebear.com/9.x/fun-emoji/svg?seed=yay",
+  "https://api.dicebear.com/9.x/fun-emoji/svg?seed=wow",
+];
+
 /**
- * Stickers a user can send. Free users get only the current party's stickers;
- * premium/supernova users get stickers from every party they're in.
+ * Stickers a user can send: the 3 free defaults plus customs. Free users get
+ * the current party's customs; premium/supernova get customs from every party.
  */
 export function availableStickers(state: AppState, userId: string, serverId?: string): string[] {
   const user = state.users[userId];
-  if (!user) return [];
+  if (!user) return [...DEFAULT_STICKERS];
   const paid = user.tier !== "free";
+  let customs: string[] = [];
   if (paid) {
-    const all: string[] = [];
     for (const s of state.servers) {
-      if (s.members.some((m) => m.userId === userId && !m.banned)) all.push(...s.stickers);
+      if (s.members.some((m) => m.userId === userId && !m.banned)) customs.push(...s.stickers);
     }
-    return all;
+  } else {
+    const server = serverId ? state.servers.find((s) => s.id === serverId) : undefined;
+    customs = server ? server.stickers : [];
   }
-  const server = serverId ? state.servers.find((s) => s.id === serverId) : undefined;
-  return server ? server.stickers : [];
+  return [...DEFAULT_STICKERS, ...customs];
 }
 
 /** Whether a username is already claimed by someone other than `exceptId`. */
