@@ -85,7 +85,7 @@ export function UserSheet({
             <div className="muted" style={{ fontSize: 13, marginTop: 2 }}>@{user.username}</div>
             <div style={{ marginTop: 4 }}>{tierBadge(user.tier)}</div>
             {user.bio && (
-              <p style={{ marginTop: 12, fontSize: 14, lineHeight: 1.5, opacity: 0.92 }}>{user.bio}</p>
+              <p style={{ marginTop: 12, fontSize: 14, lineHeight: 1.5, opacity: 0.92, whiteSpace: "pre-wrap" }}>{user.bio}</p>
             )}
           </div>
           </div>
