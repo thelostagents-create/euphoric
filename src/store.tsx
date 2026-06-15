@@ -27,7 +27,11 @@ const STORAGE_KEY = "euphoric.state.v1";
 type Action =
   | { type: "SEND_MESSAGE"; channelId: string; content: string; attachment?: Attachment; replyTo?: string }
   | { type: "DELETE_MESSAGE"; messageId: string }
+  | { type: "TOGGLE_PIN"; messageId: string }
   | { type: "TOGGLE_REACTION"; messageId: string; emoji: string }
+  | { type: "SET_BLOCKED_WORDS"; serverId: string; words: string[] }
+  | { type: "SET_ONBOARDING"; serverId: string; enabled: boolean; cosmeticRoleIds: string[] }
+  | { type: "COMPLETE_ONBOARDING"; serverId: string }
   | { type: "MOVE_CHANNEL"; serverId: string; channelId: string; dir: -1 | 1 }
   | { type: "DELETE_CHANNEL"; serverId: string; channelId: string }
   | { type: "CREATE_SERVER"; name: string; icon: string; iconImage?: string }
@@ -87,11 +91,47 @@ function serverOfChannel(state: AppState, channelId: string): Server | undefined
   return state.servers.find((s) => s.channels.some((c) => c.id === channelId));
 }
 
+/** Append an audit-log entry to a server (most recent first, capped at 100). */
+function withAudit(
+  server: Server,
+  entry: { action: string; actorId: string; targetId?: string; detail: string },
+): Server {
+  const log = [
+    { id: id("a"), createdAt: new Date().toISOString(), ...entry },
+    ...server.auditLog,
+  ].slice(0, 100);
+  return { ...server, auditLog: log };
+}
+
+/** First blocked word found in content, or undefined. */
+function blockedWordIn(server: Server, content: string): string | undefined {
+  const lower = content.toLowerCase();
+  return server.blockedWords.find((w) => w && lower.includes(w));
+}
+
 function reducer(state: AppState, action: Action): AppState {
   const me = state.currentUserId;
   switch (action.type) {
     case "SEND_MESSAGE": {
       if (!action.content.trim() && !action.attachment) return state;
+      // AutoMod: block messages containing a blocked word in a server channel.
+      const srv = serverOfChannel(state, action.channelId);
+      if (srv && action.content) {
+        const word = blockedWordIn(srv, action.content);
+        if (word) {
+          return {
+            ...state,
+            servers: mapServer(state, srv.id, (s) =>
+              withAudit(s, {
+                action: "AutoMod",
+                actorId: "automod",
+                targetId: me,
+                detail: `Blocked a message containing "${word}"`,
+              }),
+            ),
+          };
+        }
+      }
       const msg: Message = {
         id: id("m"),
         channelId: action.channelId,
@@ -114,6 +154,20 @@ function reducer(state: AppState, action: Action): AppState {
       return {
         ...state,
         messages: state.messages.filter((m) => m.id !== action.messageId),
+      };
+    }
+
+    case "TOGGLE_PIN": {
+      const msg = state.messages.find((m) => m.id === action.messageId);
+      if (!msg) return state;
+      const server = serverOfChannel(state, msg.channelId);
+      // Pinning requires the permission in a server channel.
+      if (!server || !can(server, me, "PIN_MESSAGES")) return state;
+      return {
+        ...state,
+        messages: state.messages.map((m) =>
+          m.id === action.messageId ? { ...m, pinned: !m.pinned } : m,
+        ),
       };
     }
 
@@ -182,6 +236,15 @@ function reducer(state: AppState, action: Action): AppState {
         staff: false,
         mentionable: false,
       };
+      const automodRole: Role = {
+        id: id("r"),
+        name: "AutoMod",
+        color: "#43d9ad",
+        permissions: [],
+        position: 1,
+        staff: false,
+        mentionable: false,
+      };
       const server: Server = {
         id: id("s"),
         name: action.name.trim() || "New Server",
@@ -191,11 +254,17 @@ function reducer(state: AppState, action: Action): AppState {
         invite: newInviteCode(state.servers),
         ownerId: me,
         channels: [{ id: id("c"), name: "general", sendRoleIds: [] }],
-        roles: [everyoneRole],
-        members: [{ userId: me, roleIds: [everyoneRole.id] }],
+        roles: [everyoneRole, automodRole],
+        members: [
+          { userId: me, roleIds: [everyoneRole.id] },
+          { userId: "automod", roleIds: [everyoneRole.id, automodRole.id] },
+        ],
         discoverable: false,
         description: "",
         keywords: [],
+        blockedWords: [],
+        auditLog: [],
+        onboarding: { enabled: false, cosmeticRoleIds: [] },
       };
       return { ...state, servers: [...state.servers, server] };
     }
@@ -499,10 +568,14 @@ function reducer(state: AppState, action: Action): AppState {
       if (!server || !canModerate(server, me, action.userId)) return state;
       return {
         ...state,
-        servers: mapServer(state, action.serverId, (s) => ({
-          ...s,
-          members: s.members.filter((m) => m.userId !== action.userId),
-        })),
+        servers: mapServer(state, action.serverId, (s) =>
+          withAudit({ ...s, members: s.members.filter((m) => m.userId !== action.userId) }, {
+            action: "Kick",
+            actorId: me,
+            targetId: action.userId,
+            detail: "Kicked from the server",
+          }),
+        ),
       };
     }
 
@@ -511,12 +584,12 @@ function reducer(state: AppState, action: Action): AppState {
       if (!server || !canModerate(server, me, action.userId)) return state;
       return {
         ...state,
-        servers: mapServer(state, action.serverId, (s) => ({
-          ...s,
-          members: s.members.map((m) =>
-            m.userId === action.userId ? { ...m, banned: true } : m,
+        servers: mapServer(state, action.serverId, (s) =>
+          withAudit(
+            { ...s, members: s.members.map((m) => (m.userId === action.userId ? { ...m, banned: true } : m)) },
+            { action: "Ban", actorId: me, targetId: action.userId, detail: "Banned from the server" },
           ),
-        })),
+        ),
       };
     }
 
@@ -526,24 +599,56 @@ function reducer(state: AppState, action: Action): AppState {
       const until = new Date(Date.now() + action.minutes * 60_000).toISOString();
       return {
         ...state,
-        servers: mapServer(state, action.serverId, (s) => ({
-          ...s,
-          members: s.members.map((m) =>
-            m.userId === action.userId ? { ...m, timeoutUntil: until } : m,
+        servers: mapServer(state, action.serverId, (s) =>
+          withAudit(
+            { ...s, members: s.members.map((m) => (m.userId === action.userId ? { ...m, timeoutUntil: until } : m)) },
+            { action: "Timeout", actorId: me, targetId: action.userId, detail: `Timed out for ${action.minutes}m` },
           ),
-        })),
+        ),
       };
     }
 
     case "CLEAR_TIMEOUT": {
       return {
         ...state,
+        servers: mapServer(state, action.serverId, (s) =>
+          withAudit(
+            { ...s, members: s.members.map((m) => (m.userId === action.userId ? { ...m, timeoutUntil: undefined } : m)) },
+            { action: "Timeout", actorId: me, targetId: action.userId, detail: "Cleared timeout" },
+          ),
+        ),
+      };
+    }
+
+    case "SET_BLOCKED_WORDS": {
+      const words = action.words.map((w) => w.trim().toLowerCase()).filter(Boolean);
+      return {
+        ...state,
+        servers: mapServer(state, action.serverId, (s) =>
+          withAudit({ ...s, blockedWords: words }, {
+            action: "AutoMod",
+            actorId: me,
+            detail: `Updated blocked words (${words.length})`,
+          }),
+        ),
+      };
+    }
+
+    case "SET_ONBOARDING": {
+      return {
+        ...state,
         servers: mapServer(state, action.serverId, (s) => ({
           ...s,
-          members: s.members.map((m) =>
-            m.userId === action.userId ? { ...m, timeoutUntil: undefined } : m,
-          ),
+          onboarding: { enabled: action.enabled, cosmeticRoleIds: action.cosmeticRoleIds },
         })),
+      };
+    }
+
+    case "COMPLETE_ONBOARDING": {
+      const u = state.users[me];
+      return {
+        ...state,
+        users: { ...state.users, [me]: { ...u, onboarded: addUnique(u.onboarded, action.serverId) } },
       };
     }
 
@@ -581,13 +686,19 @@ function migrate(state: AppState): AppState {
         },
         following: u.following ?? [],
         starAllocations: u.starAllocations ?? {},
+        onboarded: u.onboarded ?? [],
       },
     ]),
   );
+  // Ensure the AutoMod bot user always exists.
+  if (!users.automod) users.automod = seedState.users.automod;
   const servers = state.servers.map((s) => ({
     ...s,
     iconImage: s.iconImage ?? "",
     invite: s.invite ?? newInviteCode(state.servers),
+    blockedWords: s.blockedWords ?? [],
+    auditLog: s.auditLog ?? [],
+    onboarding: s.onboarding ?? { enabled: false, cosmeticRoleIds: [] },
     channels: s.channels.map((c) => ({ ...c, sendRoleIds: c.sendRoleIds ?? [] })),
     roles: s.roles.map((r) => ({ ...r, mentionable: r.mentionable ?? false })),
   }));

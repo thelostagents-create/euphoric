@@ -61,10 +61,14 @@ export function ReactionPicker({
   messageId,
   onClose,
   onReply,
+  onPin,
+  pinned,
 }: {
   messageId: string;
   onClose: () => void;
   onReply?: () => void;
+  onPin?: () => void;
+  pinned?: boolean;
 }) {
   const { dispatch } = useStore();
   return (
@@ -84,14 +88,13 @@ export function ReactionPicker({
           ))}
         </div>
         {onReply && (
-          <button
-            className="btn"
-            onClick={() => {
-              onReply();
-              onClose();
-            }}
-          >
+          <button className="btn" onClick={() => { onReply(); onClose(); }}>
             ↩ Reply
+          </button>
+        )}
+        {onPin && (
+          <button className="btn ghost" onClick={() => { onPin(); onClose(); }}>
+            📌 {pinned ? "Unpin message" : "Pin message"}
           </button>
         )}
       </div>

@@ -50,6 +50,17 @@ iOS port come in later passes.
   server settings → Channels.
 - **Mentionable roles** — toggle a role *Mentionable* so anyone can `@role` to
   ping its members (shows in their notifications).
+- **Pinning** — with the Pin Messages permission, pin/unpin from a message's
+  action menu (📌 shown on pinned messages).
+- **AutoMod** — an AutoMod bot member + role; managers can block words (blocked
+  messages are stopped and logged). Plus client-side **rate limiting** to curb
+  spam.
+- **Audit log** — server settings record moderation actions (kick/ban/timeout/
+  AutoMod).
+- **Onboarding** — managers set up a welcome screen with cosmetic roles new
+  members pick on join (and again from the Channels menu).
+- **Invite from members** — the member list shows a copyable invite link, and
+  marks members who've lent a ⭐ Star.
 - **Profile blurb** — a short, color-customizable status shown as a translucent
   block on your profile.
 - **Server boosts (⭐ Stars)** — Premium members get 1 Star, Supernova members

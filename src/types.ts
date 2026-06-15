@@ -8,9 +8,12 @@ export type Permission =
   | "BAN_MEMBERS"
   | "TIMEOUT_MEMBERS"
   | "DELETE_MESSAGES"
+  | "PIN_MESSAGES"
   | "MENTION_EVERYONE"
   | "MANAGE_ROLES"
   | "MANAGE_CHANNELS"
+  | "MANAGE_AUTOMOD"
+  | "MANAGE_ONBOARDING"
   | "MANAGE_SERVER";
 
 export const ALL_PERMISSIONS: { id: Permission; label: string; desc: string }[] = [
@@ -18,9 +21,12 @@ export const ALL_PERMISSIONS: { id: Permission; label: string; desc: string }[] 
   { id: "BAN_MEMBERS", label: "Ban Members", desc: "Permanently bar members from the server." },
   { id: "TIMEOUT_MEMBERS", label: "Timeout Members", desc: "Temporarily mute members." },
   { id: "DELETE_MESSAGES", label: "Delete Messages", desc: "Delete messages sent by other members." },
+  { id: "PIN_MESSAGES", label: "Pin Messages", desc: "Pin and unpin messages in channels." },
   { id: "MENTION_EVERYONE", label: "Mention @everyone", desc: "Ping and alert everyone in the server." },
   { id: "MANAGE_ROLES", label: "Manage Roles", desc: "Create, edit and assign roles." },
   { id: "MANAGE_CHANNELS", label: "Manage Channels", desc: "Create and delete channels." },
+  { id: "MANAGE_AUTOMOD", label: "Manage AutoMod", desc: "Configure blocked words." },
+  { id: "MANAGE_ONBOARDING", label: "Manage Onboarding", desc: "Set up the new-member onboarding screen." },
   { id: "MANAGE_SERVER", label: "Manage Server", desc: "Edit server settings, invite and discovery." },
 ];
 
@@ -70,6 +76,8 @@ export interface User {
   following: string[];
   /** Stars this user has spent, keyed by server id. */
   starAllocations: Record<string, number>;
+  /** Server ids whose onboarding this user has completed. */
+  onboarded: string[];
 }
 
 export interface Role {
@@ -116,6 +124,23 @@ export interface Message {
   reactions?: Record<string, string[]>;
   /** Id of the message this one replies to. */
   replyTo?: string;
+  pinned?: boolean;
+}
+
+export interface AuditEntry {
+  id: string;
+  /** Short action label, e.g. "Timeout", "Ban", "AutoMod". */
+  action: string;
+  actorId: string;
+  targetId?: string;
+  detail: string;
+  createdAt: string;
+}
+
+export interface Onboarding {
+  enabled: boolean;
+  /** Cosmetic roles a new member may pick for themselves. */
+  cosmeticRoleIds: string[];
 }
 
 export interface Server {
@@ -135,6 +160,10 @@ export interface Server {
   discoverable: boolean;
   description: string;
   keywords: string[];
+  /** AutoMod blocked words (lowercased). */
+  blockedWords: string[];
+  auditLog: AuditEntry[];
+  onboarding: Onboarding;
 }
 
 /** A multi-person direct conversation between friends. */

@@ -13,6 +13,8 @@ import { ReactionChips, ReactionPicker, longPressProps } from "./Reactions";
 import { LendStar } from "./LendStar";
 import { ChannelsModal } from "./ChannelsModal";
 import { ServerMembersModal } from "./ServerMembersModal";
+import { OnboardingModal } from "./Onboarding";
+import { allowSend } from "../ratelimit";
 import { ReplyPreview, ReplyBar } from "./Reply";
 import { PersonIcon, SettingsIcon, ReplyArrowIcon } from "./Icons";
 import { displayName, serverStars } from "../social";
@@ -26,6 +28,8 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [showChannels, setShowChannels] = useState(false);
   const [showMembers, setShowMembers] = useState(false);
+  const [notice, setNotice] = useState("");
+  const [obDismissed, setObDismissed] = useState<Set<string>>(new Set());
 
   const myServers = useMemo(
     () =>
@@ -124,12 +128,24 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
   const muted = isTimedOut(myMember);
   const canDeleteOthers = can(server, state.currentUserId, "DELETE_MESSAGES");
   const canTalk = canSendInChannel(server, state.currentUserId, channel);
+  const canPin = can(server, state.currentUserId, "PIN_MESSAGES");
   const myRoleIds = myMember?.roleIds ?? [];
   const mentionableRoles = server.roles.filter((r) => r.mentionable);
 
+  function flash(msg: string) {
+    setNotice(msg);
+    window.setTimeout(() => setNotice(""), 3000);
+  }
+
   function send() {
     if (!draft.trim() || muted || !canTalk) return;
+    if (!allowSend()) {
+      flash("You're sending messages too fast — slow down.");
+      return;
+    }
+    const blocked = server.blockedWords.find((w) => w && draft.toLowerCase().includes(w));
     dispatch({ type: "SEND_MESSAGE", channelId: channel!.id, content: draft, replyTo: replyTo ?? undefined });
+    if (blocked) flash(`AutoMod blocked your message (contains "${blocked}").`);
     setDraft("");
     setReplyTo(null);
   }
@@ -272,6 +288,7 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
                     <span className="name" onClick={() => setSheetUser(m.authorId)}>
                       {displayName(author)}
                     </span>
+                    {m.pinned && <span title="Pinned">📌</span>}
                     <span className="time">{timeAgo(m.createdAt)}</span>
                     <button className="msg-action" title="React or reply" onClick={() => setReactFor(m.id)}>
                       <ReplyArrowIcon size={15} />
@@ -325,6 +342,7 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
             You're timed out in this server until {new Date(myMember!.timeoutUntil!).toLocaleTimeString()}.
           </div>
         )}
+        {notice && <div className="timeout-banner">{notice}</div>}
 
         <div style={{ position: "relative" }}>
           {(showEveryone || roleSuggestions.length > 0 || mentionSuggestions.length > 0) && (
@@ -386,6 +404,8 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
         <ReactionPicker
           messageId={reactFor}
           onReply={() => setReplyTo(reactFor)}
+          onPin={canPin ? () => dispatch({ type: "TOGGLE_PIN", messageId: reactFor }) : undefined}
+          pinned={messages.find((m) => m.id === reactFor)?.pinned}
           onClose={() => setReactFor(null)}
         />
       )}
@@ -404,6 +424,14 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
           onClose={() => setShowMembers(false)}
         />
       )}
+      {server.onboarding.enabled &&
+        !me.onboarded.includes(server.id) &&
+        !obDismissed.has(server.id) && (
+          <OnboardingModal
+            server={server}
+            onDone={() => setObDismissed((prev) => new Set(prev).add(server.id))}
+          />
+        )}
     </div>
   );
 }

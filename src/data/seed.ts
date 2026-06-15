@@ -26,6 +26,7 @@ function user(
     blockedUserIds: [],
     following: [],
     starAllocations: {},
+    onboarded: [],
     ...partial,
   };
 }
@@ -43,6 +44,11 @@ const users: Record<string, User> = {
       usernameFont: "'Brush Script MT', cursive",
     },
     following: ["luna", "nova"],
+    onboarded: ["s_lounge", "s_devs"],
+  }),
+  automod: user("automod", "automod", {
+    nickname: "AutoMod",
+    bio: "🤖 I keep the chat tidy.",
   }),
   luna: user("luna", "luna", {
     bio: "moon enthusiast 🌙 | she/her",
@@ -106,12 +112,27 @@ const servers: Server[] = [
         staff: true,
         mentionable: true,
       },
+      {
+        id: "r_automod",
+        name: "AutoMod",
+        color: "#43d9ad",
+        permissions: [],
+        position: 40,
+        staff: false,
+        mentionable: false,
+      },
+      { id: "r_gamer", name: "🎮 Gamer", color: "#6b9bff", permissions: [], position: 5, staff: false, mentionable: false },
+      { id: "r_music", name: "🎵 Music", color: "#ff6bd6", permissions: [], position: 4, staff: false, mentionable: false },
     ],
+    blockedWords: ["spam"],
+    auditLog: [],
+    onboarding: { enabled: true, cosmeticRoleIds: ["r_gamer", "r_music"] },
     members: [
       { userId: "me", roleIds: ["r_everyone", "r_admin"] },
       { userId: "luna", roleIds: ["r_everyone", "r_mod"] },
       { userId: "rex", roleIds: ["r_everyone"] },
       { userId: "spammer", roleIds: ["r_everyone"] },
+      { userId: "automod", roleIds: ["r_everyone", "r_automod"] },
     ],
   },
   {
@@ -139,6 +160,9 @@ const servers: Server[] = [
         mentionable: false,
       },
     ],
+    blockedWords: [],
+    auditLog: [],
+    onboarding: { enabled: false, cosmeticRoleIds: [] },
     members: [
       { userId: "nova", roleIds: ["r_dev_everyone"] },
       { userId: "me", roleIds: ["r_dev_everyone"] },

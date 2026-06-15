@@ -10,10 +10,11 @@ import {
   type Server,
 } from "../types";
 import { can, effectivePermissions, isOwner } from "../permissions";
-import { inviteLink, isGif, serverStars, starsAvailable } from "../social";
+import { displayName, inviteLink, isGif, serverStars, starsAvailable } from "../social";
 import { ImagePicker } from "./ImagePicker";
+import { timeAgo } from "./Modal";
 
-type Tab = "overview" | "roles" | "channels" | "members" | "discovery";
+type Tab = "overview" | "roles" | "channels" | "members" | "automod" | "onboarding" | "audit" | "discovery";
 
 export function ServerManage({ server, onClose }: { server: Server; onClose: () => void }) {
   const { state } = useStore();
@@ -24,12 +25,17 @@ export function ServerManage({ server, onClose }: { server: Server; onClose: () 
   const canManageRoles = owner || can(server, meId, "MANAGE_ROLES");
   const canManageServer = owner || can(server, meId, "MANAGE_SERVER");
   const canManageChannels = owner || can(server, meId, "MANAGE_CHANNELS");
+  const canManageAutomod = owner || can(server, meId, "MANAGE_AUTOMOD");
+  const canManageOnboarding = owner || can(server, meId, "MANAGE_ONBOARDING");
 
   const tabs: { id: Tab; label: string }[] = [
     { id: "overview", label: "Overview" },
     { id: "roles", label: "Roles & Staff" },
     { id: "channels", label: "Channels" },
     { id: "members", label: "Members" },
+    { id: "automod", label: "AutoMod" },
+    { id: "onboarding", label: "Onboarding" },
+    { id: "audit", label: "Audit Log" },
     { id: "discovery", label: "Discovery" },
   ];
 
@@ -51,6 +57,9 @@ export function ServerManage({ server, onClose }: { server: Server; onClose: () 
       {tab === "roles" && <RolesTab server={server} canManage={canManageRoles} />}
       {tab === "channels" && <ChannelsTab server={server} canManage={canManageChannels} />}
       {tab === "members" && <MembersTab server={server} />}
+      {tab === "automod" && <AutoModTab server={server} canManage={canManageAutomod} />}
+      {tab === "onboarding" && <OnboardingTab server={server} canManage={canManageOnboarding} />}
+      {tab === "audit" && <AuditTab server={server} />}
       {tab === "discovery" &&
         (canManageServer ? (
           <DiscoveryTab server={server} />
@@ -415,6 +424,110 @@ function ChannelsTab({ server, canManage }: { server: Server; canManage: boolean
   );
 }
 
+function AutoModTab({ server, canManage }: { server: Server; canManage: boolean }) {
+  const { dispatch } = useStore();
+  const [words, setWords] = useState(server.blockedWords.join(", "));
+
+  if (!canManage) return <p className="muted">You need the Manage AutoMod permission.</p>;
+
+  return (
+    <div>
+      <p className="muted" style={{ fontSize: 13, marginTop: 0 }}>
+        Messages containing any blocked word are stopped by <b>AutoMod</b> and logged in the audit
+        log. Comma-separated, case-insensitive.
+      </p>
+      <div className="field">
+        <label>Blocked words</label>
+        <textarea rows={3} value={words} onChange={(e) => setWords(e.target.value)} placeholder="spam, scam, …" />
+      </div>
+      <button
+        className="btn full"
+        onClick={() =>
+          dispatch({ type: "SET_BLOCKED_WORDS", serverId: server.id, words: words.split(",") })
+        }
+      >
+        Save blocked words
+      </button>
+    </div>
+  );
+}
+
+function OnboardingTab({ server, canManage }: { server: Server; canManage: boolean }) {
+  const { dispatch } = useStore();
+  const { enabled, cosmeticRoleIds } = server.onboarding;
+  const selectable = server.roles.filter((r) => r.name !== "@everyone" && !r.staff);
+
+  if (!canManage) return <p className="muted">You need the Manage Onboarding permission.</p>;
+
+  function setOnboarding(next: { enabled?: boolean; cosmeticRoleIds?: string[] }) {
+    dispatch({
+      type: "SET_ONBOARDING",
+      serverId: server.id,
+      enabled: next.enabled ?? enabled,
+      cosmeticRoleIds: next.cosmeticRoleIds ?? cosmeticRoleIds,
+    });
+  }
+
+  return (
+    <div>
+      <div className="row" style={{ justifyContent: "space-between", marginBottom: 14 }}>
+        <div>
+          <div style={{ fontWeight: 700 }}>Onboarding screen</div>
+          <div className="muted" style={{ fontSize: 12 }}>Show new members a welcome with role choices.</div>
+        </div>
+        <button className={`toggle ${enabled ? "on" : ""}`} onClick={() => setOnboarding({ enabled: !enabled })} />
+      </div>
+      <div className="section-title">Cosmetic roles members can pick</div>
+      <div className="chips">
+        {selectable.map((r) => {
+          const on = cosmeticRoleIds.includes(r.id);
+          return (
+            <button
+              key={r.id}
+              className={`chip ${on ? "accent" : ""}`}
+              style={on ? { color: r.color } : undefined}
+              onClick={() =>
+                setOnboarding({
+                  cosmeticRoleIds: on
+                    ? cosmeticRoleIds.filter((x) => x !== r.id)
+                    : [...cosmeticRoleIds, r.id],
+                })
+              }
+            >
+              {on ? "✓ " : ""}{r.name}
+            </button>
+          );
+        })}
+      </div>
+      {selectable.length === 0 && (
+        <p className="muted" style={{ fontSize: 12 }}>Create some non-staff roles to offer as cosmetic picks.</p>
+      )}
+    </div>
+  );
+}
+
+function AuditTab({ server }: { server: Server }) {
+  const { state } = useStore();
+  if (server.auditLog.length === 0) return <p className="muted">No moderation actions yet.</p>;
+  return (
+    <div>
+      {server.auditLog.map((e) => (
+        <div className="card" key={e.id} style={{ padding: 10, marginBottom: 8 }}>
+          <div className="row" style={{ justifyContent: "space-between" }}>
+            <span className="badge staff">{e.action}</span>
+            <span className="time">{timeAgo(e.createdAt)}</span>
+          </div>
+          <div style={{ fontSize: 13, marginTop: 6 }}>
+            <b>{displayName(state.users[e.actorId])}</b>
+            {e.targetId ? <> → {displayName(state.users[e.targetId])}</> : null}
+          </div>
+          <div className="muted" style={{ fontSize: 12 }}>{e.detail}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function MembersTab({ server }: { server: Server }) {
   const { state, dispatch } = useStore();
   const assignable = server.roles.filter((r) => r.name !== "@everyone");
@@ -434,7 +547,8 @@ function MembersTab({ server }: { server: Server }) {
                 <img src={u.avatar} alt="" style={{ width: 36, height: 36, borderRadius: "50%" }} />
                 <div style={{ flex: 1 }}>
                   <div style={{ fontWeight: 700 }}>
-                    {u.username} {owner && <span className="badge staff">Owner</span>}
+                    {displayName(u)} {(u.starAllocations[server.id] ?? 0) > 0 && <span title="Lent a Star">⭐</span>}{" "}
+                    {owner && <span className="badge staff">Owner</span>}
                   </div>
                   <div className="muted" style={{ fontSize: 12 }}>
                     {perms.size ? `${perms.size} permission(s)` : "no special permissions"}

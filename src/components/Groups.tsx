@@ -9,6 +9,7 @@ import { ReactionChips, ReactionPicker, longPressProps } from "./Reactions";
 import { ReplyPreview, ReplyBar } from "./Reply";
 import { ReplyArrowIcon } from "./Icons";
 import { ImagePicker } from "./ImagePicker";
+import { allowSend } from "../ratelimit";
 
 /** Group picture: image if set, otherwise the member count in a circle. */
 export function GroupAvatar({ group, size = 38 }: { group: { iconImage: string; memberIds: string[] }; size?: number }) {
@@ -203,7 +204,7 @@ export function GroupView({ groupId, onBack }: { groupId: string; onBack: () => 
     .join(", ");
 
   function send() {
-    if (!draft.trim()) return;
+    if (!draft.trim() || !allowSend()) return;
     dispatch({ type: "SEND_MESSAGE", channelId: groupId, content: draft, replyTo: replyTo ?? undefined });
     setDraft("");
     setReplyTo(null);

@@ -7,6 +7,7 @@ import { AttachButton } from "./AttachButton";
 import { ReactionChips, ReactionPicker, longPressProps } from "./Reactions";
 import { ReplyPreview, ReplyBar } from "./Reply";
 import { ReplyArrowIcon } from "./Icons";
+import { allowSend } from "../ratelimit";
 import { CreateGroupModal, GroupView, GroupAvatar } from "./Groups";
 import type { GroupChat, Message } from "../types";
 
@@ -233,7 +234,7 @@ function DmView({ friendId, onBack }: { friendId: string; onBack: () => void }) 
   }, [messages.length]);
 
   function send() {
-    if (!draft.trim() || blocked) return;
+    if (!draft.trim() || blocked || !allowSend()) return;
     dispatch({ type: "SEND_MESSAGE", channelId, content: draft, replyTo: replyTo ?? undefined });
     setDraft("");
     setReplyTo(null);
