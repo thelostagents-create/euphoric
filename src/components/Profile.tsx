@@ -126,6 +126,8 @@ export function Profile({ onManageSubscription }: { onManageSubscription: () => 
           />
         </div>
 
+        {!a.enabled && (
+        <>
         <BlurbEditor />
 
         <div className="field">
@@ -218,6 +220,8 @@ export function Profile({ onManageSubscription }: { onManageSubscription: () => 
             <HexField label="Text" value={theme.textColor} onChange={(v) => dispatch({ type: "UPDATE_THEME", theme: { textColor: v } })} />
           </div>
         </div>
+        </>
+        )}
 
         <div className="section-title" id="aesthetic-section">Aesthetic Avatars</div>
         {!canCustomize ? (
@@ -253,6 +257,16 @@ export function Profile({ onManageSubscription }: { onManageSubscription: () => 
                 <BlurbEditor />
 
                 <div className="field">
+                  <label>About me (bio)</label>
+                  <textarea
+                    rows={3}
+                    value={user.bio}
+                    placeholder="Tell people about yourself…"
+                    onChange={(e) => dispatch({ type: "UPDATE_PROFILE", bio: e.target.value })}
+                  />
+                </div>
+
+                <div className="field">
                   <label>Profile picture {canGif ? "(GIFs allowed ✨)" : ""}</label>
                   <ImagePicker value={user.avatar} placeholder="https://…" onChange={(v) => dispatch({ type: "UPDATE_PROFILE", avatar: v })} />
                 </div>
@@ -270,6 +284,7 @@ export function Profile({ onManageSubscription }: { onManageSubscription: () => 
                     />
                   )}
                 </div>
+                <HexField label="Banner color (shown when no image)" value={user.banner.color} onChange={(v) => dispatch({ type: "UPDATE_BANNER", color: v })} />
 
                 <div className="section-title" style={{ marginTop: 6 }}>Colors</div>
                 <div className="row" style={{ gap: 12 }}>
