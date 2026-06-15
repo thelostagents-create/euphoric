@@ -426,10 +426,17 @@ textarea:focus {
   margin-left: 6px;
 }
 
+.msg-tools {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .msg-delete {
-  font-size: 11px;
   color: var(--muted);
-  padding-left: 8px;
+  display: inline-flex;
+  align-items: center;
 }
 
 .msg-delete:hover {
@@ -437,11 +444,9 @@ textarea:focus {
 }
 
 .msg-action {
-  margin-left: auto;
   color: var(--muted);
   display: inline-flex;
   align-items: center;
-  padding: 0 2px;
 }
 
 .msg-action:hover {
@@ -704,7 +709,7 @@ textarea:focus {
 
 /* ---------- Profile ---------- */
 .profile-banner {
-  height: 220px;
+  height: 150px;
   background-size: cover;
   background-position: center;
 }

@@ -290,8 +290,15 @@ export function Profile({ onManageSubscription }: { onManageSubscription: () => 
                 <div className="field">
                   <label>Gallery images (up to 6)</label>
                   {[0, 1, 2, 3, 4, 5].map((i) => (
-                    <div key={i} style={{ marginBottom: 6 }}>
-                      <ImagePicker value={a.gallery[i] ?? ""} placeholder={`image ${i + 1}`} onChange={(v) => setGalleryAt(i, v)} />
+                    <div key={i} className="row" style={{ gap: 8, marginBottom: 6 }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <ImagePicker value={a.gallery[i] ?? ""} placeholder={`image ${i + 1}`} onChange={(v) => setGalleryAt(i, v)} />
+                      </div>
+                      {a.gallery[i] && (
+                        <button className="btn ghost sm" title="Remove image" onClick={() => setGalleryAt(i, "")}>
+                          ✕
+                        </button>
+                      )}
                     </div>
                   ))}
                 </div>

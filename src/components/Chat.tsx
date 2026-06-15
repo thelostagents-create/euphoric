@@ -295,9 +295,6 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
                     </span>
                     {m.pinned && <span title="Pinned">📌</span>}
                     <span className="time">{timeAgo(m.createdAt)}</span>
-                    <button className="msg-action" title="React or reply" onClick={() => setReactFor(m.id)}>
-                      <ReplyArrowIcon size={15} />
-                    </button>
                     {blocked && (
                       <button
                         className="blocked-tag"
@@ -312,16 +309,20 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
                         blocked · {isRevealed ? "hide" : "reveal"}
                       </button>
                     )}
-                    {canDelete && (
-                      <button
-                        className="msg-delete"
-                        title={m.authorId === state.currentUserId ? "Delete your message" : "Delete message"}
-                        onClick={() => dispatch({ type: "DELETE_MESSAGE", messageId: m.id })}
-                        style={{ display: "inline-flex", alignItems: "center" }}
-                      >
-                        <XIcon size={13} />
+                    <span className="msg-tools">
+                      <button className="msg-action" title="React or reply" onClick={() => setReactFor(m.id)}>
+                        <ReplyArrowIcon size={15} />
                       </button>
-                    )}
+                      {canDelete && (
+                        <button
+                          className="msg-delete"
+                          title={m.authorId === state.currentUserId ? "Delete your message" : "Delete message"}
+                          onClick={() => dispatch({ type: "DELETE_MESSAGE", messageId: m.id })}
+                        >
+                          <XIcon size={13} />
+                        </button>
+                      )}
+                    </span>
                   </div>
                   {m.content && (
                     <div className="content">
