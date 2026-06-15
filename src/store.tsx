@@ -842,6 +842,7 @@ function migrate(state: AppState): AppState {
         nickname: u.nickname ?? "",
         blurb: u.blurb ?? "",
         blurbColor: u.blurbColor ?? "#9b7bff",
+        theme: { ...u.theme, nameColor: u.theme?.nameColor ?? u.theme?.accentColor ?? "#a06bff" },
         banner: {
           color: u.banner?.color ?? "#2a2440",
           image: u.banner?.image ?? "",
@@ -862,6 +863,7 @@ function migrate(state: AppState): AppState {
           cardColor: "#ffffff",
           accentColor: "#a9c49a",
           textColor: "#4a5a44",
+          nameColor: "#a9c49a",
           likes: "",
           dislikes: "",
           beforeFollow: "",

@@ -90,7 +90,7 @@ export function AestheticProfile({ user }: { user: User }) {
             alt=""
             style={{ width: 72, height: 72, borderRadius: 10, objectFit: "cover", border: `2px solid ${a.accentColor}` }}
           />
-          <div style={{ fontWeight: 800, marginTop: 6, color: a.accentColor }}>@{user.username}</div>
+          <div style={{ fontWeight: 800, marginTop: 6, color: a.nameColor }}>@{user.username}</div>
         </div>
         <div style={{ flex: 1, minWidth: 0, fontSize: 13, whiteSpace: "pre-wrap" }}>
           {user.bio || <span style={{ opacity: 0.5 }}>no bio yet</span>}

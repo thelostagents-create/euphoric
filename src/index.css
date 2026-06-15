@@ -406,15 +406,19 @@ textarea:focus {
 
 .sticker-star {
   position: absolute;
-  top: 2px;
-  right: 2px;
-  font-size: 14px;
+  top: 3px;
+  right: 3px;
+  font-size: 12px;
   line-height: 1;
   color: #ffd36b;
-  background: rgba(0, 0, 0, 0.35);
+  background: rgba(0, 0, 0, 0.45);
   border-radius: 50%;
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
 }
 
 .sticker-star.on {

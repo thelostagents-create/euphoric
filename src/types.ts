@@ -42,6 +42,8 @@ export interface ProfileTheme {
   backgroundColor: string;
   accentColor: string;
   textColor: string;
+  /** Display-name color, independent of the accent. */
+  nameColor: string;
   /** A google-ish font-family name applied to the username (supernova only). */
   usernameFont: string;
 }
@@ -69,6 +71,8 @@ export interface Aesthetic {
   cardColor: string;
   accentColor: string;
   textColor: string;
+  /** Display-name color on the aesthetic card. */
+  nameColor: string;
   likes: string;
   dislikes: string;
   beforeFollow: string;

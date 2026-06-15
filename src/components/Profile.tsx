@@ -67,7 +67,7 @@ export function Profile({ onManageSubscription }: { onManageSubscription: () => 
         />
         <div
           className="username"
-          style={{ fontFamily: canFont ? theme.usernameFont : "inherit", color: theme.accentColor }}
+          style={{ fontFamily: canFont ? theme.usernameFont : "inherit", color: theme.nameColor }}
         >
           {displayName(user)}
         </div>
@@ -217,7 +217,10 @@ export function Profile({ onManageSubscription }: { onManageSubscription: () => 
           <div className="row" style={{ gap: 12 }}>
             <HexField label="Background" value={theme.backgroundColor} onChange={(v) => dispatch({ type: "UPDATE_THEME", theme: { backgroundColor: v } })} />
             <HexField label="Accent" value={theme.accentColor} onChange={(v) => dispatch({ type: "UPDATE_THEME", theme: { accentColor: v } })} />
-            <HexField label="Text" value={theme.textColor} onChange={(v) => dispatch({ type: "UPDATE_THEME", theme: { textColor: v } })} />
+          </div>
+          <div className="row" style={{ gap: 12, marginTop: 8 }}>
+            <HexField label="Name" value={theme.nameColor} onChange={(v) => dispatch({ type: "UPDATE_THEME", theme: { nameColor: v } })} />
+            <HexField label="Description" value={theme.textColor} onChange={(v) => dispatch({ type: "UPDATE_THEME", theme: { textColor: v } })} />
           </div>
         </div>
         </>
@@ -294,6 +297,9 @@ export function Profile({ onManageSubscription }: { onManageSubscription: () => 
                 <div className="row" style={{ gap: 12, marginTop: 8 }}>
                   <HexField label="Accent" value={a.accentColor} onChange={(v) => setAesthetic({ accentColor: v })} />
                   <HexField label="Text" value={a.textColor} onChange={(v) => setAesthetic({ textColor: v })} />
+                </div>
+                <div className="row" style={{ gap: 12, marginTop: 8 }}>
+                  <HexField label="Name" value={a.nameColor} onChange={(v) => setAesthetic({ nameColor: v })} />
                 </div>
 
                 <div className="section-title" style={{ marginTop: 6 }}>Boxes (rename any header)</div>

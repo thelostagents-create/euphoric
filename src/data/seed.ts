@@ -4,6 +4,7 @@ const defaultTheme: ProfileTheme = {
   backgroundColor: "#16122b",
   accentColor: "#a06bff",
   textColor: "#e9e6f5",
+  nameColor: "#a06bff",
   usernameFont: "system-ui",
 };
 
@@ -30,6 +31,7 @@ function user(
       cardColor: "#ffffff",
       accentColor: "#a9c49a",
       textColor: "#4a5a44",
+      nameColor: "#a9c49a",
       likes: "",
       dislikes: "",
       beforeFollow: "",
@@ -64,6 +66,7 @@ const users: Record<string, User> = {
       backgroundColor: "#1a0b2e",
       accentColor: "#ff6bd6",
       textColor: "#ffe9fb",
+      nameColor: "#ff6bd6",
       usernameFont: "'Brush Script MT', cursive",
     },
     following: ["luna", "nova"],
@@ -75,6 +78,7 @@ const users: Record<string, User> = {
       cardColor: "#2a1740",
       accentColor: "#ff6bd6",
       textColor: "#ffe9fb",
+      nameColor: "#ff6bd6",
       likes: "music, late nights, pixel art",
       dislikes: "spam, cold weather",
       beforeFollow: "i post a lot and ramble in chat — you've been warned 💫",

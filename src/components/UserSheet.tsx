@@ -77,7 +77,7 @@ export function UserSheet({
                 fontWeight: 800,
                 marginTop: 10,
                 fontFamily: canFont ? user.theme.usernameFont : "inherit",
-                color: theme.accentColor,
+                color: theme.nameColor,
               }}
             >
               {displayName(user)}
