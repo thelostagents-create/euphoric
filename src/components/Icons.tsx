@@ -66,6 +66,15 @@ export function PersonIcon({ size = 14 }: IconProps) {
   );
 }
 
+export function XIcon({ size = 14 }: IconProps) {
+  return (
+    <svg {...base(size)}>
+      <path d="M18 6 6 18" />
+      <path d="m6 6 12 12" />
+    </svg>
+  );
+}
+
 export function ReplyArrowIcon({ size = 16 }: IconProps) {
   return (
     <svg {...base(size)}>

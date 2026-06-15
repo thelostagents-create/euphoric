@@ -1,5 +1,6 @@
 import type { CSSProperties, ReactNode } from "react";
 import type { User } from "../types";
+import { isGif } from "../social";
 
 export function Modal({
   title,
@@ -27,10 +28,10 @@ export function tierBadge(tier: string) {
   return null;
 }
 
-/** Banner background: image only counts for premium/supernova members. */
+/** Banner background: static images for all; animated GIFs are paid-only. */
 export function bannerStyle(user: User): CSSProperties {
-  const canImage = user.tier !== "free";
-  if (canImage && user.banner.image) {
+  const showImage = user.banner.image && (!isGif(user.banner.image) || user.tier !== "free");
+  if (showImage) {
     return {
       backgroundImage: `url(${user.banner.image})`,
       backgroundSize: "cover",

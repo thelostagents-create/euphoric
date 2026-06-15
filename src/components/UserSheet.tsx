@@ -25,11 +25,10 @@ export function UserSheet({
   const followsMe = user.following.includes(me.id);
   const friends = areFriends(me, user);
   const supernova = user.tier === "supernova";
+  const canFont = user.tier !== "free";
 
-  // Premium color theming only applies to supernova profiles.
-  const theme = supernova
-    ? user.theme
-    : { backgroundColor: "var(--bg-2)", accentColor: "var(--accent)", textColor: "var(--text)", usernameFont: "inherit" };
+  // Profile colors apply to all tiers; the custom font is paid-only.
+  const theme = user.theme;
 
   const canMod = server && canModerate(server, state.currentUserId, userId);
   const member = server && getMember(server, userId);
@@ -58,7 +57,7 @@ export function UserSheet({
               color: theme.textColor,
             }}
           >
-            <div style={{ height: 110, ...bannerStyle(user) }} />
+            <div style={{ height: 140, ...bannerStyle(user) }} />
           <div style={{ padding: "0 20px 20px" }}>
             <img
               src={user.avatar}
@@ -77,7 +76,7 @@ export function UserSheet({
                 fontSize: 24,
                 fontWeight: 800,
                 marginTop: 10,
-                fontFamily: supernova ? user.theme.usernameFont : "inherit",
+                fontFamily: canFont ? user.theme.usernameFont : "inherit",
                 color: theme.accentColor,
               }}
             >

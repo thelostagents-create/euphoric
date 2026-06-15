@@ -80,7 +80,7 @@ export function AestheticProfile({ user }: { user: User }) {
       )}
 
       {/* banner (from main profile) */}
-      <div style={{ height: 96, borderRadius: 10, ...bannerStyle(user) }} />
+      <div style={{ height: 120, borderRadius: 10, ...bannerStyle(user) }} />
 
       {/* identity */}
       <div style={{ display: "flex", gap: 10, marginTop: 10 }}>

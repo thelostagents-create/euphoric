@@ -73,10 +73,9 @@ iOS port come in later passes.
 - **Profiles & bios** — every user has an avatar, a custom bio, a banner, and a
   tier.
 - **Subscription tiers**
-  - **Free** — core features.
-  - **Premium ($5/mo)** — animated GIF profile picture.
-  - **Supernova ($8/mo)** — GIF avatar **plus** custom username font and
-    premium profile color customization (background / accent / text).
+  - **Free** — core features, profile color theming, and a static banner image.
+  - **Premium ($5/mo)** — animated GIF avatar/banner and a custom username font.
+  - **Supernova ($8/mo)** — everything in Premium plus Aesthetic Avatars.
 - **Server Discovery** — servers opt in with a description and keywords; a
   search page lets anyone find and join them by keyword.
 

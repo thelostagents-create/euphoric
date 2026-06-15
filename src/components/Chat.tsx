@@ -16,7 +16,7 @@ import { ServerMembersModal } from "./ServerMembersModal";
 import { OnboardingModal } from "./Onboarding";
 import { allowSend } from "../ratelimit";
 import { ReplyPreview, ReplyBar } from "./Reply";
-import { PersonIcon, SettingsIcon, ReplyArrowIcon } from "./Icons";
+import { PersonIcon, SettingsIcon, ReplyArrowIcon, XIcon } from "./Icons";
 import { displayName, serverStars } from "../social";
 import type { ChatNav } from "../App";
 
@@ -317,8 +317,9 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
                         className="msg-delete"
                         title={m.authorId === state.currentUserId ? "Delete your message" : "Delete message"}
                         onClick={() => dispatch({ type: "DELETE_MESSAGE", messageId: m.id })}
+                        style={{ display: "inline-flex", alignItems: "center" }}
                       >
-                        delete
+                        <XIcon size={13} />
                       </button>
                     )}
                   </div>

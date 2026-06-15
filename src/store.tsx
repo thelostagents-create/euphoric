@@ -367,10 +367,11 @@ function reducer(state: AppState, action: Action): AppState {
 
     case "UPDATE_BANNER": {
       const u = state.users[me];
-      // Only premium/supernova members may set a banner image.
-      const canImage = u.tier === "premium" || u.tier === "supernova";
-      const image =
-        action.image !== undefined && canImage ? action.image : u.banner.image;
+      // Everyone can set a static banner image; animated GIFs need a paid tier.
+      let image = u.banner.image;
+      if (action.image !== undefined) {
+        if (!isGif(action.image) || u.tier !== "free") image = action.image;
+      }
       return {
         ...state,
         users: {
