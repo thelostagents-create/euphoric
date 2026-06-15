@@ -128,6 +128,9 @@ function OverviewTab({ server, canManage }: { server: Server; canManage: boolean
           <span className={`chip ${animatedUnlocked ? "accent" : ""}`}>
             {animatedUnlocked ? "✓" : `${BOOST_ANIMATED_ICON}⭐`} Animated icon
           </span>
+          <span className={`chip ${stars >= BOOST_STICKERS ? "accent" : ""}`}>
+            {stars >= BOOST_STICKERS ? "✓" : `${BOOST_STICKERS}⭐`} Stickers
+          </span>
           <span className={`chip ${customInviteUnlocked ? "accent" : ""}`}>
             {customInviteUnlocked ? "✓" : `${BOOST_CUSTOM_INVITE}⭐`} Custom invite
           </span>

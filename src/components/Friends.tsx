@@ -148,28 +148,47 @@ export function Friends({
           </p>
         )}
 
-        {/* Pending requests — people who've added you, collapsed to stay tidy */}
+        {/* Friends — collapsed; incoming requests shown at the top */}
         <button
           className="btn ghost full"
           style={{ marginTop: 10 }}
           onClick={() => setShowFriends((v) => !v)}
         >
-          👋 Pending requests · {pendingRequests.length} {showFriends ? "▲" : "▼"}
+          👥 Friends · {friends.length}
+          {pendingRequests.length > 0 ? ` · ${pendingRequests.length} request${pendingRequests.length === 1 ? "" : "s"}` : ""}{" "}
+          {showFriends ? "▲" : "▼"}
         </button>
-        {showFriends &&
-          (pendingRequests.length === 0 ? (
-            <p className="muted" style={{ fontSize: 13 }}>No pending friend requests.</p>
-          ) : (
-            pendingRequests.map((u) => (
-              <div className="row" key={u.id} style={{ marginTop: 8 }}>
-                <img src={u.avatar} alt="" style={{ width: 32, height: 32, borderRadius: "50%" }} />
-                <span style={{ flex: 1, fontWeight: 600 }}>{displayName(u)}</span>
-                <button className="btn sm" onClick={() => dispatch({ type: "ADD_FRIEND", userId: u.id })}>
-                  Accept
-                </button>
-              </div>
-            ))
-          ))}
+        {showFriends && (
+          <>
+            {pendingRequests.length > 0 && (
+              <>
+                <div className="muted" style={{ fontSize: 11, fontWeight: 700, margin: "8px 0 2px", textTransform: "uppercase" }}>
+                  Friend requests
+                </div>
+                {pendingRequests.map((u) => (
+                  <div className="row" key={u.id} style={{ marginTop: 8 }}>
+                    <img src={u.avatar} alt="" style={{ width: 32, height: 32, borderRadius: "50%" }} />
+                    <span style={{ flex: 1, fontWeight: 600 }}>{displayName(u)}</span>
+                    <button className="btn sm" onClick={() => dispatch({ type: "ADD_FRIEND", userId: u.id })}>
+                      Accept
+                    </button>
+                  </div>
+                ))}
+              </>
+            )}
+            {friends.length === 0 ? (
+              <p className="muted" style={{ fontSize: 13, marginTop: 8 }}>No friends yet — add someone below.</p>
+            ) : (
+              friends.map((f) => (
+                <div className="row" key={f.id} style={{ marginTop: 8, cursor: "pointer" }} onClick={() => setOpenDm(f.id)}>
+                  <img src={f.avatar} alt="" style={{ width: 32, height: 32, borderRadius: "50%" }} />
+                  <span style={{ flex: 1, fontWeight: 600 }}>{displayName(f)}</span>
+                  <span className="badge staff">Friend</span>
+                </div>
+              ))
+            )}
+          </>
+        )}
 
         <AddFriend />
 

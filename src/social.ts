@@ -19,7 +19,7 @@ export function serverUnread(state: AppState, userId: string, server: Server): b
 
 /** Total Stars a member of a given tier is granted to spend. */
 export function starCapacity(tier: Tier): number {
-  if (tier === "supernova") return 10;
+  if (tier === "supernova") return 2;
   if (tier === "premium") return 1;
   return 0;
 }

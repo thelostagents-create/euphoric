@@ -1,7 +1,7 @@
 import { useStore } from "../store";
 import { Modal } from "./Modal";
 import { serverStars, starsAvailable } from "../social";
-import { BOOST_ANIMATED_ICON, BOOST_CUSTOM_INVITE, type Server } from "../types";
+import { BOOST_ANIMATED_ICON, BOOST_CUSTOM_INVITE, BOOST_STICKERS, type Server } from "../types";
 
 export function LendStar({ server, onClose }: { server: Server; onClose: () => void }) {
   const { state, dispatch } = useStore();
@@ -42,6 +42,9 @@ export function LendStar({ server, onClose }: { server: Server; onClose: () => v
       <div className="chips" style={{ marginTop: 14, justifyContent: "center" }}>
         <span className={`chip ${stars >= BOOST_ANIMATED_ICON ? "accent" : ""}`}>
           {stars >= BOOST_ANIMATED_ICON ? "✓" : `${BOOST_ANIMATED_ICON}⭐`} Animated icon
+        </span>
+        <span className={`chip ${stars >= BOOST_STICKERS ? "accent" : ""}`}>
+          {stars >= BOOST_STICKERS ? "✓" : `${BOOST_STICKERS}⭐`} Stickers
         </span>
         <span className={`chip ${stars >= BOOST_CUSTOM_INVITE ? "accent" : ""}`}>
           {stars >= BOOST_CUSTOM_INVITE ? "✓" : `${BOOST_CUSTOM_INVITE}⭐`} Custom invite
