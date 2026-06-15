@@ -42,6 +42,13 @@ button {
   cursor: pointer;
   border: none;
   background: none;
+  /* Press feedback: darken instantly, then fade back on release. */
+  transition: filter 0.5s ease;
+}
+
+button:active {
+  filter: brightness(0.55);
+  transition: filter 0s;
 }
 
 input,
@@ -430,11 +437,7 @@ textarea:focus {
   margin-left: auto;
   display: inline-flex;
   align-items: center;
-  gap: 0;
-}
-
-.msg-tools button {
-  padding: 0 1px;
+  gap: 7px;
 }
 
 .unread-dot {

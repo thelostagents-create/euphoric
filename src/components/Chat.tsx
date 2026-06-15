@@ -239,15 +239,15 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
             <div className="sub">#{channel.name}</div>
           </div>
           <div className="spacer" />
-          <button className="count-pill" onClick={() => setShowMembers(true)} title="View members">
-            <PersonIcon size={13} />
-            {server.members.filter((m) => !m.banned).length}
-          </button>
           <button className="gear-btn" onClick={() => setShowSearch(true)} title="Search messages">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="11" cy="11" r="7" />
               <path d="m21 21-4.3-4.3" />
             </svg>
+          </button>
+          <button className="count-pill" onClick={() => setShowMembers(true)} title="View members">
+            <PersonIcon size={13} />
+            {server.members.filter((m) => !m.banned).length}
           </button>
           <button className="star-pill" onClick={() => setShowLend(true)} title="Lend a Star">
             {serverStars(state, server.id)} ⭐
