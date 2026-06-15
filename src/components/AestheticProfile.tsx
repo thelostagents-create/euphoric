@@ -109,7 +109,7 @@ export function AestheticProfile({ user }: { user: User }) {
 
       {a.gallery.some(Boolean) && (
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6, marginTop: 10 }}>
-          {a.gallery.filter(Boolean).map((src, i) => (
+          {a.gallery.filter(Boolean).slice(0, 3).map((src, i) => (
             <img
               key={i}
               src={src}

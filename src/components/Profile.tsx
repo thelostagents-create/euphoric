@@ -30,9 +30,9 @@ export function Profile({ onManageSubscription }: { onManageSubscription: () => 
   }
   function setGalleryAt(i: number, url: string) {
     const g = [...a.gallery];
-    while (g.length < 6) g.push("");
+    while (g.length < 3) g.push("");
     g[i] = url;
-    setAesthetic({ gallery: g });
+    setAesthetic({ gallery: g.slice(0, 3) });
   }
   const myServers = state.servers.filter((s) => getMember(s, user.id));
 
@@ -287,7 +287,6 @@ export function Profile({ onManageSubscription }: { onManageSubscription: () => 
                     />
                   )}
                 </div>
-                <HexField label="Banner color (shown when no image)" value={user.banner.color} onChange={(v) => dispatch({ type: "UPDATE_BANNER", color: v })} />
 
                 <div className="section-title" style={{ marginTop: 6 }}>Colors</div>
                 <div className="row" style={{ gap: 12 }}>
@@ -300,6 +299,7 @@ export function Profile({ onManageSubscription }: { onManageSubscription: () => 
                 </div>
                 <div className="row" style={{ gap: 12, marginTop: 8 }}>
                   <HexField label="Name" value={a.nameColor} onChange={(v) => setAesthetic({ nameColor: v })} />
+                  <HexField label="Banner" value={user.banner.color} onChange={(v) => dispatch({ type: "UPDATE_BANNER", color: v })} />
                 </div>
 
                 <div className="section-title" style={{ marginTop: 6 }}>Boxes (rename any header)</div>
@@ -309,8 +309,8 @@ export function Profile({ onManageSubscription }: { onManageSubscription: () => 
                 <BoxEditor headerValue={a.dnfTitle} onHeader={(v) => setAesthetic({ dnfTitle: v })} bodyValue={a.doNotFollow} onBody={(v) => setAesthetic({ doNotFollow: v })} multiline />
 
                 <div className="field">
-                  <label>Gallery images (up to 6)</label>
-                  {[0, 1, 2, 3, 4, 5].map((i) => (
+                  <label>Gallery images (up to 3)</label>
+                  {[0, 1, 2].map((i) => (
                     <div key={i} className="row" style={{ gap: 8, marginBottom: 6 }}>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <ImagePicker value={a.gallery[i] ?? ""} placeholder={`image ${i + 1}`} onChange={(v) => setGalleryAt(i, v)} />
