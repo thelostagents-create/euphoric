@@ -318,10 +318,10 @@ export async function fetchConversation(conv: string): Promise<Message[]> {
   return (data ?? []).map(rowToMessage);
 }
 
-export async function fetchProfilesByIds(ids: string[]): Promise<Partial<User>[]> {
-  if (!supabase || ids.length === 0) return [];
-  const { data } = await supabase.from("profiles").select("*").in("id", ids);
-  return (data ?? []).map((d) => ({
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/** Map a profiles row to a local User partial, including customization. */
+function rowToProfile(d: any): Partial<User> {
+  const p: Partial<User> = {
     id: d.id,
     username: d.username,
     nickname: d.nickname ?? "",
@@ -330,7 +330,21 @@ export async function fetchProfilesByIds(ids: string[]): Promise<Partial<User>[]
     blurb: d.blurb ?? "",
     blurbColor: d.blurb_color ?? "#9b7bff",
     tier: d.tier ?? "free",
-  }));
+    appAccent: d.app_accent ?? "#9b7bff",
+    lightMode: d.light_mode ?? false,
+  };
+  // Only override locals when the DB has a fully-shaped nested object.
+  if (d.banner && d.banner.color) p.banner = d.banner;
+  if (d.theme && d.theme.accentColor) p.theme = d.theme;
+  if (d.aesthetic && d.aesthetic.bgColor) p.aesthetic = d.aesthetic;
+  return p;
+}
+/* eslint-enable @typescript-eslint/no-explicit-any */
+
+export async function fetchProfilesByIds(ids: string[]): Promise<Partial<User>[]> {
+  if (!supabase || ids.length === 0) return [];
+  const { data } = await supabase.from("profiles").select("*").in("id", ids);
+  return (data ?? []).map(rowToProfile);
 }
 
 export async function sendMessageDb(
@@ -392,22 +406,7 @@ export async function loadProfile(id: string): Promise<Partial<User> | null> {
   if (!supabase) return null;
   const { data, error } = await supabase.from("profiles").select("*").eq("id", id).maybeSingle();
   if (error || !data) return null;
-  const p: Partial<User> = {
-    username: data.username,
-    nickname: data.nickname ?? "",
-    avatar: data.avatar ?? "",
-    bio: data.bio ?? "",
-    blurb: data.blurb ?? "",
-    blurbColor: data.blurb_color ?? "#9b7bff",
-    tier: data.tier ?? "free",
-    appAccent: data.app_accent ?? "#9b7bff",
-    lightMode: data.light_mode ?? false,
-  };
-  // Nested objects only override locals when the DB has a full shape.
-  if (data.banner && data.banner.color) p.banner = data.banner;
-  if (data.theme && data.theme.accentColor) p.theme = data.theme;
-  if (data.aesthetic && data.aesthetic.bgColor) p.aesthetic = data.aesthetic;
-  return p;
+  return rowToProfile(data);
 }
 
 /** Persist the local user's profile fields to Supabase (keyed by auth id). */
