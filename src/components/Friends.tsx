@@ -178,6 +178,11 @@ export function Friends({
         </button>
         {showFriends && (
           <>
+            {isSupabaseConfigured && (
+              <p className="muted" style={{ fontSize: 11, marginTop: 6 }}>
+                💡 New friend requests don't appear live yet — refresh the app to check for them.
+              </p>
+            )}
             {pendingRequests.length > 0 && (
               <>
                 <div className="muted" style={{ fontSize: 11, fontWeight: 700, margin: "8px 0 2px", textTransform: "uppercase" }}>
@@ -381,7 +386,7 @@ function DmView({ friendId, onBack }: { friendId: string; onBack: () => void }) 
             <div key={m.id} className="msg" {...longPressProps(() => setReactFor(m.id))}>
               <img className="avatar" src={author?.avatar} alt="" />
               <div className="body">
-                {m.replyTo && <ReplyPreview replyTo={m.replyTo} />}
+                {m.replyTo && <ReplyPreview replyTo={m.replyTo} messages={messages} users={users} />}
                 <div className="meta">
                   <span className="name">{displayName(author)}</span>
                   <span className="time">{timeAgo(m.createdAt)}</span>
@@ -448,7 +453,7 @@ function DmView({ friendId, onBack }: { friendId: string; onBack: () => void }) 
         <div className="timeout-banner">You've blocked {displayName(friend)}. Unblock them to chat.</div>
       ) : (
         <>
-          {replyTo && <ReplyBar replyTo={replyTo} onCancel={() => setReplyTo(null)} />}
+          {replyTo && <ReplyBar replyTo={replyTo} onCancel={() => setReplyTo(null)} messages={messages} users={users} />}
           <div className="composer">
             <AttachButton channelId={channelId} onSend={live ? (att) => liveConv.send("", att) : undefined} />
             {!live && <StickerButton channelId={channelId} onInsertEmoji={(e) => setDraft((d) => d + e)} />}

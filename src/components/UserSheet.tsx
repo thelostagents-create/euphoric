@@ -30,7 +30,8 @@ export function UserSheet({
   // Profile colors apply to all tiers; the custom font is paid-only.
   const theme = user.theme;
 
-  const canMod = server && canModerate(server, state.currentUserId, userId);
+  const iAmDev = me.tier === "developer";
+  const canMod = !!server && (canModerate(server, state.currentUserId, userId) || iAmDev);
   const member = server && getMember(server, userId);
   const timedOut = isTimedOut(member);
   const canAssignRoles =

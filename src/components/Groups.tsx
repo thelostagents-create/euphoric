@@ -277,7 +277,7 @@ export function GroupView({ groupId, onBack }: { groupId: string; onBack: () => 
             <div key={m.id} className="msg" {...longPressProps(() => setReactFor(m.id))}>
               <img className="avatar" src={author?.avatar} alt="" />
               <div className="body">
-                {m.replyTo && <ReplyPreview replyTo={m.replyTo} />}
+                {m.replyTo && <ReplyPreview replyTo={m.replyTo} messages={messages} users={users} />}
                 <div className="meta">
                   <span className="name">{displayName(author)}</span>
                   <span className="time">{timeAgo(m.createdAt)}</span>
@@ -304,7 +304,7 @@ export function GroupView({ groupId, onBack }: { groupId: string; onBack: () => 
         <div ref={endRef} />
       </div>
 
-      {replyTo && <ReplyBar replyTo={replyTo} onCancel={() => setReplyTo(null)} />}
+      {replyTo && <ReplyBar replyTo={replyTo} onCancel={() => setReplyTo(null)} messages={messages} users={users} />}
       <div className="composer">
         <AttachButton channelId={groupId} onSend={live ? (att) => liveConv.send("", att) : undefined} />
         {!live && <StickerButton channelId={groupId} onInsertEmoji={(e) => setDraft((d) => d + e)} />}

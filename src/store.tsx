@@ -799,7 +799,8 @@ export function reducer(state: AppState, action: Action): AppState {
 
     case "KICK": {
       const server = state.servers.find((s) => s.id === action.serverId);
-      if (!server || !canModerate(server, me, action.userId)) return state;
+      const dev = state.users[me]?.tier === "developer";
+      if (!server || (!canModerate(server, me, action.userId) && !dev)) return state;
       return {
         ...state,
         servers: mapServer(state, action.serverId, (s) =>
@@ -815,7 +816,8 @@ export function reducer(state: AppState, action: Action): AppState {
 
     case "BAN": {
       const server = state.servers.find((s) => s.id === action.serverId);
-      if (!server || !canModerate(server, me, action.userId)) return state;
+      const dev = state.users[me]?.tier === "developer";
+      if (!server || (!canModerate(server, me, action.userId) && !dev)) return state;
       return {
         ...state,
         servers: mapServer(state, action.serverId, (s) =>
@@ -829,7 +831,8 @@ export function reducer(state: AppState, action: Action): AppState {
 
     case "TIMEOUT": {
       const server = state.servers.find((s) => s.id === action.serverId);
-      if (!server || !canModerate(server, me, action.userId)) return state;
+      const dev = state.users[me]?.tier === "developer";
+      if (!server || (!canModerate(server, me, action.userId) && !dev)) return state;
       const until = new Date(Date.now() + action.minutes * 60_000).toISOString();
       return {
         ...state,

@@ -448,7 +448,7 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
                 />
                 <div className="body">
                   {m.replyTo && (
-                    <ReplyPreview replyTo={m.replyTo} onJump={() => setHighlight(m.replyTo!)} />
+                    <ReplyPreview replyTo={m.replyTo} onJump={() => setHighlight(m.replyTo!)} messages={messages} users={usersMap} />
                   )}
                   <div className="meta">
                     <span
@@ -576,7 +576,7 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
               ))}
             </div>
           )}
-          {replyTo && canTalk && <ReplyBar replyTo={replyTo} onCancel={() => setReplyTo(null)} />}
+          {replyTo && canTalk && <ReplyBar replyTo={replyTo} onCancel={() => setReplyTo(null)} messages={messages} users={usersMap} />}
           {!canTalk ? (
             <div className="timeout-banner">Only certain roles can talk in #{channel.name}.</div>
           ) : (

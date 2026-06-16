@@ -25,6 +25,7 @@ export function Modal({
 export function tierBadge(tier: string) {
   if (tier === "premium") return <span className="badge premium">Premium</span>;
   if (tier === "supernova") return <span className="badge supernova">Supernova</span>;
+  if (tier === "developer") return <span className="badge staff">⚙️ Developer</span>;
   return null;
 }
 

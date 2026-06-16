@@ -1,6 +1,6 @@
 // Core domain types for Euphoric.
 
-export type Tier = "free" | "premium" | "supernova";
+export type Tier = "free" | "premium" | "supernova" | "developer";
 
 /** Server-level permissions a role can grant. */
 export type Permission =
