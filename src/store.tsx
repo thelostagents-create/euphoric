@@ -472,7 +472,9 @@ export function reducer(state: AppState, action: Action): AppState {
           [me]: {
             ...u,
             bio: action.bio ?? u.bio,
-            avatar: action.avatar ?? u.avatar,
+            avatar: action.avatar !== undefined
+              ? (!isGif(action.avatar) || u.tier !== "free" ? action.avatar : u.avatar)
+              : u.avatar,
             nickname: action.nickname ?? u.nickname,
             blurb: action.blurb ?? u.blurb,
             blurbColor: action.blurbColor ?? u.blurbColor,
