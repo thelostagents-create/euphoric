@@ -142,7 +142,7 @@ export function Discover() {
               </div>
               <p className="desc">{s.description || "No description yet."}</p>
               <div className="chips" style={{ marginBottom: 10 }}>
-                {s.keywords.map((k) => (
+                {s.keywords.slice(0, 9).map((k) => (
                   <span key={k} className="chip">#{k}</span>
                 ))}
               </div>
