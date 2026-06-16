@@ -1,31 +1,17 @@
-/**
- * Stripe Payment Links. The URLs live in env (committed in .env.local at build
- * time, like the Supabase keys) so they can differ per deploy:
- *   VITE_STRIPE_PREMIUM_URL   — Payment Link for the $5 Premium plan
- *   VITE_STRIPE_SUPERNOVA_URL — Payment Link for the $8 Supernova plan
- *   VITE_STRIPE_PORTAL_URL    — (optional) Customer Portal link for managing/cancelling
- *
- * We append the signed-in user's id as `client_reference_id` so the webhook can
- * flip the right account's tier after a successful payment.
- */
-const LINKS: Record<string, string | undefined> = {
-  premium: import.meta.env.VITE_STRIPE_PREMIUM_URL as string | undefined,
-  supernova: import.meta.env.VITE_STRIPE_SUPERNOVA_URL as string | undefined,
-};
+// Buy Me a Coffee integration.
+//
+// Set VITE_BMAC_PAGE_URL in .env.local to your BMAC creator page URL, e.g.:
+//   VITE_BMAC_PAGE_URL=https://buymeacoffee.com/yourname
+//
+// Users click through to subscribe on BMAC; the bmac-webhook Edge Function
+// watches for membership events and automatically updates their tier.
+// The supporter's BMAC email must match their Euphoric account email.
 
-export const billingPortalUrl = import.meta.env.VITE_STRIPE_PORTAL_URL as string | undefined;
+export const bmacPageUrl = import.meta.env.VITE_BMAC_PAGE_URL as string | undefined;
 
-export function paymentLinkFor(tier: string): string | undefined {
-  return LINKS[tier];
-}
-
-/** Send the user to Stripe Checkout for a tier. Returns false if no link set. */
-export function startCheckout(tier: string, uid: string, email?: string): boolean {
-  const base = paymentLinkFor(tier);
-  if (!base) return false;
-  const url = new URL(base);
-  url.searchParams.set("client_reference_id", uid);
-  if (email) url.searchParams.set("prefilled_email", email);
-  window.location.href = url.toString();
+/** Open the Buy Me a Coffee membership page in a new tab. Returns false if not configured. */
+export function openBmacPage(): boolean {
+  if (!bmacPageUrl) return false;
+  window.open(bmacPageUrl, "_blank", "noreferrer");
   return true;
 }

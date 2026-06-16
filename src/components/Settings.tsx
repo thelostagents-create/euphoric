@@ -3,7 +3,7 @@ import type { Tier } from "../types";
 import { starCapacity, starsAvailable } from "../social";
 import { useAuth } from "../auth";
 import { isSupabaseConfigured } from "../lib/supabase";
-import { startCheckout, paymentLinkFor, billingPortalUrl } from "../lib/payments";
+import { openBmacPage, bmacPageUrl } from "../lib/payments";
 
 const TIERS: {
   id: Tier;
@@ -63,7 +63,7 @@ export function AccountSettings() {
 
   async function logOut() {
     await signOut();
-    resetState(); // clear cached data and return to the sign-in screen
+    resetState();
   }
 
   async function removeAccount() {
@@ -132,33 +132,35 @@ export function AccountSettings() {
               className={`btn full ${active ? "ghost" : ""}`}
               disabled={active}
               onClick={() => {
-                const uid = session?.user.id;
-                // Backend mode with a Stripe link → real checkout. Otherwise
-                // (demo / free downgrade) just set the tier locally.
-                if (signedIn && uid && t.id !== "free" && paymentLinkFor(t.id)) {
-                  startCheckout(t.id, uid, session?.user.email ?? undefined);
+                if (signedIn && t.id !== "free" && bmacPageUrl) {
+                  openBmacPage();
                 } else {
                   dispatch({ type: "SET_TIER", tier: t.id });
                 }
               }}
             >
-              {active ? "Current plan" : t.id === "free" ? "Choose Free" : `Upgrade to ${t.name}`}
+              {active ? "Current plan" : t.id === "free" ? "Choose Free" : `Subscribe on Buy Me a Coffee`}
             </button>
           </div>
         );
       })}
-      {signedIn && billingPortalUrl && user.tier !== "free" && (
-        <a className="btn ghost full" href={billingPortalUrl} target="_blank" rel="noreferrer">
-          Manage / cancel subscription
+      {signedIn && bmacPageUrl && user.tier !== "free" && (
+        <a className="btn ghost full" href={bmacPageUrl} target="_blank" rel="noreferrer">
+          Manage / cancel on Buy Me a Coffee
         </a>
       )}
       <p className="muted" style={{ fontSize: 11 }}>
-        {signedIn && paymentLinkFor("premium")
-          ? "Secure checkout is handled by Stripe; your plan updates here once payment is confirmed."
+        {signedIn && bmacPageUrl
+          ? "Subscriptions are handled by Buy Me a Coffee. Your plan updates here automatically once your membership is confirmed."
           : "Demo mode — no real payment is processed."}{" "}
         You have {starCapacity(user.tier)} ⭐ Star{starCapacity(user.tier) === 1 ? "" : "s"} (
         {starsAvailable(user)} available to spend).
       </p>
+      {signedIn && bmacPageUrl && (
+        <p className="muted" style={{ fontSize: 11, marginTop: 0 }}>
+          Important: use the same email address on Buy Me a Coffee that you signed up with here ({session!.user.email}) so your subscription is linked automatically.
+        </p>
+      )}
 
       <div className="section-title">Blocked users</div>
       {blocked.length === 0 ? (
