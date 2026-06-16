@@ -188,6 +188,19 @@ export async function joinServerDb(serverId: string, _uid: string): Promise<void
   triggerServersReload();
 }
 
+/**
+ * Join a party by invite code. Uses a SECURITY DEFINER RPC so it can find
+ * private (non-discoverable) parties the caller can't yet read under RLS.
+ * Returns the joined server id, or null if no party matches the code.
+ */
+export async function joinByInviteDb(invite: string): Promise<string | null> {
+  if (!supabase) return null;
+  const { data, error } = await supabase.rpc("join_party_by_invite", { p_invite: invite });
+  if (error || !data) return null;
+  triggerServersReload();
+  return data as string;
+}
+
 /* ── Social graph (follows / blocks) ───────────────────────── */
 
 /** Load the signed-in user's follows, followers and blocks (+ profiles). */

@@ -4,7 +4,7 @@ import { Modal } from "./Modal";
 import { parseInviteCode } from "../social";
 import { useAuth } from "../auth";
 import { isSupabaseConfigured } from "../lib/supabase";
-import { joinServerDb } from "../lib/db";
+import { joinByInviteDb } from "../lib/db";
 
 export function JoinServerModal({
   onClose,
@@ -18,17 +18,29 @@ export function JoinServerModal({
   const [link, setLink] = useState("");
   const [error, setError] = useState("");
 
-  function join() {
+  async function join() {
     const code = parseInviteCode(link);
     if (!code) return;
+    const uid = session?.user.id;
+    // Backend mode: look the party up server-side (it may be private / not yet
+    // in our local cache), join, and navigate to it.
+    if (isSupabaseConfigured && uid) {
+      const serverId = await joinByInviteDb(code);
+      if (!serverId) {
+        setError("No party found for that link.");
+        return;
+      }
+      onJoined(serverId);
+      onClose();
+      return;
+    }
+    // Demo mode: resolve from local state.
     const target = state.servers.find((s) => s.invite === code);
     if (!target) {
       setError("No party found for that link.");
       return;
     }
-    const uid = session?.user.id;
-    if (isSupabaseConfigured && uid) joinServerDb(target.id, uid);
-    else dispatch({ type: "JOIN_SERVER", serverId: target.id });
+    dispatch({ type: "JOIN_SERVER", serverId: target.id });
     onJoined(target.id);
     onClose();
   }
