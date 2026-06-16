@@ -1,6 +1,6 @@
 import { useStore } from "../store";
 import { Modal, bannerStyle, tierBadge } from "./Modal";
-import { can, canModerate, getMember, isOwner, isTimedOut } from "../permissions";
+import { can, canModerate, getMember, isOwner, isTimedOut, memberRoles } from "../permissions";
 import { areFriends, displayName } from "../social";
 import { AestheticProfile } from "./AestheticProfile";
 import type { Server } from "../types";
@@ -174,6 +174,20 @@ export function UserSheet({
             >
               Ban
             </button>
+          </div>
+        </>
+      )}
+
+      {/* Read-only role list — visible to anyone viewing the profile. */}
+      {server && member && !canAssignRoles && memberRoles(server, userId).length > 0 && (
+        <>
+          <div className="section-title">Roles</div>
+          <div className="chips">
+            {memberRoles(server, userId).map((r) => (
+              <span key={r.id} className="chip" style={{ color: r.color, borderColor: r.color }}>
+                {r.name}
+              </span>
+            ))}
           </div>
         </>
       )}

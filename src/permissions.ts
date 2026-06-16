@@ -1,4 +1,4 @@
-import { ALL_PERMISSIONS, type Channel, type Member, type Permission, type Server } from "./types";
+import { ALL_PERMISSIONS, type Channel, type Member, type Permission, type Role, type Server } from "./types";
 
 /** The owner implicitly has every permission. */
 export function isOwner(server: Server, userId: string): boolean {
@@ -48,6 +48,20 @@ export function canModerate(server: Server, actorId: string, targetId: string): 
   if (isOwner(server, targetId)) return false;
   if (isOwner(server, actorId)) return true;
   return topRolePosition(server, actorId) > topRolePosition(server, targetId);
+}
+
+/** A member's roles (excluding @everyone), highest position first. */
+export function memberRoles(server: Server, userId: string): Role[] {
+  const member = getMember(server, userId);
+  if (!member) return [];
+  return server.roles
+    .filter((r) => member.roleIds.includes(r.id) && r.name !== "@everyone")
+    .sort((a, b) => b.position - a.position);
+}
+
+/** Color of a member's highest colored role, used for their display name. */
+export function roleColor(server: Server, userId: string): string | undefined {
+  return memberRoles(server, userId)[0]?.color;
 }
 
 export function isTimedOut(member: Member | undefined): boolean {

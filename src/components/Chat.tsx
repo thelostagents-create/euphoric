@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useStore } from "../store";
-import { can, canSendInChannel, canViewChannel, getMember, isTimedOut } from "../permissions";
+import { can, canSendInChannel, canViewChannel, getMember, isTimedOut, roleColor } from "../permissions";
 import { timeAgo } from "./Modal";
 import { UserSheet } from "./UserSheet";
 import { ServerManage } from "./ServerManage";
@@ -144,25 +144,26 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
   }, [myServers]);
 
   if (!server || !channel) {
+    // Empty baseplate: just the rail with create/join, no extra welcome screen.
     return (
-      <>
-        <div className="center-empty">
-          <p>You're not in any parties yet.</p>
-          <p>Head to Explore to find a community, or create your own.</p>
-          <div className="row" style={{ justifyContent: "center", gap: 8, marginTop: 14 }}>
-            <button className="btn" onClick={() => setShowCreate(true)}>
-              Create a party
-            </button>
-            <button className="btn ghost" onClick={() => setShowJoin(true)}>
-              Join with a link
-            </button>
-          </div>
+      <div className="chat-layout">
+        <div className="rail">
+          <button className="rail-icon add" onClick={() => setShowCreate(true)} title="Create a party">
+            +
+          </button>
+          <button className="rail-icon add" onClick={() => setShowJoin(true)} title="Join with an invite link">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+            </svg>
+          </button>
         </div>
+        <div className="chat-main" />
         {showCreate && <CreateServerModal onClose={() => setShowCreate(false)} />}
         {showJoin && (
           <JoinServerModal onClose={() => setShowJoin(false)} onJoined={(sid) => setServerId(sid)} />
         )}
-      </>
+      </div>
     );
   }
 
@@ -405,7 +406,11 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
                     <ReplyPreview replyTo={m.replyTo} onJump={() => setHighlight(m.replyTo!)} />
                   )}
                   <div className="meta">
-                    <span className="name" onClick={() => !live && setSheetUser(m.authorId)}>
+                    <span
+                      className="name"
+                      onClick={() => !live && setSheetUser(m.authorId)}
+                      style={server ? { color: roleColor(server, m.authorId) } : undefined}
+                    >
                       {displayName(author)}
                     </span>
                     {m.pinned && <span title="Pinned">📌</span>}
