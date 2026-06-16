@@ -22,3 +22,8 @@ try {
 
 export const supabase = client;
 export const isSupabaseConfigured = Boolean(client);
+
+// Debug handle so you can inspect auth/session from the browser console.
+if (typeof window !== "undefined") {
+  (window as unknown as { supabase: typeof client }).supabase = client;
+}
