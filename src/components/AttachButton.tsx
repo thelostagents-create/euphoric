@@ -1,6 +1,7 @@
 import { useRef } from "react";
 import { useStore } from "../store";
 import { MAX_UPLOAD, readFileAsDataURL } from "../upload";
+import { isNsfw } from "../lib/nsfw";
 import type { Attachment } from "../types";
 
 /**
@@ -27,8 +28,12 @@ export function AttachButton({
       alert("That file is too large (max 4 MB).");
       return;
     }
-    const url = await readFileAsDataURL(file);
     const kind = file.type.startsWith("video") ? "video" : "image";
+    if (kind === "image" && await isNsfw(file)) {
+      alert("That image was flagged as explicit and can't be sent.");
+      return;
+    }
+    const url = await readFileAsDataURL(file);
     if (onSend) onSend({ kind, url });
     else dispatch({ type: "SEND_MESSAGE", channelId, content: "", attachment: { kind, url } });
   }

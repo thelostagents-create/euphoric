@@ -1,5 +1,6 @@
 import { useRef } from "react";
 import { MAX_UPLOAD, readFileAsDataURL } from "../upload";
+import { isNsfw } from "../lib/nsfw";
 
 /** URL field plus an "Import" button that reads a local image as a data URL. */
 export function ImagePicker({
@@ -23,6 +24,10 @@ export function ImagePicker({
     if (!file) return;
     if (file.size > MAX_UPLOAD) {
       alert("That file is too large (max 4 MB).");
+      return;
+    }
+    if (await isNsfw(file)) {
+      alert("That image was flagged as explicit and can't be used.");
       return;
     }
     onChange(await readFileAsDataURL(file));
