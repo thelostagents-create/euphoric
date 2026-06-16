@@ -432,8 +432,8 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
                     <span className="msg-tools">
                       <button
                         className="msg-action"
-                        title="Reply"
-                        onClick={() => (live ? setReplyTo(m.id) : setReactFor(m.id))}
+                        title="React, reply or pin"
+                        onClick={() => setReactFor(m.id)}
                       >
                         <ReplyArrowIcon size={14} />
                       </button>
