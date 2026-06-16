@@ -25,10 +25,9 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
+      # Supabase keys come from the committed .env.local (Vite loads it at
+      # build time). No secret override, which previously injected a bad value.
       - run: npm run build
-        env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
       # Enables Pages automatically if it isn't already turned on.
       - uses: actions/configure-pages@v5
         with:
