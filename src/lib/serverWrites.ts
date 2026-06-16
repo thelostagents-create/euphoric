@@ -1,5 +1,5 @@
 import { supabase } from "./supabase";
-import { triggerServersReload } from "./db";
+import { triggerServersReload, addAuditDb } from "./db";
 import type { AppState, Server, Role } from "../types";
 import type { Action } from "../store";
 
@@ -26,6 +26,16 @@ export async function persistServerAction(action: Action, prev: AppState, next: 
   if (!serverId || !UUID.test(serverId)) return;
 
   try {
+    // Persist any audit entry the reducer just produced (kick/ban/timeout/etc).
+    const ba = srv(prev, serverId);
+    const aa = srv(next, serverId);
+    if (aa && ba && aa.auditLog.length > ba.auditLog.length) {
+      const e = aa.auditLog[0];
+      if (UUID.test(e.actorId)) {
+        await addAuditDb(serverId, e.action, e.actorId, e.detail, e.targetId && UUID.test(e.targetId) ? e.targetId : undefined);
+      }
+    }
+
     switch (action.type) {
       /* ── Channels (lounges) ───────────────────────────── */
       case "CREATE_CHANNEL": {

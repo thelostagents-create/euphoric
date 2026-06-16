@@ -23,6 +23,7 @@ import { displayName, serverStars, isUnread, serverUnread } from "../social";
 import { useAuth } from "../auth";
 import { isSupabaseConfigured } from "../lib/supabase";
 import { useLiveConversation } from "../lib/useLiveConversation";
+import { createPostDb } from "../lib/db";
 import type { ChatNav } from "../App";
 import type { User } from "../types";
 
@@ -330,13 +331,20 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
                 {canTalk && (
                   <button
                     className="btn sm"
-                    onClick={() => {
+                    onClick={async () => {
                       const title = prompt("New post title");
-                      if (title?.trim()) {
-                        const id = `p_${Math.random().toString(36).slice(2, 9)}`;
-                        dispatch({ type: "CREATE_POST", serverId: server.id, channelId: channel.id, id, title });
-                        setOpenPost(id);
+                      if (!title?.trim()) return;
+                      let id = `p_${Math.random().toString(36).slice(2, 9)}`;
+                      if (live) {
+                        const dbId = await createPostDb(channel.id, title, uid!);
+                        if (!dbId) {
+                          alert("Couldn't create the post.");
+                          return;
+                        }
+                        id = dbId;
                       }
+                      dispatch({ type: "CREATE_POST", serverId: server.id, channelId: channel.id, id, title });
+                      setOpenPost(id);
                     }}
                   >
                     + New post

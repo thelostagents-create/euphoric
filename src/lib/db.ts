@@ -1,5 +1,5 @@
 import { supabase } from "./supabase";
-import type { Attachment, GroupChat, Message, Server, User } from "../types";
+import type { Attachment, AuditEntry, GroupChat, Message, Server, User } from "../types";
 
 /* ── Servers (parties) / membership ────────────────────────── */
 
@@ -37,7 +37,9 @@ function rowToServer(s: any): Server {
         sendRoleIds: c.send_role_ids ?? [],
         viewRoleIds: c.view_role_ids ?? [],
         forum: !!c.forum,
-        posts: [],
+        posts: (c.posts ?? [])
+          .map((p: any) => ({ id: p.id, title: p.title, authorId: p.author_id, createdAt: p.created_at }))
+          .sort((a: any, b: any) => (a.createdAt < b.createdAt ? 1 : -1)),
       })),
     roles: (s.roles ?? []).map((r: any) => ({
       id: r.id,
@@ -61,7 +63,7 @@ function rowToServer(s: any): Server {
 /** Load the user's parties + discoverable ones, with their member profiles. */
 export async function loadServers(uid: string): Promise<{ servers: Server[]; profiles: Partial<User>[] }> {
   if (!supabase) return { servers: [], profiles: [] };
-  const sel = "*, channels(*), roles(*), members(*)";
+  const sel = "*, channels(*, posts(*)), roles(*), members(*)";
   const { data: mem } = await supabase.from("members").select("server_id").eq("user_id", uid);
   const myIds = (mem ?? []).map((m) => m.server_id as string);
   const mine = myIds.length
@@ -69,13 +71,89 @@ export async function loadServers(uid: string): Promise<{ servers: Server[]; pro
     : [];
   const disc = (await supabase.from("servers").select(sel).eq("discoverable", true)).data ?? [];
   const byId = new Map<string, unknown>();
+  /* eslint-disable @typescript-eslint/no-explicit-any */
   [...mine, ...disc].forEach((s: any) => byId.set(s.id, s));
+  /* eslint-enable @typescript-eslint/no-explicit-any */
   const servers = [...byId.values()].map(rowToServer);
+  const serverIds = servers.map((s) => s.id);
+
+  // Audit history + per-server Star totals for these parties.
+  const [auditMap, starsMap] = await Promise.all([loadAudit(serverIds), loadStars(serverIds)]);
+  servers.forEach((s) => (s.auditLog = auditMap[s.id] ?? []));
+
   const ids = [
     ...new Set(servers.flatMap((s) => s.members.map((m) => m.userId)).concat(servers.map((s) => s.ownerId))),
   ].filter(Boolean);
   const profiles = await fetchProfilesByIds(ids);
+  // Attach each member's Star allocations so serverStars() totals are accurate.
+  profiles.forEach((p) => {
+    if (p.id && starsMap[p.id]) p.starAllocations = starsMap[p.id];
+  });
   return { servers, profiles };
+}
+
+/** Per-server Star totals keyed by user id: { userId: { serverId: count } }. */
+async function loadStars(serverIds: string[]): Promise<Record<string, Record<string, number>>> {
+  if (!supabase || !serverIds.length) return {};
+  const { data } = await supabase.from("stars").select("user_id, server_id, count").in("server_id", serverIds);
+  const map: Record<string, Record<string, number>> = {};
+  (data ?? []).forEach((r) => {
+    (map[r.user_id as string] ??= {})[r.server_id as string] = (r.count as number) ?? 0;
+  });
+  return map;
+}
+
+/** Recent audit-log entries per server. */
+async function loadAudit(serverIds: string[]): Promise<Record<string, AuditEntry[]>> {
+  if (!supabase || !serverIds.length) return {};
+  const { data } = await supabase
+    .from("audit_log")
+    .select("*")
+    .in("server_id", serverIds)
+    .order("created_at", { ascending: false })
+    .limit(100);
+  const map: Record<string, AuditEntry[]> = {};
+  (data ?? []).forEach((r) => {
+    (map[r.server_id as string] ??= []).push({
+      id: r.id as string,
+      action: r.action as string,
+      actorId: r.actor_id as string,
+      targetId: (r.target_id as string) ?? undefined,
+      detail: (r.detail as string) ?? "",
+      createdAt: r.created_at as string,
+    });
+  });
+  return map;
+}
+
+export async function allocateStarDb(uid: string, serverId: string, count: number): Promise<void> {
+  if (!supabase) return;
+  if (count <= 0) await supabase.from("stars").delete().eq("user_id", uid).eq("server_id", serverId);
+  else await supabase.from("stars").upsert({ user_id: uid, server_id: serverId, count }, { onConflict: "user_id,server_id" });
+}
+
+export async function addAuditDb(
+  serverId: string,
+  action: string,
+  actorId: string,
+  detail: string,
+  targetId?: string,
+): Promise<void> {
+  await supabase
+    ?.from("audit_log")
+    .insert({ server_id: serverId, action, actor_id: actorId, target_id: targetId ?? null, detail });
+}
+
+/** Create a forum post; returns its DB id (used as the message conversation key). */
+export async function createPostDb(channelId: string, title: string, authorUid: string): Promise<string | null> {
+  if (!supabase) return null;
+  const { data, error } = await supabase
+    .from("posts")
+    .insert({ channel_id: channelId, title: title.trim(), author_id: authorUid })
+    .select("id")
+    .single();
+  if (error || !data) return null;
+  return data.id as string;
 }
 
 /** Make sure the signed-in user has a profile row (FKs depend on it). */

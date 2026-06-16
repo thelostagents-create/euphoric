@@ -8,6 +8,7 @@ import {
   removeGroupMemberDb,
   renameGroupDb,
   setGroupIconDb,
+  allocateStarDb,
 } from "./db";
 import type { AppState } from "../types";
 import type { Action } from "../store";
@@ -45,6 +46,14 @@ export async function persistSocialAction(action: Action, prev: AppState, next: 
         const after = new Set(next.users[me]?.blockedUserIds ?? []);
         for (const id of after) if (!before.has(id) && UUID.test(id)) await blockDb(me, id);
         for (const id of before) if (!after.has(id) && UUID.test(id)) await unblockDb(me, id);
+        return;
+      }
+
+      // Stars (boosts): persist my allocation for the party.
+      case "ALLOCATE_STAR": {
+        if (!UUID.test(a.serverId)) return;
+        const count = next.users[me]?.starAllocations?.[a.serverId] ?? 0;
+        await allocateStarDb(me, a.serverId, count);
         return;
       }
 
