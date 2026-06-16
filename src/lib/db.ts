@@ -78,24 +78,36 @@ export async function loadServers(uid: string): Promise<{ servers: Server[]; pro
   return { servers, profiles };
 }
 
-/** Create a party (server + default lounge + @everyone role + owner member). */
-export async function createServerDb(ownerId: string, name: string, icon: string): Promise<void> {
+/** Make sure the signed-in user has a profile row (FKs depend on it). */
+export async function ensureProfile(uid: string, fallbackName: string): Promise<void> {
   if (!supabase) return;
+  await supabase
+    .from("profiles")
+    .upsert({ id: uid, username: fallbackName }, { onConflict: "id", ignoreDuplicates: true });
+}
+
+/** Create a party (server + default lounge + @everyone role + owner member). */
+export async function createServerDb(ownerId: string, name: string, icon: string): Promise<string | null> {
+  if (!supabase) return "Backend not configured.";
   const invite = Math.random().toString(36).slice(2, 8);
-  const { data: srv } = await supabase
+  const { data: srv, error } = await supabase
     .from("servers")
     .insert({ name: name.trim() || "New Party", icon: icon || "✨", owner_id: ownerId, invite })
     .select("id")
     .single();
-  if (!srv) return;
+  if (error || !srv) return error?.message ?? "Could not create the party.";
   const { data: role } = await supabase
     .from("roles")
     .insert({ server_id: srv.id, name: "@everyone", color: "#9aa0b4", position: 0 })
     .select("id")
     .single();
   await supabase.from("channels").insert({ server_id: srv.id, name: "general", position: 0 });
-  await supabase.from("members").insert({ server_id: srv.id, user_id: ownerId, role_ids: role ? [role.id] : [] });
+  const { error: memErr } = await supabase
+    .from("members")
+    .insert({ server_id: srv.id, user_id: ownerId, role_ids: role ? [role.id] : [] });
+  if (memErr) return memErr.message;
   triggerServersReload();
+  return null;
 }
 
 /** Join a party (add a membership with the @everyone role). */

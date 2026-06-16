@@ -15,11 +15,18 @@ export function CreateServerModal({ onClose }: { onClose: () => void }) {
   const [icon, setIcon] = useState("✨");
   const [iconImage, setIconImage] = useState("");
 
-  function create() {
+  async function create() {
     if (!name.trim()) return;
     const uid = session?.user.id;
-    if (isSupabaseConfigured && uid) createServerDb(uid, name, icon);
-    else dispatch({ type: "CREATE_SERVER", name, icon, iconImage });
+    if (isSupabaseConfigured && uid) {
+      const err = await createServerDb(uid, name, icon);
+      if (err) {
+        alert(`Couldn't create party: ${err}`);
+        return;
+      }
+    } else {
+      dispatch({ type: "CREATE_SERVER", name, icon, iconImage });
+    }
     onClose();
   }
 

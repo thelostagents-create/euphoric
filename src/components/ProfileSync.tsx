@@ -1,11 +1,12 @@
 import { useEffect, useRef } from "react";
 import { useAuth } from "../auth";
 import { useStore } from "../store";
-import { loadProfile, saveProfile } from "../lib/db";
+import { ensureProfile, loadProfile, saveProfile, triggerServersReload } from "../lib/db";
 
 /**
- * Syncs the signed-in user's profile with Supabase: loads it on login and
- * debounce-saves local edits back. No-op in demo mode (no session).
+ * Syncs the signed-in user's profile with Supabase: ensures a profile row
+ * exists, loads it on login, and debounce-saves local edits back. No-op in
+ * demo mode (no session).
  */
 export function ProfileSync() {
   const { session } = useAuth();
@@ -19,10 +20,16 @@ export function ProfileSync() {
     if (!uid) return;
     loaded.current = false;
     let active = true;
-    loadProfile(uid).then((p) => {
-      if (active) dispatch({ type: "SET_CURRENT_USER", id: uid, profile: p ?? {} });
+    const meta = session?.user.user_metadata as { username?: string } | undefined;
+    const fallback = meta?.username || `user_${uid.slice(0, 6)}`;
+    (async () => {
+      await ensureProfile(uid, fallback);
+      const p = await loadProfile(uid);
+      if (!active) return;
+      dispatch({ type: "SET_CURRENT_USER", id: uid, profile: p ?? {} });
       loaded.current = true;
-    });
+      triggerServersReload();
+    })();
     return () => {
       active = false;
     };
