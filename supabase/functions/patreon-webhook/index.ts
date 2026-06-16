@@ -69,7 +69,7 @@ Deno.serve(async (req) => {
   // them back to free.
   const status = attrs.patron_status as string | undefined;
   const cents = (attrs.currently_entitled_amount_cents as number | undefined) ?? 0;
-  const isActive = !trigger.endsWith(":delete") && status === "active_patron" && cents > 0;
+  const isActive = !trigger.endsWith(":delete") && status === "active_patron";
 
   try {
     const { data: authData, error: lookupErr } = await admin.auth.admin.getUserByEmail(email);
