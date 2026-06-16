@@ -421,7 +421,8 @@ export async function saveProfile(id: string, u: User): Promise<void> {
       bio: u.bio,
       blurb: u.blurb,
       blurb_color: u.blurbColor,
-      tier: u.tier,
+      // tier is set server-side by the Stripe webhook (and the developer SQL),
+      // never written from the client so payments aren't overwritten.
       banner: u.banner,
       theme: u.theme,
       aesthetic: u.aesthetic,

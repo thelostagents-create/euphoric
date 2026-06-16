@@ -3,6 +3,7 @@ import type { Tier } from "../types";
 import { starCapacity, starsAvailable } from "../social";
 import { useAuth } from "../auth";
 import { isSupabaseConfigured } from "../lib/supabase";
+import { startCheckout, paymentLinkFor, billingPortalUrl } from "../lib/payments";
 
 const TIERS: {
   id: Tier;
@@ -130,17 +131,33 @@ export function AccountSettings() {
             <button
               className={`btn full ${active ? "ghost" : ""}`}
               disabled={active}
-              onClick={() => dispatch({ type: "SET_TIER", tier: t.id })}
+              onClick={() => {
+                const uid = session?.user.id;
+                // Backend mode with a Stripe link → real checkout. Otherwise
+                // (demo / free downgrade) just set the tier locally.
+                if (signedIn && uid && t.id !== "free" && paymentLinkFor(t.id)) {
+                  startCheckout(t.id, uid, session?.user.email ?? undefined);
+                } else {
+                  dispatch({ type: "SET_TIER", tier: t.id });
+                }
+              }}
             >
-              {active ? "Current plan" : `Choose ${t.name}`}
+              {active ? "Current plan" : t.id === "free" ? "Choose Free" : `Upgrade to ${t.name}`}
             </button>
           </div>
         );
       })}
+      {signedIn && billingPortalUrl && user.tier !== "free" && (
+        <a className="btn ghost full" href={billingPortalUrl} target="_blank" rel="noreferrer">
+          Manage / cancel subscription
+        </a>
+      )}
       <p className="muted" style={{ fontSize: 11 }}>
-        Demo only — no real payment is processed. Apple In-App Purchase wiring comes with the
-        native build. You have {starCapacity(user.tier)} ⭐ Star
-        {starCapacity(user.tier) === 1 ? "" : "s"} ({starsAvailable(user)} available to spend).
+        {signedIn && paymentLinkFor("premium")
+          ? "Secure checkout is handled by Stripe; your plan updates here once payment is confirmed."
+          : "Demo mode — no real payment is processed."}{" "}
+        You have {starCapacity(user.tier)} ⭐ Star{starCapacity(user.tier) === 1 ? "" : "s"} (
+        {starsAvailable(user)} available to spend).
       </p>
 
       <div className="section-title">Blocked users</div>
