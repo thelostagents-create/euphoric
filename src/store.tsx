@@ -52,6 +52,9 @@ type Action =
   | { type: "CREATE_CHANNEL"; serverId: string; name: string }
   | { type: "UPDATE_PROFILE"; bio?: string; avatar?: string; username?: string; nickname?: string; blurb?: string; blurbColor?: string }
   | { type: "LOAD_PROFILE"; profile: Partial<User> }
+  | { type: "SET_CURRENT_USER"; id: string; profile: Partial<User> }
+  | { type: "CACHE_USERS"; users: Partial<User>[] }
+  | { type: "HYDRATE_SERVERS"; servers: Server[] }
   | { type: "SET_CHANNEL_SEND_ROLES"; serverId: string; channelId: string; roleIds: string[] }
   | { type: "SET_CHANNEL_VIEW_ROLES"; serverId: string; channelId: string; roleIds: string[] }
   | { type: "MOVE_ROLE"; serverId: string; roleId: string; dir: -1 | 1 }
@@ -474,6 +477,30 @@ function reducer(state: AppState, action: Action): AppState {
     case "LOAD_PROFILE": {
       const u = state.users[me];
       return { ...state, users: { ...state.users, [me]: { ...u, ...action.profile } } };
+    }
+
+    // Backend mode: re-key the signed-in user by their auth id.
+    case "SET_CURRENT_USER": {
+      const base = state.users[me] ?? state.users.me;
+      return {
+        ...state,
+        currentUserId: action.id,
+        users: { ...state.users, [action.id]: { ...base, ...action.profile, id: action.id } },
+      };
+    }
+
+    case "CACHE_USERS": {
+      const base = state.users[me] ?? state.users.me;
+      const users = { ...state.users };
+      for (const p of action.users) {
+        if (!p.id) continue;
+        users[p.id] = { ...base, ...users[p.id], ...p, id: p.id };
+      }
+      return { ...state, users };
+    }
+
+    case "HYDRATE_SERVERS": {
+      return { ...state, servers: action.servers };
     }
 
     case "UPDATE_THEME": {

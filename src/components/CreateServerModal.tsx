@@ -2,18 +2,24 @@ import { useState } from "react";
 import { useStore } from "../store";
 import { Modal } from "./Modal";
 import { ImagePicker } from "./ImagePicker";
+import { useAuth } from "../auth";
+import { isSupabaseConfigured } from "../lib/supabase";
+import { createServerDb } from "../lib/db";
 
 const SUGGESTED = ["✨", "🌙", "💻", "🎮", "🎵", "🎨", "🌸", "🔥", "🛸", "📚"];
 
 export function CreateServerModal({ onClose }: { onClose: () => void }) {
   const { dispatch } = useStore();
+  const { session } = useAuth();
   const [name, setName] = useState("");
   const [icon, setIcon] = useState("✨");
   const [iconImage, setIconImage] = useState("");
 
   function create() {
     if (!name.trim()) return;
-    dispatch({ type: "CREATE_SERVER", name, icon, iconImage });
+    const uid = session?.user.id;
+    if (isSupabaseConfigured && uid) createServerDb(uid, name, icon);
+    else dispatch({ type: "CREATE_SERVER", name, icon, iconImage });
     onClose();
   }
 

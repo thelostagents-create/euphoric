@@ -2,6 +2,9 @@ import { useState } from "react";
 import { useStore } from "../store";
 import { Modal } from "./Modal";
 import { parseInviteCode } from "../social";
+import { useAuth } from "../auth";
+import { isSupabaseConfigured } from "../lib/supabase";
+import { joinServerDb } from "../lib/db";
 
 export function JoinServerModal({
   onClose,
@@ -11,6 +14,7 @@ export function JoinServerModal({
   onJoined: (serverId: string) => void;
 }) {
   const { state, dispatch } = useStore();
+  const { session } = useAuth();
   const [link, setLink] = useState("");
   const [error, setError] = useState("");
 
@@ -22,7 +26,9 @@ export function JoinServerModal({
       setError("No party found for that link.");
       return;
     }
-    dispatch({ type: "JOIN_SERVER", serverId: target.id });
+    const uid = session?.user.id;
+    if (isSupabaseConfigured && uid) joinServerDb(target.id, uid);
+    else dispatch({ type: "JOIN_SERVER", serverId: target.id });
     onJoined(target.id);
     onClose();
   }

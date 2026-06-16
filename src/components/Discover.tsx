@@ -3,14 +3,25 @@ import { useStore } from "../store";
 import { getMember } from "../permissions";
 import { parseInviteCode, serverStars } from "../social";
 import { ServerIcon } from "./ServerIcon";
+import { useAuth } from "../auth";
+import { isSupabaseConfigured } from "../lib/supabase";
+import { joinServerDb } from "../lib/db";
 
 const VERIFIED = "★verified";
 
 export function Discover() {
   const { state, dispatch } = useStore();
+  const { session } = useAuth();
+  const uid = session?.user.id;
+  const live = isSupabaseConfigured && !!uid;
   const [q, setQ] = useState("");
   const [invite, setInvite] = useState("");
   const [inviteMsg, setInviteMsg] = useState("");
+
+  function join(serverId: string) {
+    if (live) joinServerDb(serverId, uid!);
+    else dispatch({ type: "JOIN_SERVER", serverId });
+  }
 
   function joinByInvite() {
     const code = parseInviteCode(invite);
@@ -20,7 +31,7 @@ export function Discover() {
       setInviteMsg("No party found for that invite.");
       return;
     }
-    dispatch({ type: "JOIN_SERVER", serverId: target.id });
+    join(target.id);
     setInviteMsg(`Joined ${target.name}!`);
     setInvite("");
   }
@@ -138,7 +149,7 @@ export function Discover() {
               <button
                 className={`btn full ${joined ? "ghost" : ""}`}
                 disabled={joined}
-                onClick={() => dispatch({ type: "JOIN_SERVER", serverId: s.id })}
+                onClick={() => join(s.id)}
               >
                 {joined ? "Joined" : "Join"}
               </button>

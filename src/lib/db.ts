@@ -1,5 +1,113 @@
 import { supabase } from "./supabase";
-import type { Attachment, Message, User } from "../types";
+import type { Attachment, Message, Server, User } from "../types";
+
+/* ── Servers (parties) / membership ────────────────────────── */
+
+// Lightweight pub/sub so writes can ask the synced server list to reload.
+let reloadServers: (() => void) | null = null;
+export function setServersReload(fn: (() => void) | null) {
+  reloadServers = fn;
+}
+export function triggerServersReload() {
+  reloadServers?.();
+}
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+function rowToServer(s: any): Server {
+  return {
+    id: s.id,
+    name: s.name,
+    icon: s.icon ?? "✨",
+    iconImage: s.icon_image ?? "",
+    ownerId: s.owner_id,
+    invite: s.invite,
+    discoverable: !!s.discoverable,
+    verified: !!s.verified,
+    description: s.description ?? "",
+    keywords: s.keywords ?? [],
+    blockedWords: s.blocked_words ?? [],
+    auditLog: [],
+    onboarding: s.onboarding ?? { enabled: false, cosmeticRoleIds: [] },
+    stickers: s.stickers ?? [],
+    channels: (s.channels ?? [])
+      .sort((a: any, b: any) => (a.position ?? 0) - (b.position ?? 0))
+      .map((c: any) => ({
+        id: c.id,
+        name: c.name,
+        sendRoleIds: c.send_role_ids ?? [],
+        viewRoleIds: c.view_role_ids ?? [],
+        forum: !!c.forum,
+        posts: [],
+      })),
+    roles: (s.roles ?? []).map((r: any) => ({
+      id: r.id,
+      name: r.name,
+      color: r.color,
+      permissions: r.permissions ?? [],
+      position: r.position ?? 0,
+      staff: !!r.staff,
+      mentionable: !!r.mentionable,
+    })),
+    members: (s.members ?? []).map((m: any) => ({
+      userId: m.user_id,
+      roleIds: m.role_ids ?? [],
+      timeoutUntil: m.timeout_until ?? undefined,
+      banned: !!m.banned,
+    })),
+  };
+}
+/* eslint-enable @typescript-eslint/no-explicit-any */
+
+/** Load the user's parties + discoverable ones, with their member profiles. */
+export async function loadServers(uid: string): Promise<{ servers: Server[]; profiles: Partial<User>[] }> {
+  if (!supabase) return { servers: [], profiles: [] };
+  const sel = "*, channels(*), roles(*), members(*)";
+  const { data: mem } = await supabase.from("members").select("server_id").eq("user_id", uid);
+  const myIds = (mem ?? []).map((m) => m.server_id as string);
+  const mine = myIds.length
+    ? (await supabase.from("servers").select(sel).in("id", myIds)).data ?? []
+    : [];
+  const disc = (await supabase.from("servers").select(sel).eq("discoverable", true)).data ?? [];
+  const byId = new Map<string, unknown>();
+  [...mine, ...disc].forEach((s: any) => byId.set(s.id, s));
+  const servers = [...byId.values()].map(rowToServer);
+  const ids = [
+    ...new Set(servers.flatMap((s) => s.members.map((m) => m.userId)).concat(servers.map((s) => s.ownerId))),
+  ].filter(Boolean);
+  const profiles = await fetchProfilesByIds(ids);
+  return { servers, profiles };
+}
+
+/** Create a party (server + default lounge + @everyone role + owner member). */
+export async function createServerDb(ownerId: string, name: string, icon: string): Promise<void> {
+  if (!supabase) return;
+  const invite = Math.random().toString(36).slice(2, 8);
+  const { data: srv } = await supabase
+    .from("servers")
+    .insert({ name: name.trim() || "New Party", icon: icon || "✨", owner_id: ownerId, invite })
+    .select("id")
+    .single();
+  if (!srv) return;
+  const { data: role } = await supabase
+    .from("roles")
+    .insert({ server_id: srv.id, name: "@everyone", color: "#9aa0b4", position: 0 })
+    .select("id")
+    .single();
+  await supabase.from("channels").insert({ server_id: srv.id, name: "general", position: 0 });
+  await supabase.from("members").insert({ server_id: srv.id, user_id: ownerId, role_ids: role ? [role.id] : [] });
+  triggerServersReload();
+}
+
+/** Join a party (add a membership with the @everyone role). */
+export async function joinServerDb(serverId: string, uid: string): Promise<void> {
+  if (!supabase) return;
+  const { data: roles } = await supabase.from("roles").select("id,name").eq("server_id", serverId);
+  const everyone = (roles ?? []).find((r) => r.name === "@everyone");
+  await supabase
+    .from("members")
+    .upsert({ server_id: serverId, user_id: uid, role_ids: everyone ? [everyone.id] : [] });
+  triggerServersReload();
+}
 
 /* ── Messages (live conversations) ─────────────────────────── */
 
