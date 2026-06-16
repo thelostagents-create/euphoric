@@ -62,6 +62,7 @@ type Action =
   | { type: "HYDRATE_SERVERS"; servers: Server[] }
   | { type: "HYDRATE_SOCIAL"; following: string[]; followers: string[]; blocked: string[]; profiles: Partial<User>[] }
   | { type: "HYDRATE_GROUPS"; groups: GroupChat[] }
+  | { type: "SET_SERVER_ORDER"; order: string[] }
   | { type: "SET_CHANNEL_SEND_ROLES"; serverId: string; channelId: string; roleIds: string[] }
   | { type: "SET_CHANNEL_VIEW_ROLES"; serverId: string; channelId: string; roleIds: string[] }
   | { type: "MOVE_ROLE"; serverId: string; roleId: string; dir: -1 | 1 }
@@ -529,6 +530,11 @@ export function reducer(state: AppState, action: Action): AppState {
 
     case "HYDRATE_GROUPS": {
       return { ...state, groups: action.groups };
+    }
+
+    case "SET_SERVER_ORDER": {
+      const u = state.users[me];
+      return { ...state, users: { ...state.users, [me]: { ...u, serverOrder: action.order } } };
     }
 
     case "UPDATE_THEME": {

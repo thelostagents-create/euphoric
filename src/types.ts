@@ -122,6 +122,8 @@ export interface User {
   lightMode: boolean;
   /** Sticker urls the user has favorited (shown first in the picker). */
   favoriteStickers: string[];
+  /** Personal ordering of the party rail, by server id. */
+  serverOrder?: string[];
 }
 
 export interface Role {

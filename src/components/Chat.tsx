@@ -52,6 +52,39 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
 
   const [serverId, setServerId] = useState(myServers[0]?.id ?? "");
   const server = myServers.find((s) => s.id === serverId) ?? myServers[0];
+  const [dragId, setDragId] = useState<string | null>(null);
+
+  // Apply the user's personal rail ordering; unordered/new parties go last.
+  const orderedServers = useMemo(() => {
+    const order = me.serverOrder ?? [];
+    const byId = new Map(myServers.map((s) => [s.id, s] as const));
+    const out: typeof myServers = [];
+    for (const id of order) {
+      const s = byId.get(id);
+      if (s) {
+        out.push(s);
+        byId.delete(id);
+      }
+    }
+    for (const s of myServers) if (byId.has(s.id)) out.push(s);
+    return out;
+  }, [myServers, me.serverOrder]);
+
+  function reorderOver(overId: string) {
+    if (!dragId || dragId === overId) return;
+    const ids = orderedServers.map((s) => s.id);
+    const from = ids.indexOf(dragId);
+    const to = ids.indexOf(overId);
+    if (from < 0 || to < 0) return;
+    ids.splice(to, 0, ids.splice(from, 1)[0]);
+    dispatch({ type: "SET_SERVER_ORDER", order: ids });
+  }
+
+  function onRailPointerMove(e: React.PointerEvent) {
+    if (!dragId) return;
+    const el = document.elementFromPoint(e.clientX, e.clientY)?.closest<HTMLElement>("[data-srv]");
+    if (el?.dataset.srv) reorderOver(el.dataset.srv);
+  }
   // Only channels the current user is allowed to see.
   const visibleChannels = useMemo(
     () => (server ? server.channels.filter((c) => canViewChannel(server, state.currentUserId, c)) : []),
@@ -229,14 +262,26 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
 
   return (
     <div className="chat-layout">
-      <div className="rail">
-        {myServers.map((s) => (
+      <div
+        className="rail"
+        onPointerMove={onRailPointerMove}
+        onPointerUp={() => setDragId(null)}
+        onPointerLeave={() => setDragId(null)}
+      >
+        {orderedServers.map((s) => (
           <button
             key={s.id}
-            className={`rail-icon ${s.id === server.id ? "active" : ""}`}
+            data-srv={s.id}
+            className={`rail-icon ${s.id === server.id ? "active" : ""} ${dragId === s.id ? "dragging" : ""}`}
             onClick={() => setServerId(s.id)}
-            title={s.name}
-            style={{ position: "relative", ...(s.iconImage ? { overflow: "visible", padding: 0 } : {}) }}
+            onPointerDown={() => setDragId(s.id)}
+            title={`${s.name} — drag to reorder`}
+            style={{
+              position: "relative",
+              touchAction: "none",
+              opacity: dragId === s.id ? 0.5 : 1,
+              ...(s.iconImage ? { overflow: "visible", padding: 0 } : {}),
+            }}
           >
             <ServerIcon server={s} />
             {serverUnread(state, state.currentUserId, s) && <span className="unread-dot" />}
