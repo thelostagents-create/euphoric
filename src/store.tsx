@@ -1,11 +1,15 @@
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
   useReducer,
+  useRef,
   type ReactNode,
 } from "react";
+import { isSupabaseConfigured } from "./lib/supabase";
+import { persistServerAction } from "./lib/serverWrites";
 import type {
   Aesthetic,
   AppState,
@@ -131,7 +135,7 @@ function blockedWordIn(server: Server, content: string): string | undefined {
   return server.blockedWords.find((w) => w && lower.includes(w));
 }
 
-function reducer(state: AppState, action: Action): AppState {
+export function reducer(state: AppState, action: Action): AppState {
   const me = state.currentUserId;
   switch (action.type) {
     case "SEND_MESSAGE": {
@@ -1009,6 +1013,11 @@ const StoreContext = createContext<StoreValue | null>(null);
 export function StoreProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, undefined, loadState);
 
+  // Latest committed state, so the wrapped dispatch can compute the resulting
+  // state synchronously and persist the diff to the backend.
+  const stateRef = useRef(state);
+  stateRef.current = state;
+
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -1017,7 +1026,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }
   }, [state]);
 
-  const value = useMemo(() => ({ state, dispatch }), [state]);
+  // In backend mode, mirror server-management actions to Supabase. Demo/guest
+  // (non-UUID) servers are skipped inside persistServerAction.
+  const wrapped = useCallback((action: Action) => {
+    if (isSupabaseConfigured) {
+      const prev = stateRef.current;
+      void persistServerAction(action, prev, reducer(prev, action));
+    }
+    dispatch(action);
+  }, []);
+
+  const value = useMemo(() => ({ state, dispatch: wrapped }), [state, wrapped]);
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 }
 
