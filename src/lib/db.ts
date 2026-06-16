@@ -87,8 +87,12 @@ export async function ensureProfile(uid: string, fallbackName: string): Promise<
 }
 
 /** Create a party (server + default lounge + @everyone role + owner member). */
-export async function createServerDb(ownerId: string, name: string, icon: string): Promise<string | null> {
+export async function createServerDb(_ownerId: string, name: string, icon: string): Promise<string | null> {
   if (!supabase) return "Backend not configured.";
+  // Use the server-validated user id so owner_id always matches auth.uid().
+  const { data: auth } = await supabase.auth.getUser();
+  const ownerId = auth.user?.id;
+  if (!ownerId) return "You're not signed in (auth token invalid). Try signing out and back in.";
   const invite = Math.random().toString(36).slice(2, 8);
   const { data: srv, error } = await supabase
     .from("servers")
