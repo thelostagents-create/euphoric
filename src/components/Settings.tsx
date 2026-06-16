@@ -3,7 +3,7 @@ import type { Tier } from "../types";
 import { starCapacity, starsAvailable } from "../social";
 import { useAuth } from "../auth";
 import { isSupabaseConfigured } from "../lib/supabase";
-import { openBmacPage, bmacPageUrl } from "../lib/payments";
+import { openPatreonPage, patreonUrl } from "../lib/payments";
 
 const TIERS: {
   id: Tier;
@@ -132,33 +132,33 @@ export function AccountSettings() {
               className={`btn full ${active ? "ghost" : ""}`}
               disabled={active}
               onClick={() => {
-                if (signedIn && t.id !== "free" && bmacPageUrl) {
-                  openBmacPage();
+                if (signedIn && t.id !== "free" && patreonUrl) {
+                  openPatreonPage();
                 } else {
                   dispatch({ type: "SET_TIER", tier: t.id });
                 }
               }}
             >
-              {active ? "Current plan" : t.id === "free" ? "Choose Free" : `Subscribe on Buy Me a Coffee`}
+              {active ? "Current plan" : t.id === "free" ? "Choose Free" : `Subscribe on Patreon`}
             </button>
           </div>
         );
       })}
-      {signedIn && bmacPageUrl && user.tier !== "free" && (
-        <a className="btn ghost full" href={bmacPageUrl} target="_blank" rel="noreferrer">
-          Manage / cancel on Buy Me a Coffee
+      {signedIn && patreonUrl && user.tier !== "free" && (
+        <a className="btn ghost full" href={patreonUrl} target="_blank" rel="noreferrer">
+          Manage / cancel on Patreon
         </a>
       )}
       <p className="muted" style={{ fontSize: 11 }}>
-        {signedIn && bmacPageUrl
-          ? "Subscriptions are handled by Buy Me a Coffee. Your plan updates here automatically once your membership is confirmed."
+        {signedIn && patreonUrl
+          ? "Subscriptions are handled by Patreon. Your plan updates here automatically once your membership is confirmed."
           : "Demo mode — no real payment is processed."}{" "}
         You have {starCapacity(user.tier)} ⭐ Star{starCapacity(user.tier) === 1 ? "" : "s"} (
         {starsAvailable(user)} available to spend).
       </p>
-      {signedIn && bmacPageUrl && (
+      {signedIn && patreonUrl && (
         <p className="muted" style={{ fontSize: 11, marginTop: 0 }}>
-          Important: use the same email address on Buy Me a Coffee that you signed up with here ({session!.user.email}) so your subscription is linked automatically.
+          Important: use the same email address on Patreon that you signed up with here ({session!.user.email}) so your subscription is linked automatically.
         </p>
       )}
 
