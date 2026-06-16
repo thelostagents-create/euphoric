@@ -465,7 +465,7 @@ export function reducer(state: AppState, action: Action): AppState {
       let username = u.username;
       if (action.username !== undefined) {
         const next = action.username.trim();
-        if (next && !usernameTaken(state, next, me)) username = next;
+        if (next && !/\s/.test(next) && !usernameTaken(state, next, me)) username = next;
       }
       return {
         ...state,

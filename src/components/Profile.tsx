@@ -39,9 +39,10 @@ export function Profile({ onManageSubscription }: { onManageSubscription: () => 
   // Usernames are unique and claimed explicitly.
   const [nameDraft, setNameDraft] = useState(user.username);
   const trimmed = nameDraft.trim();
-  const taken = !!trimmed && usernameTaken(state, trimmed, user.id);
+  const hasSpace = /\s/.test(trimmed);
+  const taken = !!trimmed && !hasSpace && usernameTaken(state, trimmed, user.id);
   const changed = trimmed !== user.username;
-  const canClaim = !!trimmed && !taken && changed;
+  const canClaim = !!trimmed && !hasSpace && !taken && changed;
 
   return (
     <div className="screen">
@@ -106,7 +107,11 @@ export function Profile({ onManageSubscription }: { onManageSubscription: () => 
               Claim
             </button>
           </div>
-          {taken ? (
+          {hasSpace ? (
+            <p style={{ fontSize: 12, marginTop: 5, color: "var(--danger)" }}>
+              Username can't contain spaces.
+            </p>
+          ) : taken ? (
             <p style={{ fontSize: 12, marginTop: 5, color: "var(--danger)" }}>
               "{trimmed}" is already taken.
             </p>

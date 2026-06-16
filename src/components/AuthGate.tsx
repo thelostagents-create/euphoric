@@ -19,6 +19,10 @@ export function AuthGate({ onGuest }: { onGuest: () => void }) {
       setError("Please accept the Terms of Service to create an account.");
       return;
     }
+    if (mode === "up" && /\s/.test(username)) {
+      setError("Username can't contain spaces.");
+      return;
+    }
     setBusy(true);
     setError("");
     const err =
