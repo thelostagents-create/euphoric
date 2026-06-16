@@ -1,6 +1,8 @@
 import { resetState, useStore } from "../store";
 import type { Tier } from "../types";
 import { starCapacity, starsAvailable } from "../social";
+import { useAuth } from "../auth";
+import { isSupabaseConfigured } from "../lib/supabase";
 
 const TIERS: {
   id: Tier;
@@ -54,7 +56,24 @@ export function Settings() {
 /** Account settings sections, reusable without screen chrome. */
 export function AccountSettings() {
   const { state, dispatch } = useStore();
+  const { session, signOut, deleteAccount } = useAuth();
   const user = state.users[state.currentUserId];
+  const signedIn = isSupabaseConfigured && !!session;
+
+  async function logOut() {
+    await signOut();
+    resetState(); // clear cached data and return to the sign-in screen
+  }
+
+  async function removeAccount() {
+    if (!confirm("Permanently delete your account and all your data? This can't be undone.")) return;
+    const err = await deleteAccount();
+    if (err) {
+      alert(`Couldn't delete your account: ${err}`);
+      return;
+    }
+    resetState();
+  }
 
   const blocked = user.blockedUserIds
     .map((id) => state.users[id])
@@ -140,6 +159,21 @@ export function AccountSettings() {
             </button>
           </div>
         ))
+      )}
+
+      {signedIn && (
+        <>
+          <div className="section-title">Account</div>
+          <p className="muted" style={{ fontSize: 13, marginTop: 0 }}>
+            Signed in as {session!.user.email}
+          </p>
+          <button className="btn ghost full" onClick={logOut}>
+            Log out
+          </button>
+          <button className="btn danger full" style={{ marginTop: 8 }} onClick={removeAccount}>
+            Delete account
+          </button>
+        </>
       )}
 
       <div className="section-title">Danger zone</div>

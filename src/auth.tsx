@@ -9,6 +9,8 @@ interface AuthValue {
   signUp: (email: string, password: string, username: string) => Promise<string | null>;
   signIn: (email: string, password: string) => Promise<string | null>;
   signOut: () => Promise<void>;
+  /** Permanently delete the signed-in account and all its data. */
+  deleteAccount: () => Promise<string | null>;
 }
 
 const AuthContext = createContext<AuthValue | null>(null);
@@ -60,6 +62,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
       async signOut() {
         await supabase?.auth.signOut();
+      },
+      async deleteAccount() {
+        if (!supabase) return "Backend not configured.";
+        const { error } = await supabase.rpc("delete_account");
+        if (error) return error.message;
+        await supabase.auth.signOut();
+        return null;
       },
     }),
     [loading, session],
