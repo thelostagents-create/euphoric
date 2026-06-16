@@ -72,8 +72,8 @@ Deno.serve(async (req) => {
   const isActive = !trigger.endsWith(":delete") && status === "active_patron" && cents > 0;
 
   try {
-    const { data: user, error: lookupErr } = await admin.auth.admin.getUserByEmail(email);
-    if (lookupErr || !user) {
+    const { data: authData, error: lookupErr } = await admin.auth.admin.getUserByEmail(email);
+    if (lookupErr || !authData?.user) {
       console.warn("patreon-webhook: no Euphoric account found for", email);
       return new Response(JSON.stringify({ received: true }), {
         status: 200,
@@ -82,8 +82,8 @@ Deno.serve(async (req) => {
     }
 
     const tier = isActive ? tierForCents(cents) : "free";
-    await admin.from("profiles").update({ tier }).eq("id", user.id);
-    console.log("patreon-webhook:", email, "->", tier, `(${trigger})`);
+    await admin.from("profiles").update({ tier }).eq("id", authData.user.id);
+    console.log("patreon-webhook:", email, "->", tier, `(${trigger}, ${cents}¢)`);
   } catch (err) {
     console.error("patreon-webhook handler error", err);
     return new Response("handler error", { status: 500 });
