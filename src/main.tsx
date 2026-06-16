@@ -6,6 +6,7 @@ import { AuthProvider, useAuth } from "./auth";
 import { AuthGate } from "./components/AuthGate";
 import { ProfileSync } from "./components/ProfileSync";
 import { ServersSync } from "./components/ServersSync";
+import { SocialSync } from "./components/SocialSync";
 import { isSupabaseConfigured } from "./lib/supabase";
 import "./index.css";
 
@@ -56,6 +57,7 @@ function Shell() {
     <StoreProvider>
       <ProfileSync />
       <ServersSync />
+      <SocialSync />
       <App />
     </StoreProvider>
   );

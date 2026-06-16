@@ -10,6 +10,7 @@ import {
 } from "react";
 import { isSupabaseConfigured } from "./lib/supabase";
 import { persistServerAction } from "./lib/serverWrites";
+import { persistSocialAction } from "./lib/socialWrites";
 import type {
   Aesthetic,
   AppState,
@@ -59,6 +60,8 @@ type Action =
   | { type: "SET_CURRENT_USER"; id: string; profile: Partial<User> }
   | { type: "CACHE_USERS"; users: Partial<User>[] }
   | { type: "HYDRATE_SERVERS"; servers: Server[] }
+  | { type: "HYDRATE_SOCIAL"; following: string[]; followers: string[]; blocked: string[]; profiles: Partial<User>[] }
+  | { type: "HYDRATE_GROUPS"; groups: GroupChat[] }
   | { type: "SET_CHANNEL_SEND_ROLES"; serverId: string; channelId: string; roleIds: string[] }
   | { type: "SET_CHANNEL_VIEW_ROLES"; serverId: string; channelId: string; roleIds: string[] }
   | { type: "MOVE_ROLE"; serverId: string; roleId: string; dir: -1 | 1 }
@@ -505,6 +508,27 @@ export function reducer(state: AppState, action: Action): AppState {
 
     case "HYDRATE_SERVERS": {
       return { ...state, servers: action.servers };
+    }
+
+    // Backend mode: load the signed-in user's follows/blocks from the DB.
+    case "HYDRATE_SOCIAL": {
+      const base = state.users[me] ?? state.users.me;
+      const users = { ...state.users };
+      for (const p of action.profiles) {
+        if (!p.id) continue;
+        users[p.id] = { ...base, ...users[p.id], ...p, id: p.id };
+      }
+      const meUser = users[me] ?? base;
+      users[me] = { ...meUser, following: action.following, blockedUserIds: action.blocked };
+      // Mark followers as following me so mutual-follow (friend) checks resolve.
+      for (const f of action.followers) {
+        if (users[f]) users[f] = { ...users[f], following: addUnique(users[f].following, me) };
+      }
+      return { ...state, users };
+    }
+
+    case "HYDRATE_GROUPS": {
+      return { ...state, groups: action.groups };
     }
 
     case "UPDATE_THEME": {
@@ -1031,7 +1055,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const wrapped = useCallback((action: Action) => {
     if (isSupabaseConfigured) {
       const prev = stateRef.current;
-      void persistServerAction(action, prev, reducer(prev, action));
+      const next = reducer(prev, action);
+      void persistServerAction(action, prev, next);
+      void persistSocialAction(action, prev, next);
     }
     dispatch(action);
   }, []);

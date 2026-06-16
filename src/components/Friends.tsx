@@ -10,7 +10,10 @@ import { ReplyArrowIcon, SearchIcon, XIcon } from "./Icons";
 import { StickerButton } from "./StickerButton";
 import { allowSend } from "../ratelimit";
 import { CreateGroupModal, GroupView, GroupAvatar } from "./Groups";
-import type { GroupChat, Message } from "../types";
+import type { GroupChat, Message, User } from "../types";
+import { useAuth } from "../auth";
+import { isSupabaseConfigured } from "../lib/supabase";
+import { useLiveConversation } from "../lib/useLiveConversation";
 
 /** Short preview for the last message in a conversation. */
 function preview(last: Message | undefined, fallback: string): string {
@@ -292,9 +295,14 @@ function AddFriend() {
 
 function DmView({ friendId, onBack }: { friendId: string; onBack: () => void }) {
   const { state, dispatch } = useStore();
+  const { session } = useAuth();
+  const uid = session?.user.id;
+  const live = isSupabaseConfigured && !!uid;
+  const meId = live ? uid! : state.currentUserId;
+  const channelId = dmChannelId(meId, friendId);
+  const liveConv = useLiveConversation(live ? channelId : undefined, uid);
+
   const me = state.users[state.currentUserId];
-  const friend = state.users[friendId];
-  const channelId = dmChannelId(me.id, friendId);
   const [draft, setDraft] = useState("");
   const [reactFor, setReactFor] = useState<string | null>(null);
   const [replyTo, setReplyTo] = useState<string | null>(null);
@@ -304,10 +312,15 @@ function DmView({ friendId, onBack }: { friendId: string; onBack: () => void }) 
   const [searching, setSearching] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
 
-  const allMessages = useMemo(
+  const users: Record<string, User> = live
+    ? { ...state.users, ...(liveConv.profiles as Record<string, User>) }
+    : state.users;
+  const friend = users[friendId];
+  const storeMessages = useMemo(
     () => state.messages.filter((m) => m.channelId === channelId),
     [state.messages, channelId],
   );
+  const allMessages = live ? liveConv.messages : storeMessages;
   const sq = search.trim().toLowerCase();
   const messages = sq ? allMessages.filter((m) => m.content.toLowerCase().includes(sq)) : allMessages;
   const blocked = me.blockedUserIds.includes(friendId);
@@ -322,7 +335,8 @@ function DmView({ friendId, onBack }: { friendId: string; onBack: () => void }) 
 
   function send() {
     if (!draft.trim() || blocked || !allowSend()) return;
-    dispatch({ type: "SEND_MESSAGE", channelId, content: draft, replyTo: replyTo ?? undefined });
+    if (live) liveConv.send(draft, undefined, replyTo ?? undefined);
+    else dispatch({ type: "SEND_MESSAGE", channelId, content: draft, replyTo: replyTo ?? undefined });
     setDraft("");
     setReplyTo(null);
   }
@@ -357,9 +371,14 @@ function DmView({ friendId, onBack }: { friendId: string; onBack: () => void }) 
       <div className="messages">
         {messages.length === 0 && <div className="center-empty">No messages yet. Say hi 👋</div>}
         {messages.map((m) => {
-          const author = state.users[m.authorId];
+          const author = users[m.authorId];
+          const saveEdit = () => {
+            if (live) liveConv.edit(m.id, editDraft);
+            else dispatch({ type: "EDIT_MESSAGE", messageId: m.id, content: editDraft });
+            setEditingId(null);
+          };
           return (
-            <div key={m.id} className="msg" {...longPressProps(() => setReactFor(m.id))}>
+            <div key={m.id} className="msg" {...(live ? {} : longPressProps(() => setReactFor(m.id)))}>
               <img className="avatar" src={author?.avatar} alt="" />
               <div className="body">
                 {m.replyTo && <ReplyPreview replyTo={m.replyTo} />}
@@ -367,11 +386,11 @@ function DmView({ friendId, onBack }: { friendId: string; onBack: () => void }) 
                   <span className="name">{displayName(author)}</span>
                   <span className="time">{timeAgo(m.createdAt)}</span>
                   <span className="msg-tools">
-                    <button className="msg-action" title="React or reply" onClick={() => setReactFor(m.id)}>
+                    <button className="msg-action" title="React or reply" onClick={() => (live ? setReplyTo(m.id) : setReactFor(m.id))}>
                       <ReplyArrowIcon size={14} />
                     </button>
-                    {m.authorId === state.currentUserId && (
-                      <button className="msg-delete" title="Delete message" onClick={() => dispatch({ type: "DELETE_MESSAGE", messageId: m.id })}>
+                    {m.authorId === meId && (
+                      <button className="msg-delete" title="Delete message" onClick={() => (live ? liveConv.remove(m.id) : dispatch({ type: "DELETE_MESSAGE", messageId: m.id }))}>
                         <XIcon size={14} />
                       </button>
                     )}
@@ -384,26 +403,23 @@ function DmView({ friendId, onBack }: { friendId: string; onBack: () => void }) 
                       autoFocus
                       onChange={(e) => setEditDraft(e.target.value)}
                       onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          dispatch({ type: "EDIT_MESSAGE", messageId: m.id, content: editDraft });
-                          setEditingId(null);
-                        }
+                        if (e.key === "Enter") saveEdit();
                         if (e.key === "Escape") setEditingId(null);
                       }}
                     />
-                    <button className="btn sm" onClick={() => { dispatch({ type: "EDIT_MESSAGE", messageId: m.id, content: editDraft }); setEditingId(null); }}>Save</button>
+                    <button className="btn sm" onClick={saveEdit}>Save</button>
                     <button className="btn ghost sm" onClick={() => setEditingId(null)}>Cancel</button>
                   </div>
                 ) : (
                   m.content && (
                     <div className="content">
-                      <MessageText content={m.content} users={state.users} meId={state.currentUserId} />
+                      <MessageText content={m.content} users={users} meId={meId} />
                       {m.editedAt && <span className="muted" style={{ fontSize: 11 }}> (edited)</span>}
                     </div>
                   )
                 )}
                 {m.attachment && <MessageAttachment attachment={m.attachment} />}
-                <ReactionChips message={m} />
+                {!live && <ReactionChips message={m} />}
               </div>
             </div>
           );
@@ -416,7 +432,7 @@ function DmView({ friendId, onBack }: { friendId: string; onBack: () => void }) 
           messageId={reactFor}
           onReply={() => setReplyTo(reactFor)}
           onEdit={
-            messages.find((m) => m.id === reactFor)?.authorId === state.currentUserId
+            messages.find((m) => m.id === reactFor)?.authorId === meId
               ? () => {
                   setEditDraft(messages.find((m) => m.id === reactFor)?.content ?? "");
                   setEditingId(reactFor);
@@ -433,8 +449,8 @@ function DmView({ friendId, onBack }: { friendId: string; onBack: () => void }) 
         <>
           {replyTo && <ReplyBar replyTo={replyTo} onCancel={() => setReplyTo(null)} />}
           <div className="composer">
-            <AttachButton channelId={channelId} />
-            <StickerButton channelId={channelId} onInsertEmoji={(e) => setDraft((d) => d + e)} />
+            {!live && <AttachButton channelId={channelId} />}
+            {!live && <StickerButton channelId={channelId} onInsertEmoji={(e) => setDraft((d) => d + e)} />}
             <input
               value={draft}
               placeholder={`Message ${displayName(friend)}`}

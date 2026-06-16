@@ -1,5 +1,5 @@
 import { supabase } from "./supabase";
-import type { Attachment, Message, Server, User } from "../types";
+import type { Attachment, GroupChat, Message, Server, User } from "../types";
 
 /* ── Servers (parties) / membership ────────────────────────── */
 
@@ -108,6 +108,95 @@ export async function joinServerDb(serverId: string, _uid: string): Promise<void
   if (!supabase) return;
   await supabase.rpc("join_party", { p_server: serverId });
   triggerServersReload();
+}
+
+/* ── Social graph (follows / blocks) ───────────────────────── */
+
+/** Load the signed-in user's follows, followers and blocks (+ profiles). */
+export async function loadSocial(
+  uid: string,
+): Promise<{ following: string[]; followers: string[]; blocked: string[]; profiles: Partial<User>[] }> {
+  if (!supabase) return { following: [], followers: [], blocked: [], profiles: [] };
+  const [f1, f2, b] = await Promise.all([
+    supabase.from("follows").select("followee_id").eq("follower_id", uid),
+    supabase.from("follows").select("follower_id").eq("followee_id", uid),
+    supabase.from("blocks").select("blocked_id").eq("blocker_id", uid),
+  ]);
+  const following = (f1.data ?? []).map((r) => r.followee_id as string);
+  const followers = (f2.data ?? []).map((r) => r.follower_id as string);
+  const blocked = (b.data ?? []).map((r) => r.blocked_id as string);
+  const ids = [...new Set([...following, ...followers, ...blocked])];
+  const profiles = await fetchProfilesByIds(ids);
+  return { following, followers, blocked, profiles };
+}
+
+export async function followDb(uid: string, target: string): Promise<void> {
+  await supabase
+    ?.from("follows")
+    .upsert({ follower_id: uid, followee_id: target }, { onConflict: "follower_id,followee_id", ignoreDuplicates: true });
+}
+export async function unfollowDb(uid: string, target: string): Promise<void> {
+  await supabase?.from("follows").delete().eq("follower_id", uid).eq("followee_id", target);
+}
+export async function blockDb(uid: string, target: string): Promise<void> {
+  await supabase
+    ?.from("blocks")
+    .upsert({ blocker_id: uid, blocked_id: target }, { onConflict: "blocker_id,blocked_id", ignoreDuplicates: true });
+}
+export async function unblockDb(uid: string, target: string): Promise<void> {
+  await supabase?.from("blocks").delete().eq("blocker_id", uid).eq("blocked_id", target);
+}
+
+/* ── Group chats ───────────────────────────────────────────── */
+
+/** Create a group chat; returns its DB id (used as the conversation key). */
+export async function createGroupDb(uid: string, name: string, memberIds: string[]): Promise<string | null> {
+  if (!supabase) return null;
+  const { data, error } = await supabase
+    .from("groups")
+    .insert({ name: name.trim() || "New Group", created_by: uid })
+    .select("id")
+    .single();
+  if (error || !data) return null;
+  const rows = [...new Set([uid, ...memberIds])].map((u) => ({ group_id: data.id, user_id: u }));
+  await supabase.from("group_members").insert(rows);
+  return data.id as string;
+}
+
+/** Load the groups the user belongs to, with their member profiles. */
+export async function loadGroups(uid: string): Promise<{ groups: GroupChat[]; profiles: Partial<User>[] }> {
+  if (!supabase) return { groups: [], profiles: [] };
+  const { data: mine } = await supabase.from("group_members").select("group_id").eq("user_id", uid);
+  const ids = (mine ?? []).map((m) => m.group_id as string);
+  if (!ids.length) return { groups: [], profiles: [] };
+  const { data } = await supabase.from("groups").select("*, group_members(user_id)").in("id", ids);
+  /* eslint-disable @typescript-eslint/no-explicit-any */
+  const groups: GroupChat[] = (data ?? []).map((g: any) => ({
+    id: g.id,
+    name: g.name,
+    iconImage: g.icon_image ?? "",
+    createdBy: g.created_by,
+    memberIds: (g.group_members ?? []).map((m: any) => m.user_id),
+  }));
+  /* eslint-enable @typescript-eslint/no-explicit-any */
+  const memberIds = [...new Set(groups.flatMap((g) => g.memberIds))];
+  const profiles = await fetchProfilesByIds(memberIds);
+  return { groups, profiles };
+}
+
+export async function addGroupMemberDb(groupId: string, userId: string): Promise<void> {
+  await supabase
+    ?.from("group_members")
+    .upsert({ group_id: groupId, user_id: userId }, { onConflict: "group_id,user_id", ignoreDuplicates: true });
+}
+export async function removeGroupMemberDb(groupId: string, userId: string): Promise<void> {
+  await supabase?.from("group_members").delete().eq("group_id", groupId).eq("user_id", userId);
+}
+export async function renameGroupDb(groupId: string, name: string): Promise<void> {
+  await supabase?.from("groups").update({ name }).eq("id", groupId);
+}
+export async function setGroupIconDb(groupId: string, iconImage: string): Promise<void> {
+  await supabase?.from("groups").update({ icon_image: iconImage }).eq("id", groupId);
 }
 
 /* ── Messages (live conversations) ─────────────────────────── */

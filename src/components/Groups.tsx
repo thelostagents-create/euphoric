@@ -11,6 +11,11 @@ import { ReplyArrowIcon, SearchIcon, SettingsIcon } from "./Icons";
 import { ImagePicker } from "./ImagePicker";
 import { StickerButton } from "./StickerButton";
 import { allowSend } from "../ratelimit";
+import { useAuth } from "../auth";
+import { isSupabaseConfigured } from "../lib/supabase";
+import { createGroupDb } from "../lib/db";
+import { useLiveConversation } from "../lib/useLiveConversation";
+import type { User } from "../types";
 
 /** Group picture: image if set, otherwise the member count in a circle. */
 export function GroupAvatar({ group, size = 38 }: { group: { iconImage: string; memberIds: string[] }; size?: number }) {
@@ -35,6 +40,7 @@ export function CreateGroupModal({
   onCreated: (groupId: string) => void;
 }) {
   const { state, dispatch } = useStore();
+  const { session } = useAuth();
   const friends = friendsOf(state, state.currentUserId);
   const [name, setName] = useState("");
   const [picked, setPicked] = useState<string[]>([]);
@@ -43,9 +49,18 @@ export function CreateGroupModal({
     setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
   }
 
-  function create() {
+  async function create() {
     if (picked.length === 0) return;
-    const groupId = `g_${Math.random().toString(36).slice(2, 9)}`;
+    const uid = session?.user.id;
+    let groupId = `g_${Math.random().toString(36).slice(2, 9)}`;
+    if (isSupabaseConfigured && uid) {
+      const id = await createGroupDb(uid, name, picked);
+      if (!id) {
+        alert("Couldn't create the group chat.");
+        return;
+      }
+      groupId = id;
+    }
     dispatch({ type: "CREATE_GROUP", id: groupId, name, memberIds: picked });
     onCreated(groupId);
     onClose();
@@ -179,6 +194,11 @@ function GroupSettingsModal({ groupId, onClose }: { groupId: string; onClose: ()
 
 export function GroupView({ groupId, onBack }: { groupId: string; onBack: () => void }) {
   const { state, dispatch } = useStore();
+  const { session } = useAuth();
+  const uid = session?.user.id;
+  const live = isSupabaseConfigured && !!uid;
+  const meId = live ? uid! : state.currentUserId;
+  const liveConv = useLiveConversation(live ? groupId : undefined, uid);
   const group = state.groups.find((g) => g.id === groupId);
   const [draft, setDraft] = useState("");
   const [showAdd, setShowAdd] = useState(false);
@@ -188,10 +208,14 @@ export function GroupView({ groupId, onBack }: { groupId: string; onBack: () => 
   const [searching, setSearching] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
 
-  const allMessages = useMemo(
+  const users: Record<string, User> = live
+    ? { ...state.users, ...(liveConv.profiles as Record<string, User>) }
+    : state.users;
+  const storeMessages = useMemo(
     () => state.messages.filter((m) => m.channelId === groupId),
     [state.messages, groupId],
   );
+  const allMessages = live ? liveConv.messages : storeMessages;
   const q = search.trim().toLowerCase();
   const messages = q ? allMessages.filter((m) => m.content.toLowerCase().includes(q)) : allMessages;
 
@@ -209,12 +233,13 @@ export function GroupView({ groupId, onBack }: { groupId: string; onBack: () => 
   }
 
   const memberNames = group.memberIds
-    .map((uid) => displayName(state.users[uid]))
+    .map((mid) => displayName(users[mid]))
     .join(", ");
 
   function send() {
     if (!draft.trim() || !allowSend()) return;
-    dispatch({ type: "SEND_MESSAGE", channelId: groupId, content: draft, replyTo: replyTo ?? undefined });
+    if (live) liveConv.send(draft, undefined, replyTo ?? undefined);
+    else dispatch({ type: "SEND_MESSAGE", channelId: groupId, content: draft, replyTo: replyTo ?? undefined });
     setDraft("");
     setReplyTo(null);
   }
@@ -247,26 +272,31 @@ export function GroupView({ groupId, onBack }: { groupId: string; onBack: () => 
       <div className="messages">
         {messages.length === 0 && <div className="center-empty">No messages yet. Say hi 👋</div>}
         {messages.map((m) => {
-          const author = state.users[m.authorId];
+          const author = users[m.authorId];
           return (
-            <div key={m.id} className="msg" {...longPressProps(() => setReactFor(m.id))}>
+            <div key={m.id} className="msg" {...(live ? {} : longPressProps(() => setReactFor(m.id)))}>
               <img className="avatar" src={author?.avatar} alt="" />
               <div className="body">
                 {m.replyTo && <ReplyPreview replyTo={m.replyTo} />}
                 <div className="meta">
                   <span className="name">{displayName(author)}</span>
                   <span className="time">{timeAgo(m.createdAt)}</span>
-                  <button className="msg-action" title="React or reply" onClick={() => setReactFor(m.id)}>
+                  <button className="msg-action" title="React or reply" onClick={() => (live ? setReplyTo(m.id) : setReactFor(m.id))}>
                     <ReplyArrowIcon size={15} />
                   </button>
+                  {live && m.authorId === meId && (
+                    <button className="msg-delete" title="Delete message" onClick={() => liveConv.remove(m.id)}>
+                      ✕
+                    </button>
+                  )}
                 </div>
                 {m.content && (
                   <div className="content">
-                    <MessageText content={m.content} users={state.users} meId={state.currentUserId} />
+                    <MessageText content={m.content} users={users} meId={meId} />
                   </div>
                 )}
                 {m.attachment && <MessageAttachment attachment={m.attachment} />}
-                <ReactionChips message={m} />
+                {!live && <ReactionChips message={m} />}
               </div>
             </div>
           );
@@ -276,8 +306,8 @@ export function GroupView({ groupId, onBack }: { groupId: string; onBack: () => 
 
       {replyTo && <ReplyBar replyTo={replyTo} onCancel={() => setReplyTo(null)} />}
       <div className="composer">
-        <AttachButton channelId={groupId} />
-        <StickerButton channelId={groupId} onInsertEmoji={(e) => setDraft((d) => d + e)} />
+        {!live && <AttachButton channelId={groupId} />}
+        {!live && <StickerButton channelId={groupId} onInsertEmoji={(e) => setDraft((d) => d + e)} />}
         <input
           value={draft}
           placeholder={`Message ${group.name}`}
