@@ -5,10 +5,11 @@ import {
   resolveReportDb,
   findUserByUsername,
   setUserTierDb,
-  loadAllServersForDev,
+  findServerByInvite,
   setVerifiedDb,
   type Report,
 } from "../lib/db";
+import { parseInviteCode } from "../social";
 import type { Server, Tier, User } from "../types";
 
 type Pane = "reports" | "subs" | "servers";
@@ -167,53 +168,59 @@ function SubsPane() {
 }
 
 function ServersPane() {
-  const [servers, setServers] = useState<Server[] | null>(null);
-  const [filter, setFilter] = useState("");
+  const [invite, setInvite] = useState("");
+  const [server, setServer] = useState<Server | null | undefined>(undefined);
+  const [busy, setBusy] = useState(false);
 
-  async function refresh() {
-    setServers(await loadAllServersForDev());
+  async function search() {
+    setServer(undefined);
+    const s = await findServerByInvite(parseInviteCode(invite));
+    setServer(s ?? null);
   }
-  useEffect(() => {
-    void refresh();
-  }, []);
 
-  if (!servers) return <p className="muted">Loading parties…</p>;
-  const shown = servers.filter((s) => s.name.toLowerCase().includes(filter.toLowerCase()));
+  async function toggle() {
+    if (!server) return;
+    setBusy(true);
+    const err = await setVerifiedDb(server.id, !server.verified);
+    setBusy(false);
+    if (!err) setServer({ ...server, verified: !server.verified });
+  }
 
   return (
     <>
-      <input
-        value={filter}
-        onChange={(e) => setFilter(e.target.value)}
-        placeholder="Filter by name…"
-        style={{ marginBottom: 10 }}
-      />
-      {shown.map((s) => (
-        <div className="card" key={s.id}>
+      <p className="muted" style={{ fontSize: 12, marginTop: 0 }}>
+        Enter a party's invite code (or full euphoric.chat link) to verify it.
+      </p>
+      <div className="row" style={{ gap: 8 }}>
+        <input
+          value={invite}
+          onChange={(e) => setInvite(e.target.value)}
+          placeholder="euphoric.chat/code or code"
+          onKeyDown={(e) => e.key === "Enter" && invite.trim() && search()}
+        />
+        <button className="btn sm" disabled={!invite.trim()} onClick={search}>Find</button>
+      </div>
+      {server === null && <p className="muted" style={{ marginTop: 10 }}>No party with that invite code.</p>}
+      {server && (
+        <div className="card" style={{ marginTop: 10 }}>
           <div className="row" style={{ justifyContent: "space-between" }}>
             <div className="row" style={{ gap: 8 }}>
               <span style={{ fontSize: 20 }}>
-                {s.iconImage ? <img src={s.iconImage} alt="" style={{ width: 24, height: 24, borderRadius: 6 }} /> : s.icon}
+                {server.iconImage ? <img src={server.iconImage} alt="" style={{ width: 24, height: 24, borderRadius: 6 }} /> : server.icon}
               </span>
               <div>
                 <div style={{ fontWeight: 700 }}>
-                  {s.name} {s.verified && <span style={{ color: "var(--accent)" }}>✓</span>}
+                  {server.name} {server.verified && <span style={{ color: "var(--accent)" }}>✓</span>}
                 </div>
-                <div className="muted" style={{ fontSize: 11 }}>{s.members.length} members</div>
+                <div className="muted" style={{ fontSize: 11 }}>{server.members.length} members</div>
               </div>
             </div>
-            <button
-              className={`btn sm ${s.verified ? "ghost" : ""}`}
-              onClick={async () => {
-                const err = await setVerifiedDb(s.id, !s.verified);
-                if (!err) setServers((prev) => prev!.map((x) => (x.id === s.id ? { ...x, verified: !s.verified } : x)));
-              }}
-            >
-              {s.verified ? "Unverify" : "Verify"}
+            <button className={`btn sm ${server.verified ? "ghost" : ""}`} disabled={busy} onClick={toggle}>
+              {server.verified ? "Unverify" : "Verify"}
             </button>
           </div>
         </div>
-      ))}
+      )}
     </>
   );
 }

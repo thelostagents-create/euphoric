@@ -509,15 +509,15 @@ export async function setUserTierDb(userId: string, tier: string): Promise<strin
   return error ? error.message : null;
 }
 
-/** Load every party (developers only) so they can verify any of them. */
-export async function loadAllServersForDev(): Promise<Server[]> {
-  if (!supabase) return [];
+/** Look up a single party by its invite code (developers, to verify it). */
+export async function findServerByInvite(invite: string): Promise<Server | null> {
+  if (!supabase) return null;
   const { data } = await supabase
     .from("servers")
     .select("*")
-    .order("created_at", { ascending: false })
-    .limit(500);
-  return (data ?? []).map(rowToServer);
+    .eq("invite", invite.trim().toLowerCase())
+    .maybeSingle();
+  return data ? rowToServer(data) : null;
 }
 
 /** Developer set a party's verified flag directly (bypasses local rail). */
