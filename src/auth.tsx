@@ -19,12 +19,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!supabase) return;
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      setLoading(false);
-    });
+    let done = false;
+    const finish = () => {
+      if (!done) {
+        done = true;
+        setLoading(false);
+      }
+    };
+    supabase.auth
+      .getSession()
+      .then(({ data }) => setSession(data.session))
+      .catch((e) => console.error("getSession failed", e))
+      .finally(finish);
+    // Safety net: never hang on the loading screen.
+    const t = setTimeout(finish, 4000);
     const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setSession(s));
-    return () => sub.subscription.unsubscribe();
+    return () => {
+      clearTimeout(t);
+      sub.subscription.unsubscribe();
+    };
   }, []);
 
   const value = useMemo<AuthValue>(
