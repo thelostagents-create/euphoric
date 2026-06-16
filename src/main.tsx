@@ -4,6 +4,7 @@ import { StoreProvider } from "./store";
 import { App } from "./App";
 import { AuthProvider, useAuth } from "./auth";
 import { AuthGate } from "./components/AuthGate";
+import { ProfileSync } from "./components/ProfileSync";
 import { isSupabaseConfigured } from "./lib/supabase";
 import "./index.css";
 
@@ -52,6 +53,7 @@ function Root() {
 function Shell() {
   return (
     <StoreProvider>
+      <ProfileSync />
       <App />
     </StoreProvider>
   );

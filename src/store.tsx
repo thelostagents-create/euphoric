@@ -17,6 +17,7 @@ import type {
   Role,
   Server,
   Tier,
+  User,
 } from "./types";
 import { seedState } from "./data/seed";
 import { can, canModerate } from "./permissions";
@@ -50,6 +51,7 @@ type Action =
   | { type: "JOIN_SERVER"; serverId: string }
   | { type: "CREATE_CHANNEL"; serverId: string; name: string }
   | { type: "UPDATE_PROFILE"; bio?: string; avatar?: string; username?: string; nickname?: string; blurb?: string; blurbColor?: string }
+  | { type: "LOAD_PROFILE"; profile: Partial<User> }
   | { type: "SET_CHANNEL_SEND_ROLES"; serverId: string; channelId: string; roleIds: string[] }
   | { type: "SET_CHANNEL_VIEW_ROLES"; serverId: string; channelId: string; roleIds: string[] }
   | { type: "MOVE_ROLE"; serverId: string; roleId: string; dir: -1 | 1 }
@@ -467,6 +469,11 @@ function reducer(state: AppState, action: Action): AppState {
           },
         },
       };
+    }
+
+    case "LOAD_PROFILE": {
+      const u = state.users[me];
+      return { ...state, users: { ...state.users, [me]: { ...u, ...action.profile } } };
     }
 
     case "UPDATE_THEME": {
