@@ -20,7 +20,11 @@ import { allowSend } from "../ratelimit";
 import { ReplyPreview, ReplyBar } from "./Reply";
 import { PersonIcon, SettingsIcon, ReplyArrowIcon, XIcon } from "./Icons";
 import { displayName, serverStars, isUnread, serverUnread } from "../social";
+import { useAuth } from "../auth";
+import { isSupabaseConfigured } from "../lib/supabase";
+import { useLiveConversation } from "../lib/useLiveConversation";
 import type { ChatNav } from "../App";
+import type { User } from "../types";
 
 export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled?: () => void }) {
   const { state, dispatch } = useStore();
@@ -76,10 +80,22 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
     }
   }, [visibleChannels, channelId]);
 
-  const messages = useMemo(
+  // Backend mode: live messages from Supabase for the open lounge/post.
+  const { session } = useAuth();
+  const uid = session?.user.id;
+  const live = isSupabaseConfigured && !!uid;
+  const liveConv = useLiveConversation(live ? activeChannelId : undefined, uid);
+
+  const storeMessages = useMemo(
     () => state.messages.filter((m) => m.channelId === activeChannelId),
     [state.messages, activeChannelId],
   );
+  const messages = live ? liveConv.messages : storeMessages;
+  const meId = live ? uid! : state.currentUserId;
+  const usersMap = live
+    ? { ...state.users, ...(liveConv.profiles as Record<string, User>) }
+    : state.users;
+  const userFor = (id: string): User | undefined => usersMap[id];
 
   // Leaving a forum post / switching channels closes the open post.
   useEffect(() => {
@@ -170,8 +186,12 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
       return;
     }
     const blocked = server.blockedWords.find((w) => w && draft.toLowerCase().includes(w));
-    dispatch({ type: "SEND_MESSAGE", channelId: activeChannelId!, content: draft, replyTo: replyTo ?? undefined });
-    if (blocked) flash(`AutoMod blocked your message (contains "${blocked}").`);
+    if (blocked) {
+      flash(`AutoMod blocked your message (contains "${blocked}").`);
+      return;
+    }
+    if (live) liveConv.send(draft, undefined, replyTo ?? undefined);
+    else dispatch({ type: "SEND_MESSAGE", channelId: activeChannelId!, content: draft, replyTo: replyTo ?? undefined });
     setDraft("");
     setReplyTo(null);
   }
@@ -347,10 +367,16 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
         <div className="messages">
           {messages.length === 0 && <div className="center-empty">No messages yet. Say hi 👋</div>}
           {messages.map((m) => {
-            const author = state.users[m.authorId];
+            const author = userFor(m.authorId);
             const blocked = me.blockedUserIds.includes(m.authorId);
             const isRevealed = revealed.has(m.id);
-            const canDelete = m.authorId === state.currentUserId || canDeleteOthers;
+            const own = m.authorId === meId;
+            const canDelete = own || (!live && canDeleteOthers);
+            const saveEdit = () => {
+              if (live) liveConv.edit(m.id, editDraft);
+              else dispatch({ type: "EDIT_MESSAGE", messageId: m.id, content: editDraft });
+              setEditingId(null);
+            };
             return (
               <div
                 key={m.id}
@@ -358,20 +384,20 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
                 className={`msg ${blocked ? "blocked" : ""} ${isRevealed ? "revealed" : ""} ${
                   m.id === highlight ? "highlight" : ""
                 }`}
-                {...longPressProps(() => setReactFor(m.id))}
+                {...(live ? {} : longPressProps(() => setReactFor(m.id)))}
               >
                 <img
                   className="avatar"
                   src={author?.avatar}
                   alt=""
-                  onClick={() => setSheetUser(m.authorId)}
+                  onClick={() => !live && setSheetUser(m.authorId)}
                 />
                 <div className="body">
                   {m.replyTo && (
                     <ReplyPreview replyTo={m.replyTo} onJump={() => setHighlight(m.replyTo!)} />
                   )}
                   <div className="meta">
-                    <span className="name" onClick={() => setSheetUser(m.authorId)}>
+                    <span className="name" onClick={() => !live && setSheetUser(m.authorId)}>
                       {displayName(author)}
                     </span>
                     {m.pinned && <span title="Pinned">📌</span>}
@@ -391,14 +417,30 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
                       </button>
                     )}
                     <span className="msg-tools">
-                      <button className="msg-action" title="React or reply" onClick={() => setReactFor(m.id)}>
+                      <button
+                        className="msg-action"
+                        title="Reply"
+                        onClick={() => (live ? setReplyTo(m.id) : setReactFor(m.id))}
+                      >
                         <ReplyArrowIcon size={14} />
                       </button>
+                      {own && (
+                        <button
+                          className="msg-delete"
+                          title="Edit"
+                          onClick={() => {
+                            setEditDraft(m.content);
+                            setEditingId(m.id);
+                          }}
+                        >
+                          ✎
+                        </button>
+                      )}
                       {canDelete && (
                         <button
                           className="msg-delete"
-                          title={m.authorId === state.currentUserId ? "Delete your message" : "Delete message"}
-                          onClick={() => dispatch({ type: "DELETE_MESSAGE", messageId: m.id })}
+                          title="Delete message"
+                          onClick={() => (live ? liveConv.remove(m.id) : dispatch({ type: "DELETE_MESSAGE", messageId: m.id }))}
                         >
                           <XIcon size={14} />
                         </button>
@@ -412,22 +454,11 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
                         autoFocus
                         onChange={(e) => setEditDraft(e.target.value)}
                         onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            dispatch({ type: "EDIT_MESSAGE", messageId: m.id, content: editDraft });
-                            setEditingId(null);
-                          }
+                          if (e.key === "Enter") saveEdit();
                           if (e.key === "Escape") setEditingId(null);
                         }}
                       />
-                      <button
-                        className="btn sm"
-                        onClick={() => {
-                          dispatch({ type: "EDIT_MESSAGE", messageId: m.id, content: editDraft });
-                          setEditingId(null);
-                        }}
-                      >
-                        Save
-                      </button>
+                      <button className="btn sm" onClick={saveEdit}>Save</button>
                       <button className="btn ghost sm" onClick={() => setEditingId(null)}>Cancel</button>
                     </div>
                   ) : (
@@ -435,8 +466,8 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
                       <div className="content">
                         <MessageText
                           content={m.content}
-                          users={state.users}
-                          meId={state.currentUserId}
+                          users={usersMap}
+                          meId={meId}
                           roles={mentionableRoles}
                           myRoleIds={myRoleIds}
                         />
@@ -445,7 +476,7 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
                     )
                   )}
                   {m.attachment && <MessageAttachment attachment={m.attachment} />}
-                  <ReactionChips message={m} />
+                  {!live && <ReactionChips message={m} />}
                 </div>
               </div>
             );
@@ -500,8 +531,8 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
             <div className="timeout-banner">Only certain roles can talk in #{channel.name}.</div>
           ) : (
             <div className="composer">
-              <AttachButton channelId={activeChannelId!} disabled={muted} />
-              <StickerButton channelId={activeChannelId!} serverId={server.id} onInsertEmoji={(e) => setDraft((d) => d + e)} />
+              {!live && <AttachButton channelId={activeChannelId!} disabled={muted} />}
+              {!live && <StickerButton channelId={activeChannelId!} serverId={server.id} onInsertEmoji={(e) => setDraft((d) => d + e)} />}
               <input
                 value={draft}
                 placeholder={muted ? "You can't send messages right now" : `Message #${channel.name}  (try @)`}
