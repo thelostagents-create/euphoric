@@ -437,18 +437,6 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
                       >
                         <ReplyArrowIcon size={14} />
                       </button>
-                      {own && (
-                        <button
-                          className="msg-delete"
-                          title="Edit"
-                          onClick={() => {
-                            setEditDraft(m.content);
-                            setEditingId(m.id);
-                          }}
-                        >
-                          ✎
-                        </button>
-                      )}
                       {canDelete && (
                         <button
                           className="msg-delete"
