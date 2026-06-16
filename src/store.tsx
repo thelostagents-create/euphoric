@@ -93,7 +93,9 @@ type Action =
   | { type: "BAN"; serverId: string; userId: string }
   | { type: "TIMEOUT"; serverId: string; userId: string; minutes: number }
   | { type: "CLEAR_TIMEOUT"; serverId: string; userId: string }
-  | { type: "UPDATE_DISCOVERY"; serverId: string; discoverable: boolean; description: string; keywords: string[] };
+  | { type: "UPDATE_DISCOVERY"; serverId: string; discoverable: boolean; description: string; keywords: string[] }
+  | { type: "SET_VERIFIED"; serverId: string; verified: boolean }
+  | { type: "REPORT"; targetKind: "user" | "message" | "server"; targetId: string; reason: string; context?: string };
 
 function id(prefix: string): string {
   return `${prefix}_${Math.random().toString(36).slice(2, 9)}`;
@@ -950,6 +952,23 @@ export function reducer(state: AppState, action: Action): AppState {
         })),
       };
     }
+
+    case "SET_VERIFIED": {
+      // Only developers may verify parties.
+      if (state.users[me]?.tier !== "developer") return state;
+      return {
+        ...state,
+        servers: mapServer(state, action.serverId, (s) => ({
+          ...s,
+          verified: action.verified,
+        })),
+      };
+    }
+
+    case "REPORT":
+      // Reports are side-effects persisted to the backend (see socialWrites);
+      // there is no local state to mutate.
+      return state;
 
     default:
       return state;

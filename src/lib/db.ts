@@ -144,6 +144,25 @@ export async function addAuditDb(
     .insert({ server_id: serverId, action, actor_id: actorId, target_id: targetId ?? null, detail });
 }
 
+/** File a user/message/server report for developers to review. */
+export async function addReportDb(
+  reporterId: string,
+  targetKind: "user" | "message" | "server",
+  targetId: string,
+  reason: string,
+  context?: string,
+): Promise<void> {
+  await supabase
+    ?.from("reports")
+    .insert({
+      reporter_id: reporterId,
+      target_kind: targetKind,
+      target_id: targetId,
+      reason,
+      context: context ?? null,
+    });
+}
+
 /** Create a forum post; returns its DB id (used as the message conversation key). */
 export async function createPostDb(channelId: string, title: string, authorUid: string): Promise<string | null> {
   if (!supabase) return null;
@@ -430,4 +449,80 @@ export async function saveProfile(id: string, u: User): Promise<void> {
       light_mode: u.lightMode,
     })
     .eq("id", id);
+}
+
+/* ── Developer console ─────────────────────────────────────── */
+
+export interface Report {
+  id: string;
+  reporterId: string;
+  targetKind: "user" | "message" | "server";
+  targetId: string;
+  reason: string;
+  context: string | null;
+  resolved: boolean;
+  createdAt: string;
+}
+
+/** Load reports (RLS restricts this to developers). Newest first. */
+export async function loadReports(): Promise<Report[]> {
+  if (!supabase) return [];
+  const { data } = await supabase
+    .from("reports")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(200);
+  /* eslint-disable @typescript-eslint/no-explicit-any */
+  return (data ?? []).map((r: any) => ({
+    id: r.id,
+    reporterId: r.reporter_id,
+    targetKind: r.target_kind,
+    targetId: r.target_id,
+    reason: r.reason,
+    context: r.context ?? null,
+    resolved: !!r.resolved,
+    createdAt: r.created_at,
+  }));
+  /* eslint-enable @typescript-eslint/no-explicit-any */
+}
+
+/** Mark a report resolved/unresolved (developers only via RLS). */
+export async function resolveReportDb(id: string, resolved: boolean): Promise<void> {
+  await supabase?.from("reports").update({ resolved }).eq("id", id);
+}
+
+/** Find a user by exact username (developers search by handle). */
+export async function findUserByUsername(username: string): Promise<Partial<User> | null> {
+  if (!supabase) return null;
+  const { data } = await supabase
+    .from("profiles")
+    .select("*")
+    .ilike("username", username.trim())
+    .maybeSingle();
+  return data ? rowToProfile(data) : null;
+}
+
+/** Developer override: set any user's subscription tier (RPC checks dev). */
+export async function setUserTierDb(userId: string, tier: string): Promise<string | null> {
+  if (!supabase) return null;
+  const { error } = await supabase.rpc("set_user_tier", { p_user: userId, p_tier: tier });
+  return error ? error.message : null;
+}
+
+/** Load every party (developers only) so they can verify any of them. */
+export async function loadAllServersForDev(): Promise<Server[]> {
+  if (!supabase) return [];
+  const { data } = await supabase
+    .from("servers")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(500);
+  return (data ?? []).map(rowToServer);
+}
+
+/** Developer set a party's verified flag directly (bypasses local rail). */
+export async function setVerifiedDb(serverId: string, verified: boolean): Promise<string | null> {
+  if (!supabase) return null;
+  const { error } = await supabase.from("servers").update({ verified }).eq("id", serverId);
+  return error ? error.message : null;
 }

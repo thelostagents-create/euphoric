@@ -55,7 +55,7 @@ export function JoinServerModal({
         <input
           autoFocus
           value={link}
-          placeholder="euphoric.gg/code"
+          placeholder="euphoric.chat/code"
           onChange={(e) => {
             setLink(e.target.value);
             setError("");

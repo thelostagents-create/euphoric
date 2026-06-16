@@ -4,6 +4,7 @@ import { starCapacity, starsAvailable } from "../social";
 import { useAuth } from "../auth";
 import { isSupabaseConfigured } from "../lib/supabase";
 import { openPatreonPage, patreonUrl } from "../lib/payments";
+import { DevConsole } from "./DevConsole";
 
 const TIERS: {
   id: Tier;
@@ -178,6 +179,13 @@ export function AccountSettings() {
             </button>
           </div>
         ))
+      )}
+
+      {user.tier === "developer" && (
+        <>
+          <div className="section-title">⚙️ Developer console</div>
+          <DevConsole />
+        </>
       )}
 
       {signedIn && (

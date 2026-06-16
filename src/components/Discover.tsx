@@ -71,7 +71,7 @@ export function Discover() {
             <input
               value={invite}
               onChange={(e) => setInvite(e.target.value)}
-              placeholder="euphoric.gg/code or code"
+              placeholder="euphoric.chat/code or code"
               onKeyDown={(e) => e.key === "Enter" && joinByInvite()}
             />
             <button className="btn sm" disabled={!invite.trim()} onClick={joinByInvite}>

@@ -1,8 +1,10 @@
+import { useState } from "react";
 import { useStore } from "../store";
 import { Modal, bannerStyle, tierBadge } from "./Modal";
 import { can, canModerate, getMember, isOwner, isTimedOut, memberRoles } from "../permissions";
 import { areFriends, displayName } from "../social";
 import { AestheticProfile } from "./AestheticProfile";
+import { ReportModal } from "./ReportModal";
 import type { Server } from "../types";
 
 export function UserSheet({
@@ -15,6 +17,7 @@ export function UserSheet({
   onClose: () => void;
 }) {
   const { state, dispatch } = useStore();
+  const [reporting, setReporting] = useState(false);
   const user = state.users[userId];
   const me = state.users[state.currentUserId];
   if (!user) return null;
@@ -128,6 +131,20 @@ export function UserSheet({
         <p className="muted" style={{ fontSize: 12, marginTop: 8, textAlign: "center" }}>
           Their messages are blurred and they can no longer contact you.
         </p>
+      )}
+
+      {!isMe && (
+        <button className="btn ghost full" style={{ marginTop: 10 }} onClick={() => setReporting(true)}>
+          ⚑ Report user
+        </button>
+      )}
+      {reporting && (
+        <ReportModal
+          targetKind="user"
+          targetId={userId}
+          context={`@${user.username}`}
+          onClose={() => setReporting(false)}
+        />
       )}
 
       {canMod && member && (

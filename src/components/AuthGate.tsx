@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "../auth";
+import { Terms } from "./Terms";
 
 /** Login / sign-up screen, shown when Supabase is configured and signed out. */
 export function AuthGate({ onGuest }: { onGuest: () => void }) {
@@ -10,8 +11,14 @@ export function AuthGate({ onGuest }: { onGuest: () => void }) {
   const [username, setUsername] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [agreed, setAgreed] = useState(false);
+  const [showTerms, setShowTerms] = useState(false);
 
   async function submit() {
+    if (mode === "up" && !agreed) {
+      setError("Please accept the Terms of Service to create an account.");
+      return;
+    }
     setBusy(true);
     setError("");
     const err =
@@ -50,9 +57,31 @@ export function AuthGate({ onGuest }: { onGuest: () => void }) {
           />
         </div>
 
+        {mode === "up" && (
+          <label className="row" style={{ gap: 8, fontSize: 13, margin: "4px 0 8px", alignItems: "flex-start" }}>
+            <input
+              type="checkbox"
+              checked={agreed}
+              onChange={(e) => setAgreed(e.target.checked)}
+              style={{ width: "auto", marginTop: 3 }}
+            />
+            <span className="muted">
+              I agree to the{" "}
+              <button
+                type="button"
+                onClick={() => setShowTerms(true)}
+                style={{ background: "none", border: "none", padding: 0, color: "var(--accent)", cursor: "pointer", textDecoration: "underline", font: "inherit" }}
+              >
+                Terms of Service
+              </button>
+              .
+            </span>
+          </label>
+        )}
+
         {error && <p className="muted" style={{ fontSize: 13, color: "var(--danger)" }}>{error}</p>}
 
-        <button className="btn full" disabled={busy || !email || !password} onClick={submit}>
+        <button className="btn full" disabled={busy || !email || !password || (mode === "up" && !agreed)} onClick={submit}>
           {busy ? "…" : mode === "in" ? "Sign in" : "Sign up"}
         </button>
         <button className="btn ghost full" style={{ marginTop: 8 }} onClick={() => setMode(mode === "in" ? "up" : "in")}>
@@ -62,6 +91,7 @@ export function AuthGate({ onGuest }: { onGuest: () => void }) {
           Continue in demo mode
         </button>
       </div>
+      {showTerms && <Terms onClose={() => setShowTerms(false)} />}
     </div>
   );
 }

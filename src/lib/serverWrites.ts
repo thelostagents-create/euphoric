@@ -200,6 +200,14 @@ export async function persistServerAction(action: Action, prev: AppState, next: 
           .eq("id", serverId);
         return;
       }
+      case "SET_VERIFIED": {
+        const after = srv(next, serverId);
+        // The reducer already gated this to developers; if it didn't change,
+        // skip (e.g. a non-developer call that was a no-op).
+        if (!after || after.verified === srv(prev, serverId)?.verified) return;
+        await supabase.from("servers").update({ verified: after.verified }).eq("id", serverId);
+        return;
+      }
       case "SET_BLOCKED_WORDS": {
         const after = srv(next, serverId);
         if (after) await supabase.from("servers").update({ blocked_words: after.blockedWords }).eq("id", serverId);

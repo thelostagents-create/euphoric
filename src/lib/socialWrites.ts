@@ -9,6 +9,7 @@ import {
   renameGroupDb,
   setGroupIconDb,
   allocateStarDb,
+  addReportDb,
 } from "./db";
 import type { AppState } from "../types";
 import type { Action } from "../store";
@@ -79,6 +80,11 @@ export async function persistSocialAction(action: Action, prev: AppState, next: 
         if (g) await setGroupIconDb(a.groupId, g.iconImage);
         return;
       }
+
+      // Reports: file against the backend for developers/staff to review.
+      case "REPORT":
+        await addReportDb(me, a.targetKind, a.targetId, a.reason, a.context);
+        return;
     }
   } catch (e) {
     console.error("persistSocialAction failed:", action.type, e);

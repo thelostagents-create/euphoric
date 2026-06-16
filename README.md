@@ -12,7 +12,7 @@ iOS port come in later passes.
 - **Servers & channels** — create servers (emoji **or image icon**), add
   channels, switch between them.
 - **Invites** — every server gets a unique random invite link
-  (`euphoric.gg/<code>`); paste a code on the Discover page to join. One code
+  (`euphoric.chat/<code>`); paste a code on the Discover page to join. One code
   maps to exactly one server.
 - **Roles & permissions** — create roles (incl. dedicated *staff roles*) with
   granular permissions: kick, ban, timeout, **delete messages**, **mention

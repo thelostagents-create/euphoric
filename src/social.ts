@@ -76,9 +76,9 @@ export function friendsOf(state: AppState, userId: string): User[] {
     .filter((u): u is User => !!u && u.following.includes(userId));
 }
 
-/** A short invite shown to users, e.g. euphoric.gg/af39kd. */
+/** A short invite shown to users, e.g. euphoric.chat/af39kd. */
 export function inviteLink(server: Server): string {
-  return `euphoric.gg/${server.invite}`;
+  return `euphoric.chat/${server.invite}`;
 }
 
 /** Pull the code out of a pasted link or raw code. */
