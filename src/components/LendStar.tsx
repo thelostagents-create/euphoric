@@ -52,7 +52,7 @@ export function LendStar({ server, onClose }: { server: Server; onClose: () => v
       </div>
       {available <= 0 && mine === 0 && (
         <p className="muted" style={{ fontSize: 12, textAlign: "center", marginTop: 12 }}>
-          You have no Stars to spend. Premium grants 1, Supernova grants 2.
+          You have no Stars to spend. Premium grants 1, Supernova grants 2, Developer grants 20.
         </p>
       )}
     </Modal>

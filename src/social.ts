@@ -17,12 +17,9 @@ export function serverUnread(state: AppState, userId: string, server: Server): b
   );
 }
 
-/** Stars automatically granted to every server a developer belongs to. */
-export const DEVELOPER_BOOSTS = 20;
-
-/** Total Stars a member of a given tier is granted to spend (developers boost
- * automatically via serverStars, so they have no manual lend allowance). */
+/** Total Stars a member of a given tier is granted to spend manually. */
 export function starCapacity(tier: Tier): number {
+  if (tier === "developer") return 20;
   if (tier === "supernova") return 2;
   if (tier === "premium") return 1;
   return 0;
@@ -42,20 +39,12 @@ export function starsAvailable(user: User): number {
   return starCapacity(user.tier) - starsSpent(user);
 }
 
-/** Total Stars a server has received: lent Stars + 20 per developer member. */
+/** Total Stars a server has received from all users' manual allocations. */
 export function serverStars(state: AppState, serverId: string): number {
-  const lent = Object.values(state.users).reduce(
+  return Object.values(state.users).reduce(
     (sum, u) => sum + (u.starAllocations[serverId] ?? 0),
     0,
   );
-  const server = state.servers.find((s) => s.id === serverId);
-  const devBonus = server
-    ? server.members.reduce(
-        (sum, m) => sum + (!m.banned && isDeveloper(state.users[m.userId]) ? DEVELOPER_BOOSTS : 0),
-        0,
-      )
-    : 0;
-  return lent + devBonus;
 }
 
 /** Name shown in chat: the nickname if set, otherwise the username. */
