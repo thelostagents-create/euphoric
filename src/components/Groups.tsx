@@ -274,14 +274,14 @@ export function GroupView({ groupId, onBack }: { groupId: string; onBack: () => 
         {messages.map((m) => {
           const author = users[m.authorId];
           return (
-            <div key={m.id} className="msg" {...(live ? {} : longPressProps(() => setReactFor(m.id)))}>
+            <div key={m.id} className="msg" {...longPressProps(() => setReactFor(m.id))}>
               <img className="avatar" src={author?.avatar} alt="" />
               <div className="body">
                 {m.replyTo && <ReplyPreview replyTo={m.replyTo} />}
                 <div className="meta">
                   <span className="name">{displayName(author)}</span>
                   <span className="time">{timeAgo(m.createdAt)}</span>
-                  <button className="msg-action" title="React or reply" onClick={() => (live ? setReplyTo(m.id) : setReactFor(m.id))}>
+                  <button className="msg-action" title="React or reply" onClick={() => setReactFor(m.id)}>
                     <ReplyArrowIcon size={15} />
                   </button>
                   {live && m.authorId === meId && (
@@ -296,7 +296,7 @@ export function GroupView({ groupId, onBack }: { groupId: string; onBack: () => 
                   </div>
                 )}
                 {m.attachment && <MessageAttachment attachment={m.attachment} />}
-                {!live && <ReactionChips message={m} />}
+                <ReactionChips message={m} meId={meId} onToggle={live ? (e) => liveConv.toggleReaction(m.id, e) : undefined} />
               </div>
             </div>
           );
@@ -306,7 +306,7 @@ export function GroupView({ groupId, onBack }: { groupId: string; onBack: () => 
 
       {replyTo && <ReplyBar replyTo={replyTo} onCancel={() => setReplyTo(null)} />}
       <div className="composer">
-        {!live && <AttachButton channelId={groupId} />}
+        <AttachButton channelId={groupId} onSend={live ? (att) => liveConv.send("", att) : undefined} />
         {!live && <StickerButton channelId={groupId} onInsertEmoji={(e) => setDraft((d) => d + e)} />}
         <input
           value={draft}
@@ -335,6 +335,7 @@ export function GroupView({ groupId, onBack }: { groupId: string; onBack: () => 
         <ReactionPicker
           messageId={reactFor}
           onReply={() => setReplyTo(reactFor)}
+          onReact={live ? (e) => liveConv.toggleReaction(reactFor, e) : undefined}
           onClose={() => setReactFor(null)}
         />
       )}

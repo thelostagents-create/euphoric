@@ -35,20 +35,30 @@ export function longPressProps(onLong: () => void, ms = 400) {
   };
 }
 
-/** Existing reaction chips under a message; tap to toggle your own. */
-export function ReactionChips({ message }: { message: Message }) {
+/**
+ * Existing reaction chips under a message; tap to toggle your own. In backend
+ * (live) mode, pass `meId` and `onToggle` so it reacts against Supabase rather
+ * than the local store.
+ */
+export function ReactionChips({
+  message,
+  meId,
+  onToggle,
+}: {
+  message: Message;
+  meId?: string;
+  onToggle?: (emoji: string) => void;
+}) {
   const { state, dispatch } = useStore();
-  const me = state.currentUserId;
+  const me = meId ?? state.currentUserId;
+  const toggle = (emoji: string) =>
+    onToggle ? onToggle(emoji) : dispatch({ type: "TOGGLE_REACTION", messageId: message.id, emoji });
   const entries = Object.entries(message.reactions ?? {}).filter(([, ids]) => ids.length > 0);
   if (entries.length === 0) return null;
   return (
     <div className="reactions">
       {entries.map(([emoji, ids]) => (
-        <button
-          key={emoji}
-          className={`reaction ${ids.includes(me) ? "mine" : ""}`}
-          onClick={() => dispatch({ type: "TOGGLE_REACTION", messageId: message.id, emoji })}
-        >
+        <button key={emoji} className={`reaction ${ids.includes(me) ? "mine" : ""}`} onClick={() => toggle(emoji)}>
           {emoji} {ids.length}
         </button>
       ))}
@@ -63,6 +73,7 @@ export function ReactionPicker({
   onReply,
   onPin,
   onEdit,
+  onReact,
   pinned,
 }: {
   messageId: string;
@@ -70,9 +81,13 @@ export function ReactionPicker({
   onReply?: () => void;
   onPin?: () => void;
   onEdit?: () => void;
+  /** Live mode: react against the backend instead of dispatching locally. */
+  onReact?: (emoji: string) => void;
   pinned?: boolean;
 }) {
   const { dispatch } = useStore();
+  const react = (emoji: string) =>
+    onReact ? onReact(emoji) : dispatch({ type: "TOGGLE_REACTION", messageId, emoji });
   return (
     <div className="modal-backdrop" onClick={onClose} style={{ alignItems: "center" }}>
       <div onClick={(e) => e.stopPropagation()} style={{ display: "flex", flexDirection: "column", gap: 10, alignItems: "center" }}>
@@ -81,7 +96,7 @@ export function ReactionPicker({
             <button
               key={emoji}
               onClick={() => {
-                dispatch({ type: "TOGGLE_REACTION", messageId, emoji });
+                react(emoji);
                 onClose();
               }}
             >

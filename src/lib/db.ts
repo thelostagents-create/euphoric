@@ -345,8 +345,17 @@ export async function deleteMessageDb(id: string): Promise<void> {
   await supabase?.from("messages").delete().eq("id", id);
 }
 
-export async function setReactionsDb(id: string, reactions: Record<string, string[]>): Promise<void> {
-  await supabase?.from("messages").update({ reactions }).eq("id", id);
+/**
+ * Toggle the caller's reaction via an RPC — reactions/pins change rows the
+ * caller may not own, so they run SECURITY DEFINER instead of a direct update
+ * (which RLS restricts to the message author).
+ */
+export async function toggleReactionDb(id: string, emoji: string): Promise<void> {
+  await supabase?.rpc("toggle_reaction", { p_msg: id, p_emoji: emoji });
+}
+
+export async function setPinnedDb(id: string, pinned: boolean): Promise<void> {
+  await supabase?.rpc("set_pinned", { p_msg: id, p_pinned: pinned });
 }
 
 /** Subscribe to changes for one conversation; returns an unsubscribe fn. */

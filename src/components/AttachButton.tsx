@@ -1,9 +1,21 @@
 import { useRef } from "react";
 import { useStore } from "../store";
 import { MAX_UPLOAD, readFileAsDataURL } from "../upload";
+import type { Attachment } from "../types";
 
-/** Paperclip that imports an image/video and sends it as a message attachment. */
-export function AttachButton({ channelId, disabled }: { channelId: string; disabled?: boolean }) {
+/**
+ * Paperclip that imports an image/video and sends it as a message attachment.
+ * In backend (live) mode, pass `onSend` so the attachment goes to Supabase.
+ */
+export function AttachButton({
+  channelId,
+  disabled,
+  onSend,
+}: {
+  channelId: string;
+  disabled?: boolean;
+  onSend?: (attachment: Attachment) => void;
+}) {
   const { dispatch } = useStore();
   const ref = useRef<HTMLInputElement>(null);
 
@@ -17,7 +29,8 @@ export function AttachButton({ channelId, disabled }: { channelId: string; disab
     }
     const url = await readFileAsDataURL(file);
     const kind = file.type.startsWith("video") ? "video" : "image";
-    dispatch({ type: "SEND_MESSAGE", channelId, content: "", attachment: { kind, url } });
+    if (onSend) onSend({ kind, url });
+    else dispatch({ type: "SEND_MESSAGE", channelId, content: "", attachment: { kind, url } });
   }
 
   return (

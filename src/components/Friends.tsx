@@ -378,7 +378,7 @@ function DmView({ friendId, onBack }: { friendId: string; onBack: () => void }) 
             setEditingId(null);
           };
           return (
-            <div key={m.id} className="msg" {...(live ? {} : longPressProps(() => setReactFor(m.id)))}>
+            <div key={m.id} className="msg" {...longPressProps(() => setReactFor(m.id))}>
               <img className="avatar" src={author?.avatar} alt="" />
               <div className="body">
                 {m.replyTo && <ReplyPreview replyTo={m.replyTo} />}
@@ -386,7 +386,7 @@ function DmView({ friendId, onBack }: { friendId: string; onBack: () => void }) 
                   <span className="name">{displayName(author)}</span>
                   <span className="time">{timeAgo(m.createdAt)}</span>
                   <span className="msg-tools">
-                    <button className="msg-action" title="React or reply" onClick={() => (live ? setReplyTo(m.id) : setReactFor(m.id))}>
+                    <button className="msg-action" title="React or reply" onClick={() => setReactFor(m.id)}>
                       <ReplyArrowIcon size={14} />
                     </button>
                     {m.authorId === meId && (
@@ -419,7 +419,7 @@ function DmView({ friendId, onBack }: { friendId: string; onBack: () => void }) 
                   )
                 )}
                 {m.attachment && <MessageAttachment attachment={m.attachment} />}
-                {!live && <ReactionChips message={m} />}
+                <ReactionChips message={m} meId={meId} onToggle={live ? (e) => liveConv.toggleReaction(m.id, e) : undefined} />
               </div>
             </div>
           );
@@ -431,6 +431,7 @@ function DmView({ friendId, onBack }: { friendId: string; onBack: () => void }) 
         <ReactionPicker
           messageId={reactFor}
           onReply={() => setReplyTo(reactFor)}
+          onReact={live ? (e) => liveConv.toggleReaction(reactFor, e) : undefined}
           onEdit={
             messages.find((m) => m.id === reactFor)?.authorId === meId
               ? () => {
@@ -449,7 +450,7 @@ function DmView({ friendId, onBack }: { friendId: string; onBack: () => void }) 
         <>
           {replyTo && <ReplyBar replyTo={replyTo} onCancel={() => setReplyTo(null)} />}
           <div className="composer">
-            {!live && <AttachButton channelId={channelId} />}
+            <AttachButton channelId={channelId} onSend={live ? (att) => liveConv.send("", att) : undefined} />
             {!live && <StickerButton channelId={channelId} onInsertEmoji={(e) => setDraft((d) => d + e)} />}
             <input
               value={draft}

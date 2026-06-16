@@ -6,7 +6,8 @@ import {
   fetchConversation,
   fetchProfilesByIds,
   sendMessageDb,
-  setReactionsDb,
+  toggleReactionDb,
+  setPinnedDb,
   subscribeConversation,
 } from "./db";
 
@@ -69,17 +70,16 @@ export function useLiveConversation(conversation: string | undefined, selfId: st
   const toggleReaction = useCallback(
     async (id: string, emoji: string) => {
       if (!selfId) return;
-      const msg = messages.find((m) => m.id === id);
-      const reactions = { ...(msg?.reactions ?? {}) };
-      const ids = reactions[emoji] ?? [];
-      const next = ids.includes(selfId) ? ids.filter((u) => u !== selfId) : [...ids, selfId];
-      if (next.length) reactions[emoji] = next;
-      else delete reactions[emoji];
-      await setReactionsDb(id, reactions);
+      await toggleReactionDb(id, emoji);
       after();
     },
-    [messages, selfId, after],
+    [selfId, after],
   );
 
-  return { messages, profiles, send, edit, remove, toggleReaction };
+  const setPinned = useCallback(async (id: string, pinned: boolean) => {
+    await setPinnedDb(id, pinned);
+    after();
+  }, [after]);
+
+  return { messages, profiles, send, edit, remove, toggleReaction, setPinned };
 }

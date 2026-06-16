@@ -393,13 +393,13 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
                 className={`msg ${blocked ? "blocked" : ""} ${isRevealed ? "revealed" : ""} ${
                   m.id === highlight ? "highlight" : ""
                 }`}
-                {...(live ? {} : longPressProps(() => setReactFor(m.id)))}
+                {...longPressProps(() => setReactFor(m.id))}
               >
                 <img
                   className="avatar"
                   src={author?.avatar}
                   alt=""
-                  onClick={() => !live && setSheetUser(m.authorId)}
+                  onClick={() => setSheetUser(m.authorId)}
                 />
                 <div className="body">
                   {m.replyTo && (
@@ -408,7 +408,7 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
                   <div className="meta">
                     <span
                       className="name"
-                      onClick={() => !live && setSheetUser(m.authorId)}
+                      onClick={() => setSheetUser(m.authorId)}
                       style={server ? { color: roleColor(server, m.authorId) } : undefined}
                     >
                       {displayName(author)}
@@ -489,7 +489,11 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
                     )
                   )}
                   {m.attachment && <MessageAttachment attachment={m.attachment} />}
-                  {!live && <ReactionChips message={m} />}
+                  <ReactionChips
+                    message={m}
+                    meId={meId}
+                    onToggle={live ? (e) => liveConv.toggleReaction(m.id, e) : undefined}
+                  />
                 </div>
               </div>
             );
@@ -544,7 +548,11 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
             <div className="timeout-banner">Only certain roles can talk in #{channel.name}.</div>
           ) : (
             <div className="composer">
-              {!live && <AttachButton channelId={activeChannelId!} disabled={muted} />}
+              <AttachButton
+                channelId={activeChannelId!}
+                disabled={muted}
+                onSend={live ? (att) => liveConv.send("", att) : undefined}
+              />
               {!live && <StickerButton channelId={activeChannelId!} serverId={server.id} onInsertEmoji={(e) => setDraft((d) => d + e)} />}
               <input
                 value={draft}
@@ -575,10 +583,19 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
         <ReactionPicker
           messageId={reactFor}
           onReply={() => setReplyTo(reactFor)}
-          onPin={canPin ? () => dispatch({ type: "TOGGLE_PIN", messageId: reactFor }) : undefined}
+          onReact={live ? (e) => liveConv.toggleReaction(reactFor, e) : undefined}
+          onPin={
+            canPin
+              ? () => {
+                  const pinned = !!messages.find((m) => m.id === reactFor)?.pinned;
+                  if (live) liveConv.setPinned(reactFor, !pinned);
+                  else dispatch({ type: "TOGGLE_PIN", messageId: reactFor });
+                }
+              : undefined
+          }
           pinned={messages.find((m) => m.id === reactFor)?.pinned}
           onEdit={
-            messages.find((m) => m.id === reactFor)?.authorId === state.currentUserId
+            messages.find((m) => m.id === reactFor)?.authorId === meId
               ? () => {
                   const msg = messages.find((m) => m.id === reactFor);
                   setEditDraft(msg?.content ?? "");
