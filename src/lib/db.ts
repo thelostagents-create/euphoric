@@ -86,42 +86,27 @@ export async function ensureProfile(uid: string, fallbackName: string): Promise<
     .upsert({ id: uid, username: fallbackName }, { onConflict: "id", ignoreDuplicates: true });
 }
 
-/** Create a party (server + default lounge + @everyone role + owner member). */
+/**
+ * Create a party via the `create_party` RPC (one SECURITY DEFINER call that
+ * inserts the server + @everyone role + #general lounge + owner member in a
+ * single transaction). Returns null on success, or an error string to show.
+ */
 export async function createServerDb(_ownerId: string, name: string, icon: string): Promise<string | null> {
   if (!supabase) return "Backend not configured.";
-  // Use the server-validated user id so owner_id always matches auth.uid().
-  const { data: auth } = await supabase.auth.getUser();
-  const ownerId = auth.user?.id;
-  if (!ownerId) return "You're not signed in (auth token invalid). Try signing out and back in.";
-  const invite = Math.random().toString(36).slice(2, 8);
-  const { data: srv, error } = await supabase
-    .from("servers")
-    .insert({ name: name.trim() || "New Party", icon: icon || "✨", owner_id: ownerId, invite })
-    .select("id")
-    .single();
-  if (error || !srv) return error?.message ?? "Could not create the party.";
-  const { data: role } = await supabase
-    .from("roles")
-    .insert({ server_id: srv.id, name: "@everyone", color: "#9aa0b4", position: 0 })
-    .select("id")
-    .single();
-  await supabase.from("channels").insert({ server_id: srv.id, name: "general", position: 0 });
-  const { error: memErr } = await supabase
-    .from("members")
-    .insert({ server_id: srv.id, user_id: ownerId, role_ids: role ? [role.id] : [] });
-  if (memErr) return memErr.message;
+  const { error } = await supabase.rpc("create_party", { p_name: name, p_icon: icon });
+  if (error) {
+    if (/not authenticated/i.test(error.message))
+      return "You're not signed in (auth token invalid). Try signing out and back in.";
+    return error.message || "Could not create the party.";
+  }
   triggerServersReload();
   return null;
 }
 
-/** Join a party (add a membership with the @everyone role). */
-export async function joinServerDb(serverId: string, uid: string): Promise<void> {
+/** Join a party via the `join_party` RPC. */
+export async function joinServerDb(serverId: string, _uid: string): Promise<void> {
   if (!supabase) return;
-  const { data: roles } = await supabase.from("roles").select("id,name").eq("server_id", serverId);
-  const everyone = (roles ?? []).find((r) => r.name === "@everyone");
-  await supabase
-    .from("members")
-    .upsert({ server_id: serverId, user_id: uid, role_ids: everyone ? [everyone.id] : [] });
+  await supabase.rpc("join_party", { p_server: serverId });
   triggerServersReload();
 }
 
