@@ -177,53 +177,85 @@ language sql security definer stable as $$
   select exists (select 1 from members m where m.server_id = srv and m.user_id = auth.uid() and not m.banned);
 $$;
 
+-- (Policies are dropped first so this migration can be re-run safely.)
+
 -- Profiles: readable by everyone; writable only by the owner.
+drop policy if exists "profiles read" on profiles;
 create policy "profiles read" on profiles for select using (true);
+drop policy if exists "profiles upsert" on profiles;
 create policy "profiles upsert" on profiles for insert with check (id = auth.uid());
+drop policy if exists "profiles update" on profiles;
 create policy "profiles update" on profiles for update using (id = auth.uid());
 
 -- Follows / blocks: managed by the acting user.
+drop policy if exists "follows read" on follows;
 create policy "follows read" on follows for select using (true);
+drop policy if exists "follows write" on follows;
 create policy "follows write" on follows for all using (follower_id = auth.uid()) with check (follower_id = auth.uid());
+drop policy if exists "blocks rw" on blocks;
 create policy "blocks rw" on blocks for all using (blocker_id = auth.uid()) with check (blocker_id = auth.uid());
 
 -- Servers / roles / channels: discoverable or member can read; owner writes.
+drop policy if exists "servers read" on servers;
 create policy "servers read" on servers for select using (discoverable or is_member(id));
+drop policy if exists "servers insert" on servers;
 create policy "servers insert" on servers for insert with check (owner_id = auth.uid());
+drop policy if exists "servers update" on servers;
 create policy "servers update" on servers for update using (owner_id = auth.uid());
+drop policy if exists "servers delete" on servers;
 create policy "servers delete" on servers for delete using (owner_id = auth.uid());
 
+drop policy if exists "roles read" on roles;
 create policy "roles read" on roles for select using (is_member(server_id) or exists (select 1 from servers s where s.id = server_id and s.discoverable));
+drop policy if exists "roles write" on roles;
 create policy "roles write" on roles for all using (exists (select 1 from servers s where s.id = server_id and s.owner_id = auth.uid()));
 
+drop policy if exists "channels read" on channels;
 create policy "channels read" on channels for select using (is_member(server_id));
+drop policy if exists "channels write" on channels;
 create policy "channels write" on channels for all using (exists (select 1 from servers s where s.id = server_id and s.owner_id = auth.uid()));
 
 -- Members: readable by members; you can join/leave yourself, owner manages all.
+drop policy if exists "members read" on members;
 create policy "members read" on members for select using (is_member(server_id) or user_id = auth.uid());
+drop policy if exists "members self" on members;
 create policy "members self" on members for all using (user_id = auth.uid() or exists (select 1 from servers s where s.id = server_id and s.owner_id = auth.uid()))
   with check (user_id = auth.uid() or exists (select 1 from servers s where s.id = server_id and s.owner_id = auth.uid()));
 
+drop policy if exists "audit read" on audit_log;
 create policy "audit read" on audit_log for select using (is_member(server_id));
+drop policy if exists "audit insert" on audit_log;
 create policy "audit insert" on audit_log for insert with check (is_member(server_id));
 
+drop policy if exists "stars rw" on stars;
 create policy "stars rw" on stars for all using (user_id = auth.uid()) with check (user_id = auth.uid());
+drop policy if exists "stars read" on stars;
 create policy "stars read" on stars for select using (true);
 
 -- Groups: members read & post.
+drop policy if exists "groups read" on groups;
 create policy "groups read" on groups for select using (exists (select 1 from group_members g where g.group_id = id and g.user_id = auth.uid()));
+drop policy if exists "groups insert" on groups;
 create policy "groups insert" on groups for insert with check (created_by = auth.uid());
+drop policy if exists "group_members read" on group_members;
 create policy "group_members read" on group_members for select using (exists (select 1 from group_members g where g.group_id = group_id and g.user_id = auth.uid()));
+drop policy if exists "group_members write" on group_members;
 create policy "group_members write" on group_members for all using (true) with check (true);
 
+drop policy if exists "posts read" on posts;
 create policy "posts read" on posts for select using (exists (select 1 from channels c where c.id = channel_id and is_member(c.server_id)));
+drop policy if exists "posts write" on posts;
 create policy "posts write" on posts for all using (exists (select 1 from channels c where c.id = channel_id and is_member(c.server_id)));
 
 -- Messages: anyone authenticated can read/write (RLS by conversation is
 -- enforced at the app layer for the MVP; tighten per-conversation later).
+drop policy if exists "messages read" on messages;
 create policy "messages read" on messages for select using (auth.role() = 'authenticated');
+drop policy if exists "messages insert" on messages;
 create policy "messages insert" on messages for insert with check (author_id = auth.uid());
+drop policy if exists "messages update" on messages;
 create policy "messages update" on messages for update using (author_id = auth.uid());
+drop policy if exists "messages delete" on messages;
 create policy "messages delete" on messages for delete using (author_id = auth.uid());
 
 -- Create a profile row automatically when a user signs up.
