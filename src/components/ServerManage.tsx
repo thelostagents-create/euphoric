@@ -718,22 +718,63 @@ function OnboardingTab({ server, canManage }: { server: Server; canManage: boole
 
 function AuditTab({ server }: { server: Server }) {
   const { state } = useStore();
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+
   if (server.auditLog.length === 0) return <p className="muted">No moderation actions yet.</p>;
+
+  // Distinct action types present in this log, for the filter chips.
+  const actions = [...new Set(server.auditLog.map((e) => e.action))].sort();
+  const toggle = (a: string) =>
+    setSelected((prev) => {
+      const next = new Set(prev);
+      next.has(a) ? next.delete(a) : next.add(a);
+      return next;
+    });
+
+  const shown = server.auditLog.filter((e) => selected.has(e.action));
+
   return (
     <div>
-      {server.auditLog.map((e) => (
-        <div className="card" key={e.id} style={{ padding: 10, marginBottom: 8 }}>
-          <div className="row" style={{ justifyContent: "space-between" }}>
-            <span className="badge staff">{e.action}</span>
-            <span className="time">{timeAgo(e.createdAt)}</span>
+      <p className="muted" style={{ fontSize: 12, marginTop: 0 }}>
+        Select which action types to show.
+      </p>
+      <div className="chips" style={{ marginBottom: 12 }}>
+        {actions.map((a) => (
+          <button
+            key={a}
+            className={`chip ${selected.has(a) ? "accent" : ""}`}
+            onClick={() => toggle(a)}
+          >
+            {a}
+          </button>
+        ))}
+        {selected.size > 0 && (
+          <button className="chip" onClick={() => setSelected(new Set())}>
+            Clear
+          </button>
+        )}
+      </div>
+      {selected.size === 0 ? (
+        <p className="muted" style={{ fontSize: 13 }}>
+          Pick one or more action types above to view their entries.
+        </p>
+      ) : shown.length === 0 ? (
+        <p className="muted" style={{ fontSize: 13 }}>No entries for the selected actions.</p>
+      ) : (
+        shown.map((e) => (
+          <div className="card" key={e.id} style={{ padding: 10, marginBottom: 8 }}>
+            <div className="row" style={{ justifyContent: "space-between" }}>
+              <span className="badge staff">{e.action}</span>
+              <span className="time">{timeAgo(e.createdAt)}</span>
+            </div>
+            <div style={{ fontSize: 13, marginTop: 6 }}>
+              <b>{displayName(state.users[e.actorId])}</b>
+              {e.targetId ? <> → {displayName(state.users[e.targetId])}</> : null}
+            </div>
+            <div className="muted" style={{ fontSize: 12 }}>{e.detail}</div>
           </div>
-          <div style={{ fontSize: 13, marginTop: 6 }}>
-            <b>{displayName(state.users[e.actorId])}</b>
-            {e.targetId ? <> → {displayName(state.users[e.targetId])}</> : null}
-          </div>
-          <div className="muted" style={{ fontSize: 12 }}>{e.detail}</div>
-        </div>
-      ))}
+        ))
+      )}
     </div>
   );
 }

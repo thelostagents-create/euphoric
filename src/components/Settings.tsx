@@ -230,7 +230,7 @@ export function AccountSettings() {
       )}
       <p className="muted" style={{ fontSize: 11 }}>
         {signedIn && patreonUrl
-          ? "Subscriptions are handled by Patreon. Your plan updates here automatically once your membership is confirmed."
+          ? "Subscriptions are handled through Patreon. Your plan updates here automatically once your membership is confirmed."
           : "Demo mode — no real payment is processed."}{" "}
         You have {starCapacity(user.tier)} ⭐ Star{starCapacity(user.tier) === 1 ? "" : "s"} (
         {starsAvailable(user)} available to spend).
