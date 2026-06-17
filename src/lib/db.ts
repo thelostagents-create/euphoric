@@ -356,6 +356,7 @@ function rowToProfile(d: any): Partial<User> {
   if (d.banner && d.banner.color) p.banner = d.banner;
   if (d.theme && d.theme.accentColor) p.theme = d.theme;
   if (d.aesthetic && d.aesthetic.bgColor) p.aesthetic = d.aesthetic;
+  if (d.creative && typeof d.creative.style === "number") p.creative = d.creative;
   return p;
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */
@@ -445,6 +446,7 @@ export async function saveProfile(id: string, u: User): Promise<void> {
       banner: u.banner,
       theme: u.theme,
       aesthetic: u.aesthetic,
+      creative: u.creative,
       app_accent: u.appAccent,
       light_mode: u.lightMode,
     })

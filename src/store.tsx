@@ -15,6 +15,7 @@ import type {
   Aesthetic,
   AppState,
   Attachment,
+  CreativeControl,
   GroupChat,
   Message,
   Permission,
@@ -71,6 +72,7 @@ type Action =
   | { type: "UPDATE_THEME"; theme: Partial<ProfileTheme> }
   | { type: "UPDATE_BANNER"; color?: string; image?: string; position?: number }
   | { type: "UPDATE_AESTHETIC"; patch: Partial<Aesthetic> }
+  | { type: "UPDATE_CREATIVE"; patch: Partial<CreativeControl> }
   | { type: "SET_TIER"; tier: Tier }
   | { type: "TOGGLE_BLOCK"; userId: string }
   | { type: "TOGGLE_FOLLOW"; userId: string }
@@ -100,6 +102,30 @@ type Action =
 
 function id(prefix: string): string {
   return `${prefix}_${Math.random().toString(36).slice(2, 9)}`;
+}
+
+/** Default Creative Control config for a new/migrated user. */
+function defaultCreative(): CreativeControl {
+  return {
+    enabled: false,
+    style: 1,
+    title: "",
+    details: "",
+    bgColor: "#e7defb",
+    cardColor: "#ffffff",
+    accentColor: "#a06bff",
+    textColor: "#3a3550",
+    nameColor: "#7b54d4",
+    borderColor: "#c9b6f0",
+    box1Title: "This user loves",
+    box1Body: "",
+    box2Title: "BYF",
+    box2Body: "",
+    box3Title: "Likes",
+    box3Body: "",
+    box4Title: "Dislikes",
+    box4Body: "",
+  };
 }
 
 function addUnique(list: string[], value: string): string[] {
@@ -578,9 +604,24 @@ export function reducer(state: AppState, action: Action): AppState {
       const patch = { ...action.patch };
       // Only supernova members may turn it on.
       if (patch.enabled && u.tier !== "supernova") patch.enabled = false;
+      // Aesthetic and Creative Control are mutually exclusive layouts.
+      const creative = patch.enabled ? { ...u.creative, enabled: false } : u.creative;
       return {
         ...state,
-        users: { ...state.users, [me]: { ...u, aesthetic: { ...u.aesthetic, ...patch } } },
+        users: { ...state.users, [me]: { ...u, aesthetic: { ...u.aesthetic, ...patch }, creative } },
+      };
+    }
+
+    case "UPDATE_CREATIVE": {
+      const u = state.users[me];
+      const patch = { ...action.patch };
+      // Only supernova members may turn it on.
+      if (patch.enabled && u.tier !== "supernova") patch.enabled = false;
+      // Turning Creative Control on switches off the Aesthetic card.
+      const aesthetic = patch.enabled ? { ...u.aesthetic, enabled: false } : u.aesthetic;
+      return {
+        ...state,
+        users: { ...state.users, [me]: { ...u, creative: { ...u.creative, ...patch }, aesthetic } },
       };
     }
 
@@ -1036,6 +1077,10 @@ function migrate(state: AppState): AppState {
           gallery: [],
           repServerId: "",
           ...((u.aesthetic ?? {}) as Partial<Aesthetic>),
+        },
+        creative: {
+          ...defaultCreative(),
+          ...((u.creative ?? {}) as Partial<CreativeControl>),
         },
       },
     ]),

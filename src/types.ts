@@ -88,6 +88,34 @@ export interface Aesthetic {
   repServerId: string;
 }
 
+/**
+ * "Creative Control" — a customizable profile card with three window-style
+ * layouts (Supernova only). Banner/avatar come from the main profile.
+ *  - style 1: site window, banner at top, no social widgets
+ *  - style 2: browser window, banner at the bottom
+ *  - style 3: archive window, banner at the top
+ * All three share four renameable text boxes and the same color controls.
+ */
+export interface CreativeControl {
+  enabled: boolean;
+  /** Which layout: 1, 2, or 3. */
+  style: 1 | 2 | 3;
+  /** Window/site title shown in the chrome bar. */
+  title: string;
+  /** The line under the name (pronouns / age / etc). */
+  details: string;
+  bgColor: string;
+  cardColor: string;
+  accentColor: string;
+  textColor: string;
+  nameColor: string;
+  borderColor: string;
+  box1Title: string; box1Body: string;
+  box2Title: string; box2Body: string;
+  box3Title: string; box3Body: string;
+  box4Title: string; box4Body: string;
+}
+
 export interface User {
   id: string;
   /** Unique handle used for @mentions and friend-adds. */
@@ -104,6 +132,7 @@ export interface User {
   banner: Banner;
   theme: ProfileTheme;
   aesthetic: Aesthetic;
+  creative: CreativeControl;
   /** User ids this user has blocked. */
   blockedUserIds: string[];
   /** User ids this user follows. A mutual follow = friends. */

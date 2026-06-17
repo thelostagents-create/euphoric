@@ -5,6 +5,8 @@ import { displayName, usernameTaken } from "../social";
 import { getMember } from "../permissions";
 import { ImagePicker } from "./ImagePicker";
 import { AestheticProfile } from "./AestheticProfile";
+import { CreativeProfile } from "./CreativeProfile";
+import type { CreativeControl } from "../types";
 
 const FONTS = [
   { label: "Default", value: "system-ui" },
@@ -89,6 +91,12 @@ export function Profile({ onManageSubscription }: { onManageSubscription: () => 
           onClick={() => document.getElementById("aesthetic-section")?.scrollIntoView({ behavior: "smooth", block: "start" })}
         >
           🎨 Aesthetic Avatars
+        </button>
+        <button
+          className="btn ghost full"
+          onClick={() => document.getElementById("creative-section")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+        >
+          🪟 Creative Control
         </button>
 
         <div className="field">
@@ -353,6 +361,8 @@ export function Profile({ onManageSubscription }: { onManageSubscription: () => 
             )}
           </div>
         )}
+
+        <CreativeControlSection />
       </div>
     </div>
   );
@@ -427,6 +437,136 @@ function BlurbEditor() {
         value={user.blurbColor}
         onChange={(v) => dispatch({ type: "UPDATE_PROFILE", blurbColor: v })}
       />
+    </>
+  );
+}
+
+const CREATIVE_STYLES: { id: 1 | 2 | 3; label: string; desc: string }[] = [
+  { id: 1, label: "Site card", desc: "Window with the banner up top." },
+  { id: 2, label: "Browser card", desc: "URL bar with the banner at the bottom." },
+  { id: 3, label: "Archive card", desc: "Two columns with the banner at the top." },
+];
+
+function CreativeControlSection() {
+  const { state, dispatch } = useStore();
+  const user = state.users[state.currentUserId];
+  const canCustomize = user.tier === "supernova";
+  const canGif = user.tier === "premium" || user.tier === "supernova";
+  const c = user.creative;
+
+  function setCreative(patch: Partial<CreativeControl>) {
+    dispatch({ type: "UPDATE_CREATIVE", patch });
+  }
+
+  return (
+    <>
+      <div className="section-title" id="creative-section">Creative Control</div>
+      {!canCustomize ? (
+        <div className="card">
+          <p className="desc" style={{ margin: 0 }}>
+            Creative Control — pick from three window-style profile cards — is a <b>Supernova</b> feature.
+          </p>
+        </div>
+      ) : (
+        <div className="card">
+          <div className="row" style={{ justifyContent: "space-between", marginBottom: 12 }}>
+            <div>
+              <div style={{ fontWeight: 700 }}>Creative Control</div>
+              <div className="muted" style={{ fontSize: 12 }}>A window-style profile card in one of three layouts.</div>
+            </div>
+            <button
+              className={`toggle ${c.enabled ? "on" : ""}`}
+              onClick={() => setCreative({ enabled: !c.enabled })}
+            />
+          </div>
+
+          {c.enabled && (
+            <>
+              {/* Blurb editor sits at the top of the menu. */}
+              <BlurbEditor />
+
+              <div className="section-title" style={{ marginTop: 6 }}>Style</div>
+              <div className="chips" style={{ marginBottom: 12 }}>
+                {CREATIVE_STYLES.map((s) => (
+                  <button
+                    key={s.id}
+                    className={`chip ${c.style === s.id ? "accent" : ""}`}
+                    onClick={() => setCreative({ style: s.id })}
+                    title={s.desc}
+                  >
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+
+              <div style={{ marginBottom: 12 }}>
+                <CreativeProfile user={user} />
+              </div>
+
+              <div className="field">
+                <label>Window title</label>
+                <input value={c.title} placeholder="yoursite.net" onChange={(e) => setCreative({ title: e.target.value })} />
+              </div>
+              <div className="field">
+                <label>Details line (pronouns / age / etc)</label>
+                <input value={c.details} placeholder="16 · she/they · pisces" onChange={(e) => setCreative({ details: e.target.value })} />
+              </div>
+
+              <div className="field">
+                <label>About me (bio)</label>
+                <textarea
+                  rows={3}
+                  value={user.bio}
+                  placeholder="Tell people about yourself…"
+                  onChange={(e) => dispatch({ type: "UPDATE_PROFILE", bio: e.target.value })}
+                />
+              </div>
+
+              <div className="field">
+                <label>Profile picture {canGif ? "(GIFs allowed ✨)" : ""}</label>
+                <ImagePicker value={user.avatar} placeholder="https://…" onChange={(v) => dispatch({ type: "UPDATE_PROFILE", avatar: v })} />
+              </div>
+              <div className="field">
+                <label>Banner image</label>
+                <ImagePicker value={user.banner.image} placeholder="https://…" onChange={(v) => dispatch({ type: "UPDATE_BANNER", image: v })} />
+                {user.banner.image && (
+                  <input
+                    type="range"
+                    min={0}
+                    max={100}
+                    value={user.banner.position}
+                    onChange={(e) => dispatch({ type: "UPDATE_BANNER", position: Number(e.target.value) })}
+                    style={{ width: "100%", marginTop: 8 }}
+                  />
+                )}
+              </div>
+
+              <div className="section-title" style={{ marginTop: 6 }}>Colors</div>
+              <div className="row" style={{ gap: 12 }}>
+                <HexField label="Background" value={c.bgColor} onChange={(v) => setCreative({ bgColor: v })} />
+                <HexField label="Card" value={c.cardColor} onChange={(v) => setCreative({ cardColor: v })} />
+              </div>
+              <div className="row" style={{ gap: 12, marginTop: 8 }}>
+                <HexField label="Accent" value={c.accentColor} onChange={(v) => setCreative({ accentColor: v })} />
+                <HexField label="Text" value={c.textColor} onChange={(v) => setCreative({ textColor: v })} />
+              </div>
+              <div className="row" style={{ gap: 12, marginTop: 8 }}>
+                <HexField label="Name" value={c.nameColor} onChange={(v) => setCreative({ nameColor: v })} />
+                <HexField label="Border" value={c.borderColor} onChange={(v) => setCreative({ borderColor: v })} />
+              </div>
+              <div className="row" style={{ gap: 12, marginTop: 8 }}>
+                <HexField label="Banner" value={user.banner.color} onChange={(v) => dispatch({ type: "UPDATE_BANNER", color: v })} />
+              </div>
+
+              <div className="section-title" style={{ marginTop: 6 }}>Boxes (rename any header)</div>
+              <BoxEditor headerValue={c.box1Title} onHeader={(v) => setCreative({ box1Title: v })} bodyValue={c.box1Body} onBody={(v) => setCreative({ box1Body: v })} multiline />
+              <BoxEditor headerValue={c.box2Title} onHeader={(v) => setCreative({ box2Title: v })} bodyValue={c.box2Body} onBody={(v) => setCreative({ box2Body: v })} multiline />
+              <BoxEditor headerValue={c.box3Title} onHeader={(v) => setCreative({ box3Title: v })} bodyValue={c.box3Body} onBody={(v) => setCreative({ box3Body: v })} multiline />
+              <BoxEditor headerValue={c.box4Title} onHeader={(v) => setCreative({ box4Title: v })} bodyValue={c.box4Body} onBody={(v) => setCreative({ box4Body: v })} multiline />
+            </>
+          )}
+        </div>
+      )}
     </>
   );
 }

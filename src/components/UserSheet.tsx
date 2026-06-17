@@ -4,6 +4,7 @@ import { Modal, bannerStyle, tierBadge } from "./Modal";
 import { can, canModerate, getMember, isOwner, isTimedOut, memberRoles } from "../permissions";
 import { areFriends, displayName } from "../social";
 import { AestheticProfile } from "./AestheticProfile";
+import { CreativeProfile } from "./CreativeProfile";
 import { ReportModal } from "./ReportModal";
 import type { Server } from "../types";
 
@@ -41,10 +42,16 @@ export function UserSheet({
     !!server && (isOwner(server, state.currentUserId) || can(server, state.currentUserId, "MANAGE_ROLES"));
 
   const aesthetic = user.aesthetic.enabled && supernova;
+  const creative = user.creative.enabled && supernova;
 
   return (
     <Modal title="" onClose={onClose}>
-      {aesthetic ? (
+      {creative ? (
+        <div style={{ marginBottom: 14 }}>
+          <CreativeProfile user={user} />
+          <div style={{ textAlign: "center", marginTop: 8 }}>{tierBadge(user.tier)}</div>
+        </div>
+      ) : aesthetic ? (
         <div style={{ marginBottom: 14 }}>
           <AestheticProfile user={user} />
           <div style={{ textAlign: "center", marginTop: 8 }}>{tierBadge(user.tier)}</div>
