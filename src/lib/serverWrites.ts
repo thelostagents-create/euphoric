@@ -177,6 +177,15 @@ export async function persistServerAction(action: Action, prev: AppState, next: 
         await supabase.from("members").update({ banned: after.banned }).eq("server_id", serverId).eq("user_id", a.userId);
         return;
       }
+      case "UNBAN": {
+        // Reducer removes the member row; mirror by deleting it so they can rejoin.
+        const before = srv(prev, serverId);
+        const after = srv(next, serverId);
+        if (!UUID.test(a.userId) || (before && after && before.members.length === after.members.length)) return;
+        await supabase.from("members").delete().eq("server_id", serverId).eq("user_id", a.userId);
+        triggerServersReload();
+        return;
+      }
       case "TIMEOUT":
       case "CLEAR_TIMEOUT": {
         const after = srv(next, serverId)?.members.find((m) => m.userId === a.userId);

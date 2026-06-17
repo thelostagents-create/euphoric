@@ -25,7 +25,7 @@ import type {
   User,
 } from "./types";
 import { seedState } from "./data/seed";
-import { can, canModerate } from "./permissions";
+import { can, canModerate, isOwner } from "./permissions";
 import { DEFAULT_STICKERS, isGif, serverStars, starsAvailable, usernameTaken } from "./social";
 import { BOOST_ANIMATED_ICON, BOOST_CUSTOM_INVITE, BOOST_STICKERS, MAX_STICKERS } from "./types";
 
@@ -91,6 +91,7 @@ type Action =
   | { type: "ASSIGN_ROLE"; serverId: string; userId: string; roleId: string; on: boolean }
   | { type: "KICK"; serverId: string; userId: string }
   | { type: "BAN"; serverId: string; userId: string }
+  | { type: "UNBAN"; serverId: string; userId: string }
   | { type: "TIMEOUT"; serverId: string; userId: string; minutes: number }
   | { type: "CLEAR_TIMEOUT"; serverId: string; userId: string }
   | { type: "UPDATE_DISCOVERY"; serverId: string; discoverable: boolean; description: string; keywords: string[] }
@@ -828,6 +829,23 @@ export function reducer(state: AppState, action: Action): AppState {
           withAudit(
             { ...s, members: s.members.map((m) => (m.userId === action.userId ? { ...m, banned: true } : m)) },
             { action: "Ban", actorId: me, targetId: action.userId, detail: "Banned from the server" },
+          ),
+        ),
+      };
+    }
+
+    case "UNBAN": {
+      const server = state.servers.find((s) => s.id === action.serverId);
+      const dev = state.users[me]?.tier === "developer";
+      // Only owner / ban-permission holders (or developers) can unban.
+      if (!server || (!can(server, me, "BAN_MEMBERS") && !isOwner(server, me) && !dev)) return state;
+      return {
+        ...state,
+        servers: mapServer(state, action.serverId, (s) =>
+          withAudit(
+            // Lifting the ban removes the member record so they can rejoin with an invite.
+            { ...s, members: s.members.filter((m) => m.userId !== action.userId) },
+            { action: "Ban", actorId: me, targetId: action.userId, detail: "Unbanned from the server" },
           ),
         ),
       };

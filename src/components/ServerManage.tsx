@@ -84,6 +84,10 @@ function OverviewTab({ server, canManage, onClose }: { server: Server; canManage
   const [iconUrl, setIconUrl] = useState(server.iconImage);
   const [customInvite, setCustomInvite] = useState(server.invite);
   const [copied, setCopied] = useState(false);
+  const [showBanned, setShowBanned] = useState(false);
+
+  const canBan = isOwner(server, me.id) || can(server, me.id, "BAN_MEMBERS");
+  const bannedMembers = server.members.filter((m) => m.banned);
 
   function copyInvite() {
     navigator.clipboard?.writeText(inviteLink(server)).catch(() => {});
@@ -207,6 +211,45 @@ function OverviewTab({ server, canManage, onClose }: { server: Server; canManage
               )}
             </div>
           </div>
+        </>
+      )}
+
+      {/* Banned users */}
+      {canBan && (
+        <>
+          <div className="section-title">Banned users</div>
+          <button
+            className="btn ghost full"
+            onClick={() => setShowBanned((v) => !v)}
+            style={{ marginBottom: showBanned ? 8 : 0 }}
+          >
+            {showBanned ? "Hide banned users" : `Banned users (${bannedMembers.length})`}
+          </button>
+          {showBanned && (
+            bannedMembers.length === 0 ? (
+              <p className="muted" style={{ fontSize: 13 }}>No one is banned.</p>
+            ) : (
+              bannedMembers.map((m) => {
+                const u = state.users[m.userId];
+                return (
+                  <div className="card" key={m.userId} style={{ padding: 10, marginBottom: 8 }}>
+                    <div className="row" style={{ justifyContent: "space-between", alignItems: "center" }}>
+                      <div className="row" style={{ gap: 8, flex: 1 }}>
+                        {u?.avatar && <img src={u.avatar} alt="" style={{ width: 28, height: 28, borderRadius: "50%" }} />}
+                        <span style={{ fontWeight: 600 }}>{displayName(u) || m.userId}</span>
+                      </div>
+                      <button
+                        className="btn sm"
+                        onClick={() => dispatch({ type: "UNBAN", serverId: server.id, userId: m.userId })}
+                      >
+                        Unban
+                      </button>
+                    </div>
+                  </div>
+                );
+              })
+            )
+          )}
         </>
       )}
 
