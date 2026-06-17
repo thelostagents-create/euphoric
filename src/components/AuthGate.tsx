@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "../auth";
 import { Terms } from "./Terms";
+import { PrivacyPolicy } from "./PrivacyPolicy";
 
 /** Login / sign-up screen, shown when Supabase is configured and signed out. */
 export function AuthGate({ onGuest }: { onGuest: () => void }) {
@@ -13,6 +14,7 @@ export function AuthGate({ onGuest }: { onGuest: () => void }) {
   const [busy, setBusy] = useState(false);
   const [agreed, setAgreed] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
+  const [showPrivacy, setShowPrivacy] = useState(false);
 
   async function submit() {
     if (mode === "up" && !agreed) {
@@ -78,6 +80,14 @@ export function AuthGate({ onGuest }: { onGuest: () => void }) {
               >
                 Terms of Service
               </button>
+              {" "}and{" "}
+              <button
+                type="button"
+                onClick={() => setShowPrivacy(true)}
+                style={{ background: "none", border: "none", padding: 0, color: "var(--accent)", cursor: "pointer", textDecoration: "underline", font: "inherit" }}
+              >
+                Privacy Policy
+              </button>
               .
             </span>
           </label>
@@ -96,6 +106,7 @@ export function AuthGate({ onGuest }: { onGuest: () => void }) {
         </button>
       </div>
       {showTerms && <Terms onClose={() => setShowTerms(false)} />}
+      {showPrivacy && <PrivacyPolicy onClose={() => setShowPrivacy(false)} />}
     </div>
   );
 }

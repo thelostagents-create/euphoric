@@ -6,6 +6,8 @@ import { useAuth } from "../auth";
 import { isSupabaseConfigured } from "../lib/supabase";
 import { openPatreonPage, patreonUrl } from "../lib/payments";
 import { DevConsole } from "./DevConsole";
+import { Terms } from "./Terms";
+import { PrivacyPolicy } from "./PrivacyPolicy";
 
 const TIERS: {
   id: Tier;
@@ -95,6 +97,8 @@ export function AccountSettings() {
 
   const [expandedServerId, setExpandedServerId] = useState<string | null>(null);
   const [showOrder, setShowOrder] = useState(false);
+  const [showTerms, setShowTerms] = useState(false);
+  const [showPrivacy, setShowPrivacy] = useState(false);
 
   function moveServer(index: number, dir: -1 | 1) {
     const next = [...myServers];
@@ -255,6 +259,14 @@ export function AccountSettings() {
         ))
       )}
 
+      <div className="section-title">Legal</div>
+      <button className="btn ghost full" onClick={() => setShowTerms(true)}>
+        Terms of Service
+      </button>
+      <button className="btn ghost full" style={{ marginTop: 8 }} onClick={() => setShowPrivacy(true)}>
+        Privacy Policy
+      </button>
+
       {user.tier === "developer" && (
         <>
           <div className="section-title">⚙️ Developer console</div>
@@ -281,6 +293,9 @@ export function AccountSettings() {
       <button className="btn danger full" onClick={resetState}>
         Reset demo data
       </button>
+
+      {showTerms && <Terms onClose={() => setShowTerms(false)} />}
+      {showPrivacy && <PrivacyPolicy onClose={() => setShowPrivacy(false)} />}
     </>
   );
 }

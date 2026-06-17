@@ -74,6 +74,7 @@ export function ReactionPicker({
   onPin,
   onEdit,
   onReact,
+  onReport,
   pinned,
 }: {
   messageId: string;
@@ -83,6 +84,7 @@ export function ReactionPicker({
   onEdit?: () => void;
   /** Live mode: react against the backend instead of dispatching locally. */
   onReact?: (emoji: string) => void;
+  onReport?: () => void;
   pinned?: boolean;
 }) {
   const { dispatch } = useStore();
@@ -117,6 +119,11 @@ export function ReactionPicker({
         {onPin && (
           <button className="btn ghost" onClick={() => { onPin(); onClose(); }}>
             📌 {pinned ? "Unpin message" : "Pin message"}
+          </button>
+        )}
+        {onReport && (
+          <button className="btn ghost" onClick={() => { onReport(); onClose(); }}>
+            ⚑ Report message
           </button>
         )}
       </div>

@@ -11,6 +11,7 @@ import { MessageText, MessageAttachment } from "./MessageText";
 import { AttachButton } from "./AttachButton";
 import { StickerButton } from "./StickerButton";
 import { ReactionChips, ReactionPicker, longPressProps } from "./Reactions";
+import { ReportModal } from "./ReportModal";
 import { LendStar } from "./LendStar";
 import { ChannelsModal } from "./ChannelsModal";
 import { SearchModal } from "./SearchModal";
@@ -32,6 +33,7 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
   const me = state.users[state.currentUserId];
   const [highlight, setHighlight] = useState<string | null>(null);
   const [reactFor, setReactFor] = useState<string | null>(null);
+  const [reportFor, setReportFor] = useState<string | null>(null);
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [showChannels, setShowChannels] = useState(false);
   const [showMembers, setShowMembers] = useState(false);
@@ -636,7 +638,20 @@ export function Chat({ nav, onNavHandled }: { nav?: ChatNav | null; onNavHandled
                 }
               : undefined
           }
+          onReport={
+            messages.find((m) => m.id === reactFor)?.authorId !== meId
+              ? () => setReportFor(reactFor)
+              : undefined
+          }
           onClose={() => setReactFor(null)}
+        />
+      )}
+      {reportFor && (
+        <ReportModal
+          targetKind="message"
+          targetId={reportFor}
+          context={messages.find((m) => m.id === reportFor)?.content || undefined}
+          onClose={() => setReportFor(null)}
         />
       )}
       {showChannels && (
