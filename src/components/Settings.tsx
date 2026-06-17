@@ -94,6 +94,7 @@ export function AccountSettings() {
   }, [state.servers, state.currentUserId, user.serverOrder]);
 
   const [expandedServerId, setExpandedServerId] = useState<string | null>(null);
+  const [showOrder, setShowOrder] = useState(false);
 
   function moveServer(index: number, dir: -1 | 1) {
     const next = [...myServers];
@@ -136,7 +137,14 @@ export function AccountSettings() {
       {myServers.length > 1 && (
         <>
           <div className="section-title">Party order</div>
-          {myServers.map((s, i) => (
+          <button
+            className="btn ghost full"
+            onClick={() => setShowOrder((v) => !v)}
+            style={{ marginBottom: showOrder ? 8 : 0 }}
+          >
+            {showOrder ? "Hide party order" : "Reorder parties"}
+          </button>
+          {showOrder && <>{myServers.map((s, i) => (
             <div key={s.id}>
               <div className="card" style={{ marginBottom: 4 }}>
                 <div className="row" style={{ justifyContent: "space-between", alignItems: "center" }}>
@@ -173,7 +181,7 @@ export function AccountSettings() {
                 )}
               </div>
             </div>
-          ))}
+          ))}</>}
         </>
       )}
 
