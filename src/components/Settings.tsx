@@ -1,3 +1,4 @@
+import { useState, useMemo } from "react";
 import { resetState, useStore } from "../store";
 import type { Tier } from "../types";
 import { starCapacity, starsAvailable } from "../social";
@@ -81,6 +82,27 @@ export function AccountSettings() {
     .map((id) => state.users[id])
     .filter(Boolean);
 
+  // Build the ordered server list (same logic as the rail).
+  const myServers = useMemo(() => {
+    const mine = state.servers.filter((s) => s.members.some((m) => m.userId === state.currentUserId && !m.banned));
+    const order = user.serverOrder ?? [];
+    const byId = new Map(mine.map((s) => [s.id, s] as const));
+    const out: typeof mine = [];
+    for (const id of order) { const s = byId.get(id); if (s) { out.push(s); byId.delete(id); } }
+    for (const s of mine) if (byId.has(s.id)) out.push(s);
+    return out;
+  }, [state.servers, state.currentUserId, user.serverOrder]);
+
+  const [expandedServerId, setExpandedServerId] = useState<string | null>(null);
+
+  function moveServer(index: number, dir: -1 | 1) {
+    const next = [...myServers];
+    const target = index + dir;
+    if (target < 0 || target >= next.length) return;
+    [next[index], next[target]] = [next[target], next[index]];
+    dispatch({ type: "SET_SERVER_ORDER", order: next.map((s) => s.id) });
+  }
+
   return (
     <>
       <div className="section-title">Appearance</div>
@@ -110,6 +132,50 @@ export function AccountSettings() {
           />
         </div>
       </div>
+
+      {myServers.length > 1 && (
+        <>
+          <div className="section-title">Party order</div>
+          {myServers.map((s, i) => (
+            <div key={s.id}>
+              <div className="card" style={{ marginBottom: 4 }}>
+                <div className="row" style={{ justifyContent: "space-between", alignItems: "center" }}>
+                  <button
+                    className="row"
+                    style={{ background: "none", border: "none", padding: 0, flex: 1, gap: 10, cursor: "pointer", color: "inherit", textAlign: "left" }}
+                    onClick={() => setExpandedServerId(expandedServerId === s.id ? null : s.id)}
+                  >
+                    <span style={{ fontSize: 20 }}>
+                      {s.iconImage
+                        ? <img src={s.iconImage} alt="" style={{ width: 24, height: 24, borderRadius: 6, objectFit: "cover" }} />
+                        : s.icon}
+                    </span>
+                    <span style={{ fontWeight: 600, flex: 1 }}>{s.name}</span>
+                    <span className="muted" style={{ fontSize: 12 }}>{expandedServerId === s.id ? "▲" : "▼"}</span>
+                  </button>
+                  <div className="row" style={{ gap: 4, marginLeft: 10 }}>
+                    <button className="btn ghost sm" disabled={i === 0} onClick={() => moveServer(i, -1)}>↑</button>
+                    <button className="btn ghost sm" disabled={i === myServers.length - 1} onClick={() => moveServer(i, 1)}>↓</button>
+                  </div>
+                </div>
+                {expandedServerId === s.id && (
+                  <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid var(--border)" }}>
+                    {s.channels.length === 0 ? (
+                      <p className="muted" style={{ fontSize: 12, margin: 0 }}>No lounges.</p>
+                    ) : (
+                      s.channels.map((c) => (
+                        <div key={c.id} className="muted" style={{ fontSize: 13, padding: "3px 0" }}>
+                          # {c.name}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </>
+      )}
 
       <div className="section-title" id="subscription-section">Subscription</div>
       {TIERS.map((t) => {
