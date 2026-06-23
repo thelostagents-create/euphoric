@@ -96,8 +96,9 @@ export function Feed({
   }
 
   async function remove(postId: string) {
+    const post = state.feedPosts.find((p) => p.id === postId);
     dispatch({ type: "DELETE_FEED_POST", postId });
-    if (live) await deleteFeedPostDb(postId);
+    if (live) await deleteFeedPostDb(postId, post?.images);
   }
 
   function addImage(url: string) {

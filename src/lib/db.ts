@@ -1,4 +1,5 @@
 import { supabase } from "./supabase";
+import { deleteMedia } from "./storage";
 import type { Attachment, AuditEntry, FeedPost, GroupChat, Message, Server, User } from "../types";
 
 /* ── Servers (parties) / membership ────────────────────────── */
@@ -573,7 +574,8 @@ export async function loadUserPostsDb(uid: string): Promise<FeedPost[]> {
   return (data ?? []).map(rowToFeedPost);
 }
 
-export async function deleteFeedPostDb(id: string): Promise<void> {
+export async function deleteFeedPostDb(id: string, images?: string[]): Promise<void> {
+  if (images?.length) await deleteMedia(images);
   await supabase?.from("feed_posts").delete().eq("id", id);
 }
 
