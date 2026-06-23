@@ -63,9 +63,10 @@ export function useLiveConversation(conversation: string | undefined, selfId: st
     after();
   }, [after]);
   const remove = useCallback(async (id: string) => {
-    await deleteMessageDb(id);
+    const msg = messages.find((m) => m.id === id);
+    await deleteMessageDb(id, msg?.attachment?.url);
     after();
-  }, [after]);
+  }, [after, messages]);
 
   const toggleReaction = useCallback(
     async (id: string, emoji: string) => {

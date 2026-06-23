@@ -1,6 +1,6 @@
 import { useRef } from "react";
 import { useStore } from "../store";
-import { MAX_UPLOAD } from "../upload";
+import { MAX_UPLOAD, MAX_VIDEO_UPLOAD } from "../upload";
 import { uploadMedia } from "../lib/storage";
 import { isNsfw } from "../lib/nsfw";
 import type { Attachment } from "../types";
@@ -25,11 +25,13 @@ export function AttachButton({
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file) return;
-    if (file.size > MAX_UPLOAD) {
-      alert("That file is too large (max 4 MB).");
+    const kind = file.type.startsWith("video") ? "video" : "image";
+    const limit = kind === "video" ? MAX_VIDEO_UPLOAD : MAX_UPLOAD;
+    const limitLabel = kind === "video" ? "20 MB" : "4 MB";
+    if (file.size > limit) {
+      alert(`That file is too large (max ${limitLabel} for ${kind}s).`);
       return;
     }
-    const kind = file.type.startsWith("video") ? "video" : "image";
     if (kind === "image" && await isNsfw(file)) {
       alert("That image was flagged as explicit and can't be sent.");
       return;

@@ -48,8 +48,10 @@ export function Feed({
   const [sheetUser, setSheetUser] = useState<string | null>(null);
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [userQuery, setUserQuery] = useState("");
-  const [visible, setVisible] = useState(20);
+  const [offset, setOffset] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
   const loadedRef = useRef(false);
+  const PAGE = 20;
 
   // When navigated here from a profile, filter to that user's posts.
   useEffect(() => {
@@ -61,11 +63,13 @@ export function Feed({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialUserId]);
 
-  // In live mode, pull the mutual-friends feed into the store once.
+  // Initial load — replaces the feed with the first page.
   async function refresh() {
     if (!live) return;
-    const posts = await loadFeedDb();
+    const posts = await loadFeedDb(0, PAGE);
     dispatch({ type: "HYDRATE_FEED", posts });
+    setOffset(PAGE);
+    setHasMore(posts.length === PAGE);
   }
   useEffect(() => {
     if (live && !loadedRef.current) {
@@ -75,12 +79,24 @@ export function Feed({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [live]);
 
+  // Load the next page and append it.
+  async function loadMore() {
+    if (!live) return;
+    const posts = await loadFeedDb(offset, PAGE);
+    dispatch({ type: "APPEND_FEED", posts });
+    setOffset((o) => o + PAGE);
+    setHasMore(posts.length === PAGE);
+  }
+
   async function post() {
     if (!text.trim() && images.length === 0) return;
     const postColor = canColor && color ? color : undefined;
     if (live) {
       await createFeedPostDb(me, text.trim(), images, postColor);
+      // Reset to first page so the new post appears at the top.
+      loadedRef.current = false;
       await refresh();
+      loadedRef.current = true;
     } else {
       dispatch({ type: "CREATE_FEED_POST", text: text.trim(), images, color: postColor });
     }
@@ -118,13 +134,7 @@ export function Feed({
     return true;
   });
   const filtering = typeFilter !== "all" || !!q;
-
-  // Show 20 at a time; reset the window whenever the filter changes.
-  useEffect(() => {
-    setVisible(20);
-  }, [typeFilter, userQuery]);
-  const shown = posts.slice(0, visible);
-  const hasMore = posts.length > shown.length;
+  const shown = posts;
 
   return (
     <div className="screen">
@@ -230,8 +240,8 @@ export function Feed({
                 onOpenUser={() => setSheetUser(p.authorId)}
               />
             ))}
-            {hasMore && (
-              <button className="btn ghost full" onClick={() => setVisible((v) => v + 20)}>
+            {(live ? hasMore : false) && (
+              <button className="btn ghost full" onClick={loadMore}>
                 More
               </button>
             )}

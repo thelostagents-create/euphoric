@@ -389,7 +389,8 @@ export async function editMessageDb(id: string, content: string): Promise<void> 
   await supabase?.from("messages").update({ content, edited_at: new Date().toISOString() }).eq("id", id);
 }
 
-export async function deleteMessageDb(id: string): Promise<void> {
+export async function deleteMessageDb(id: string, attachmentUrl?: string): Promise<void> {
+  if (attachmentUrl) await deleteMedia([attachmentUrl]);
   await supabase?.from("messages").delete().eq("id", id);
 }
 
@@ -552,13 +553,13 @@ export async function createFeedPostDb(authorId: string, text: string, images: s
 }
 
 /** Load the mutual-friends feed (RLS limits rows to self + mutuals). */
-export async function loadFeedDb(): Promise<FeedPost[]> {
+export async function loadFeedDb(offset = 0, limit = 20): Promise<FeedPost[]> {
   if (!supabase) return [];
   const { data } = await supabase
     .from("feed_posts")
     .select("*")
     .order("created_at", { ascending: false })
-    .limit(200);
+    .range(offset, offset + limit - 1);
   return (data ?? []).map(rowToFeedPost);
 }
 

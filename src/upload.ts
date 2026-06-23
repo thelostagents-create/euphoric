@@ -1,7 +1,10 @@
 // Helpers for importing local images/videos as data URLs.
 
-/** Max import size. Data URLs live in state/localStorage, so keep it modest. */
+/** Max image upload size (compressed to WebP before storage). */
 export const MAX_UPLOAD = 4_000_000; // ~4 MB
+
+/** Max video upload size — videos can't be compressed client-side. */
+export const MAX_VIDEO_UPLOAD = 20_000_000; // 20 MB
 
 export function readFileAsDataURL(file: File): Promise<string> {
   return new Promise((resolve, reject) => {

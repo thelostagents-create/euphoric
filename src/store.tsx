@@ -103,7 +103,8 @@ type Action =
   | { type: "CREATE_FEED_POST"; text: string; images: string[]; color?: string }
   | { type: "DELETE_FEED_POST"; postId: string }
   | { type: "TOGGLE_FEED_REACTION"; postId: string; emoji: string }
-  | { type: "HYDRATE_FEED"; posts: FeedPost[] };
+  | { type: "HYDRATE_FEED"; posts: FeedPost[] }
+  | { type: "APPEND_FEED"; posts: FeedPost[] };
 
 function id(prefix: string): string {
   return `${prefix}_${Math.random().toString(36).slice(2, 9)}`;
@@ -1075,6 +1076,12 @@ export function reducer(state: AppState, action: Action): AppState {
 
     case "HYDRATE_FEED":
       return { ...state, feedPosts: action.posts };
+
+    case "APPEND_FEED": {
+      const existingIds = new Set(state.feedPosts.map((p) => p.id));
+      const fresh = action.posts.filter((p) => !existingIds.has(p.id));
+      return { ...state, feedPosts: [...state.feedPosts, ...fresh] };
+    }
 
     default:
       return state;
