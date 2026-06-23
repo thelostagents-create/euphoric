@@ -33,7 +33,6 @@ export function Feed({
   const [reactFor, setReactFor] = useState<string | null>(null);
   const [sheetUser, setSheetUser] = useState<string | null>(null);
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
-  const [dateFilter, setDateFilter] = useState("");
   const [userQuery, setUserQuery] = useState("");
   const loadedRef = useRef(false);
 
@@ -93,7 +92,6 @@ export function Feed({
   const posts = state.feedPosts.filter((p) => {
     if (typeFilter === "notes" && p.images.length > 0) return false;
     if (typeFilter === "dumps" && p.images.length === 0) return false;
-    if (dateFilter && new Date(p.createdAt).toISOString().slice(0, 10) !== dateFilter) return false;
     if (q) {
       const u = state.users[p.authorId];
       const hay = `${u?.username ?? ""} ${u?.nickname ?? ""}`.toLowerCase();
@@ -101,7 +99,7 @@ export function Feed({
     }
     return true;
   });
-  const filtering = typeFilter !== "all" || !!dateFilter || !!q;
+  const filtering = typeFilter !== "all" || !!q;
 
   return (
     <div className="screen">
@@ -150,27 +148,18 @@ export function Feed({
         <div className="card" style={{ display: "grid", gap: 8 }}>
           <div className="chips">
             <button className={`chip ${typeFilter === "all" ? "accent" : ""}`} onClick={() => setTypeFilter("all")}>All</button>
-            <button className={`chip ${typeFilter === "notes" ? "accent" : ""}`} onClick={() => setTypeFilter("notes")}>📝 Notes</button>
-            <button className={`chip ${typeFilter === "dumps" ? "accent" : ""}`} onClick={() => setTypeFilter("dumps")}>🖼 Photo dumps</button>
+            <button className={`chip ${typeFilter === "notes" ? "accent" : ""}`} onClick={() => setTypeFilter("notes")}>Notes</button>
+            <button className={`chip ${typeFilter === "dumps" ? "accent" : ""}`} onClick={() => setTypeFilter("dumps")}>Photo dumps</button>
           </div>
-          <div className="row" style={{ gap: 8 }}>
-            <input
-              value={userQuery}
-              placeholder="Search by username…"
-              onChange={(e) => setUserQuery(e.target.value)}
-              style={{ flex: 1, minWidth: 0 }}
-            />
-            <input
-              type="date"
-              value={dateFilter}
-              onChange={(e) => setDateFilter(e.target.value)}
-              style={{ flex: "0 0 auto" }}
-            />
-          </div>
+          <input
+            value={userQuery}
+            placeholder="Search by username…"
+            onChange={(e) => setUserQuery(e.target.value)}
+          />
           {filtering && (
             <button
               className="btn ghost sm"
-              onClick={() => { setTypeFilter("all"); setDateFilter(""); setUserQuery(""); }}
+              onClick={() => { setTypeFilter("all"); setUserQuery(""); }}
             >
               Clear filters
             </button>

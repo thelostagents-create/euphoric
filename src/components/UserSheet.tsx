@@ -8,7 +8,6 @@ import { loadUserPostsDb } from "../lib/db";
 import { AestheticProfile } from "./AestheticProfile";
 import { CreativeProfile } from "./CreativeProfile";
 import { ReportModal } from "./ReportModal";
-import { ImageCarousel } from "./ImageCarousel";
 import { openUserFeed } from "../lib/feedNav";
 import type { FeedPost, Server } from "../types";
 
@@ -259,27 +258,14 @@ export function UserSheet({
         </>
       )}
 
-      {posts.length > 0 && (
-        <>
-          <div className="row" style={{ justifyContent: "space-between", alignItems: "center" }}>
-            <div className="section-title" style={{ margin: 0 }}>Posts</div>
-            <button
-              className="btn ghost sm"
-              onClick={() => { openUserFeed(userId); onClose(); }}
-            >
-              View feed →
-            </button>
-          </div>
-          <div style={{ display: "grid", gap: 10, marginTop: 8 }}>
-            {posts.slice(0, 12).map((p) => (
-              <div key={p.id} className="card" style={{ padding: 10 }}>
-                <div className="muted" style={{ fontSize: 11 }}>{new Date(p.createdAt).toLocaleDateString()}</div>
-                {p.text && <p style={{ margin: "4px 0 0", fontSize: 13, whiteSpace: "pre-wrap" }}>{p.text}</p>}
-                {p.images.length > 0 && <ImageCarousel images={p.images} maxHeight={220} />}
-              </div>
-            ))}
-          </div>
-        </>
+      {!isMe && posts.length > 0 && (
+        <button
+          className="btn full"
+          style={{ marginTop: 14 }}
+          onClick={() => { openUserFeed(userId); onClose(); }}
+        >
+          View feed
+        </button>
       )}
     </Modal>
   );
