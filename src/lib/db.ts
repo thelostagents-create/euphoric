@@ -538,6 +538,7 @@ function rowToFeedPost(p: any): FeedPost {
     authorId: p.author_id,
     text: p.text ?? "",
     images: p.images ?? [],
+    color: p.color ?? undefined,
     reactions: p.reactions ?? {},
     createdAt: p.created_at,
   };
@@ -545,8 +546,8 @@ function rowToFeedPost(p: any): FeedPost {
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
 /** Create a feed post. */
-export async function createFeedPostDb(authorId: string, text: string, images: string[]): Promise<void> {
-  await supabase?.from("feed_posts").insert({ author_id: authorId, text, images });
+export async function createFeedPostDb(authorId: string, text: string, images: string[], color?: string): Promise<void> {
+  await supabase?.from("feed_posts").insert({ author_id: authorId, text, images, color: color ?? null });
 }
 
 /** Load the mutual-friends feed (RLS limits rows to self + mutuals). */

@@ -281,6 +281,8 @@ export interface FeedPost {
   text: string;
   /** Up to a few image/gif urls for a photo dump. */
   images: string[];
+  /** Optional card background color (Premium/Supernova perk). */
+  color?: string;
   createdAt: string;
   /** Emoji -> user ids who reacted. */
   reactions?: Record<string, string[]>;

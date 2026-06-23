@@ -13,6 +13,19 @@ import type { FeedPost } from "../types";
 const MAX_IMAGES = 4;
 type TypeFilter = "all" | "notes" | "dumps";
 
+/** Pick black or white text for readability on a given hex background. */
+function textOn(hex: string): string {
+  const m = /^#?([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(hex.trim());
+  if (!m) return "inherit";
+  let h = m[1];
+  if (h.length === 3) h = h.split("").map((c) => c + c).join("");
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  // Relative luminance — light bg → dark text, dark bg → light text.
+  return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.6 ? "#1a1626" : "#f5f3fb";
+}
+
 /** The friends feed — photo dumps & notes from your mutuals, with reactions. */
 export function Feed({
   initialUserId,
@@ -29,6 +42,8 @@ export function Feed({
 
   const [text, setText] = useState("");
   const [images, setImages] = useState<string[]>([]);
+  const [color, setColor] = useState("");
+  const canColor = state.users[me]?.tier !== "free";
   const [reactFor, setReactFor] = useState<string | null>(null);
   const [sheetUser, setSheetUser] = useState<string | null>(null);
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
@@ -61,14 +76,16 @@ export function Feed({
 
   async function post() {
     if (!text.trim() && images.length === 0) return;
+    const postColor = canColor && color ? color : undefined;
     if (live) {
-      await createFeedPostDb(me, text.trim(), images);
+      await createFeedPostDb(me, text.trim(), images, postColor);
       await refresh();
     } else {
-      dispatch({ type: "CREATE_FEED_POST", text: text.trim(), images });
+      dispatch({ type: "CREATE_FEED_POST", text: text.trim(), images, color: postColor });
     }
     setText("");
     setImages([]);
+    setColor("");
   }
 
   async function react(postId: string, emoji: string) {
@@ -108,7 +125,7 @@ export function Feed({
 
       <div className="list">
         {/* Composer */}
-        <div className="card">
+        <div className="card" style={color ? { background: color, color: textOn(color) } : undefined}>
           <textarea
             rows={2}
             value={text}
@@ -129,6 +146,26 @@ export function Feed({
                   </button>
                 </div>
               ))}
+            </div>
+          )}
+          {canColor && (
+            <div className="row" style={{ gap: 8, marginTop: 8, alignItems: "center" }}>
+              <span style={{ fontSize: 12, fontWeight: 600, opacity: 0.8 }}>Post color</span>
+              <input
+                type="color"
+                className="swatch"
+                value={color || "#e7defb"}
+                onChange={(e) => setColor(e.target.value)}
+              />
+              <input
+                value={color}
+                placeholder="#hex"
+                onChange={(e) => setColor(e.target.value)}
+                style={{ width: 92, flex: "0 0 auto" }}
+              />
+              {color && (
+                <button className="btn ghost sm" onClick={() => setColor("")}>Reset</button>
+              )}
             </div>
           )}
           <div className="row" style={{ gap: 8, marginTop: 8, alignItems: "center" }}>
@@ -226,7 +263,11 @@ function PostCard({
   };
 
   return (
-    <div className="card" {...longPressProps(onOpenReactions)}>
+    <div
+      className="card"
+      style={post.color ? { background: post.color, color: textOn(post.color) } : undefined}
+      {...longPressProps(onOpenReactions)}
+    >
       <div className="row" style={{ gap: 10, alignItems: "center" }}>
         <img
           src={author?.avatar}

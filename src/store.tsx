@@ -100,7 +100,7 @@ type Action =
   | { type: "UPDATE_DISCOVERY"; serverId: string; discoverable: boolean; description: string; keywords: string[] }
   | { type: "SET_VERIFIED"; serverId: string; verified: boolean }
   | { type: "REPORT"; targetKind: "user" | "message" | "server"; targetId: string; reason: string; context?: string }
-  | { type: "CREATE_FEED_POST"; text: string; images: string[] }
+  | { type: "CREATE_FEED_POST"; text: string; images: string[]; color?: string }
   | { type: "DELETE_FEED_POST"; postId: string }
   | { type: "TOGGLE_FEED_REACTION"; postId: string; emoji: string }
   | { type: "HYDRATE_FEED"; posts: FeedPost[] };
@@ -1036,11 +1036,16 @@ export function reducer(state: AppState, action: Action): AppState {
 
     case "CREATE_FEED_POST": {
       if (!action.text.trim() && action.images.length === 0) return state;
+      // Custom post color is a paid perk and must be a valid hex code.
+      const paid = state.users[me]?.tier !== "free";
+      const validHex = action.color && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(action.color.trim());
+      const color = paid && validHex ? action.color!.trim() : undefined;
       const post: FeedPost = {
         id: id("fp"),
         authorId: me,
         text: action.text,
         images: action.images,
+        color,
         createdAt: new Date().toISOString(),
         reactions: {},
       };
