@@ -1,12 +1,14 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useStore } from "../store";
 import { Modal, bannerStyle, tierBadge } from "./Modal";
 import { can, canModerate, getMember, isOwner, isTimedOut, memberRoles } from "../permissions";
 import { areFriends, displayName } from "../social";
+import { isSupabaseConfigured } from "../lib/supabase";
+import { loadUserPostsDb } from "../lib/db";
 import { AestheticProfile } from "./AestheticProfile";
 import { CreativeProfile } from "./CreativeProfile";
 import { ReportModal } from "./ReportModal";
-import type { Server } from "../types";
+import type { FeedPost, Server } from "../types";
 
 export function UserSheet({
   userId,
@@ -19,6 +21,19 @@ export function UserSheet({
 }) {
   const { state, dispatch } = useStore();
   const [reporting, setReporting] = useState(false);
+
+  // The viewed user's feed posts (gallery). In live mode load on demand;
+  // otherwise read from local state. RLS only returns mutuals' / own posts.
+  const [posts, setPosts] = useState<FeedPost[]>([]);
+  useEffect(() => {
+    if (isSupabaseConfigured) {
+      let active = true;
+      loadUserPostsDb(userId).then((p) => active && setPosts(p));
+      return () => { active = false; };
+    }
+    setPosts(state.feedPosts.filter((p) => p.authorId === userId));
+  }, [userId, state.feedPosts]);
+
   const user = state.users[userId];
   const me = state.users[state.currentUserId];
   if (!user) return null;
@@ -238,6 +253,27 @@ export function UserSheet({
                   </button>
                 );
               })}
+          </div>
+        </>
+      )}
+
+      {posts.length > 0 && (
+        <>
+          <div className="section-title">Posts</div>
+          <div style={{ display: "grid", gap: 10 }}>
+            {posts.slice(0, 12).map((p) => (
+              <div key={p.id} className="card" style={{ padding: 10 }}>
+                <div className="muted" style={{ fontSize: 11 }}>{new Date(p.createdAt).toLocaleDateString()}</div>
+                {p.text && <p style={{ margin: "4px 0 0", fontSize: 13, whiteSpace: "pre-wrap" }}>{p.text}</p>}
+                {p.images.length > 0 && (
+                  <div style={{ display: "grid", gridTemplateColumns: p.images.length === 1 ? "1fr" : "1fr 1fr", gap: 5, marginTop: 6 }}>
+                    {p.images.map((src, i) => (
+                      <img key={i} src={src} alt="" style={{ width: "100%", borderRadius: 8, objectFit: "cover", maxHeight: 200 }} />
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
         </>
       )}

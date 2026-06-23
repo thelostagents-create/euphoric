@@ -39,6 +39,16 @@ export function DiscoverIcon({ size = 22 }: IconProps) {
   );
 }
 
+export function FeedIcon({ size = 22 }: IconProps) {
+  return (
+    <svg {...base(size)}>
+      <rect x="3" y="3" width="18" height="18" rx="3" />
+      <circle cx="8.5" cy="9" r="1.6" />
+      <path d="m21 16-5-5L5 21" />
+    </svg>
+  );
+}
+
 export function ProfileIcon({ size = 22 }: IconProps) {
   return (
     <svg {...base(size)}>

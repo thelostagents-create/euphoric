@@ -1,5 +1,5 @@
 import { supabase } from "./supabase";
-import type { Attachment, AuditEntry, GroupChat, Message, Server, User } from "../types";
+import type { Attachment, AuditEntry, FeedPost, GroupChat, Message, Server, User } from "../types";
 
 /* ── Servers (parties) / membership ────────────────────────── */
 
@@ -527,4 +527,56 @@ export async function setVerifiedDb(serverId: string, verified: boolean): Promis
   if (!supabase) return null;
   const { error } = await supabase.from("servers").update({ verified }).eq("id", serverId);
   return error ? error.message : null;
+}
+
+/* ── Friends feed (photo dumps & notes) ────────────────────── */
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+function rowToFeedPost(p: any): FeedPost {
+  return {
+    id: p.id,
+    authorId: p.author_id,
+    text: p.text ?? "",
+    images: p.images ?? [],
+    reactions: p.reactions ?? {},
+    createdAt: p.created_at,
+  };
+}
+/* eslint-enable @typescript-eslint/no-explicit-any */
+
+/** Create a feed post. */
+export async function createFeedPostDb(authorId: string, text: string, images: string[]): Promise<void> {
+  await supabase?.from("feed_posts").insert({ author_id: authorId, text, images });
+}
+
+/** Load the mutual-friends feed (RLS limits rows to self + mutuals). */
+export async function loadFeedDb(): Promise<FeedPost[]> {
+  if (!supabase) return [];
+  const { data } = await supabase
+    .from("feed_posts")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(200);
+  return (data ?? []).map(rowToFeedPost);
+}
+
+/** Load one user's posts (for their profile gallery; RLS still applies). */
+export async function loadUserPostsDb(uid: string): Promise<FeedPost[]> {
+  if (!supabase) return [];
+  const { data } = await supabase
+    .from("feed_posts")
+    .select("*")
+    .eq("author_id", uid)
+    .order("created_at", { ascending: false })
+    .limit(60);
+  return (data ?? []).map(rowToFeedPost);
+}
+
+export async function deleteFeedPostDb(id: string): Promise<void> {
+  await supabase?.from("feed_posts").delete().eq("id", id);
+}
+
+/** Toggle the caller's reaction on a post via the SECURITY DEFINER RPC. */
+export async function toggleFeedReactionDb(id: string, emoji: string): Promise<void> {
+  await supabase?.rpc("toggle_feed_reaction", { p_post: id, p_emoji: emoji });
 }

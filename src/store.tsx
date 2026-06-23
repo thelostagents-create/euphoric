@@ -16,6 +16,7 @@ import type {
   AppState,
   Attachment,
   CreativeControl,
+  FeedPost,
   GroupChat,
   Message,
   Permission,
@@ -98,7 +99,11 @@ type Action =
   | { type: "CLEAR_TIMEOUT"; serverId: string; userId: string }
   | { type: "UPDATE_DISCOVERY"; serverId: string; discoverable: boolean; description: string; keywords: string[] }
   | { type: "SET_VERIFIED"; serverId: string; verified: boolean }
-  | { type: "REPORT"; targetKind: "user" | "message" | "server"; targetId: string; reason: string; context?: string };
+  | { type: "REPORT"; targetKind: "user" | "message" | "server"; targetId: string; reason: string; context?: string }
+  | { type: "CREATE_FEED_POST"; text: string; images: string[] }
+  | { type: "DELETE_FEED_POST"; postId: string }
+  | { type: "TOGGLE_FEED_REACTION"; postId: string; emoji: string }
+  | { type: "HYDRATE_FEED"; posts: FeedPost[] };
 
 function id(prefix: string): string {
   return `${prefix}_${Math.random().toString(36).slice(2, 9)}`;
@@ -1029,6 +1034,43 @@ export function reducer(state: AppState, action: Action): AppState {
       // there is no local state to mutate.
       return state;
 
+    case "CREATE_FEED_POST": {
+      if (!action.text.trim() && action.images.length === 0) return state;
+      const post: FeedPost = {
+        id: id("fp"),
+        authorId: me,
+        text: action.text,
+        images: action.images,
+        createdAt: new Date().toISOString(),
+        reactions: {},
+      };
+      return { ...state, feedPosts: [post, ...state.feedPosts] };
+    }
+
+    case "DELETE_FEED_POST":
+      return {
+        ...state,
+        feedPosts: state.feedPosts.filter((p) => !(p.id === action.postId && p.authorId === me)),
+      };
+
+    case "TOGGLE_FEED_REACTION": {
+      return {
+        ...state,
+        feedPosts: state.feedPosts.map((p) => {
+          if (p.id !== action.postId) return p;
+          const reactions = { ...(p.reactions ?? {}) };
+          const ids = new Set(reactions[action.emoji] ?? []);
+          ids.has(me) ? ids.delete(me) : ids.add(me);
+          if (ids.size === 0) delete reactions[action.emoji];
+          else reactions[action.emoji] = [...ids];
+          return { ...p, reactions };
+        }),
+      };
+    }
+
+    case "HYDRATE_FEED":
+      return { ...state, feedPosts: action.posts };
+
     default:
       return state;
   }
@@ -1107,7 +1149,8 @@ function migrate(state: AppState): AppState {
     iconImage: g.iconImage ?? "",
     createdBy: g.createdBy ?? g.memberIds[0],
   }));
-  return { ...state, users, servers, groups };
+  const feedPosts = state.feedPosts ?? [];
+  return { ...state, users, servers, groups, feedPosts };
 }
 
 function loadState(): AppState {

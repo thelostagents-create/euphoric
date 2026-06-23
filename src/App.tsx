@@ -4,12 +4,13 @@ import { mentionsOf } from "./social";
 import { Chat } from "./components/Chat";
 import { Friends } from "./components/Friends";
 import { Discover } from "./components/Discover";
+import { Feed } from "./components/Feed";
 import { Profile } from "./components/Profile";
 import { Settings } from "./components/Settings";
-import { ChatIcon, FriendsIcon, DiscoverIcon, ProfileIcon, SettingsIcon } from "./components/Icons";
+import { ChatIcon, FriendsIcon, DiscoverIcon, FeedIcon, ProfileIcon, SettingsIcon } from "./components/Icons";
 import type { JSX } from "react";
 
-type Tab = "chat" | "friends" | "discover" | "profile" | "settings";
+type Tab = "chat" | "friends" | "feed" | "discover" | "profile" | "settings";
 
 export interface ChatNav {
   serverId: string;
@@ -20,6 +21,7 @@ export interface ChatNav {
 const TABS: { id: Tab; icon: (p: { size?: number }) => JSX.Element; label: string }[] = [
   { id: "chat", icon: ChatIcon, label: "Chat" },
   { id: "friends", icon: FriendsIcon, label: "Friends" },
+  { id: "feed", icon: FeedIcon, label: "Feed" },
   { id: "discover", icon: DiscoverIcon, label: "Explore" },
   { id: "profile", icon: ProfileIcon, label: "Profile" },
   { id: "settings", icon: SettingsIcon, label: "Settings" },
@@ -58,6 +60,7 @@ export function App() {
           }}
         />
       )}
+      {tab === "feed" && <Feed />}
       {tab === "discover" && <Discover />}
       {tab === "profile" && <Profile onManageSubscription={() => setTab("settings")} />}
       {tab === "settings" && <Settings />}

@@ -276,4 +276,8 @@ export const seedState: AppState = {
   groups: [
     { id: "g_crew", name: "Weekend Crew", iconImage: "", createdBy: "me", memberIds: ["me", "luna", "nova"] },
   ],
+  feedPosts: [
+    { id: "fp1", authorId: "luna", text: "photo dump from the weekend 🌙", images: [], createdAt: ago(200), reactions: { "🔥": ["me", "nova"] } },
+    { id: "fp2", authorId: "nova", text: "lil note: trying to post more here", images: [], createdAt: ago(120), reactions: {} },
+  ],
 };

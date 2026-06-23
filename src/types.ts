@@ -271,10 +271,26 @@ export interface GroupChat {
   memberIds: string[];
 }
 
+/**
+ * A "photo dump" or note posted to the friends feed. Visible only to the
+ * author's mutual friends. Permanent — also surfaces on the author's profile.
+ */
+export interface FeedPost {
+  id: string;
+  authorId: string;
+  text: string;
+  /** Up to a few image/gif urls for a photo dump. */
+  images: string[];
+  createdAt: string;
+  /** Emoji -> user ids who reacted. */
+  reactions?: Record<string, string[]>;
+}
+
 export interface AppState {
   currentUserId: string;
   users: Record<string, User>;
   servers: Server[];
   groups: GroupChat[];
   messages: Message[];
+  feedPosts: FeedPost[];
 }
