@@ -1,70 +1,46 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
-  <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#1a0e3a" />
-      <stop offset="1" stop-color="#2d1060" />
-    </linearGradient>
-    <linearGradient id="hat" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#ff6bd6" />
-      <stop offset="1" stop-color="#a06bff" />
-    </linearGradient>
-    <linearGradient id="wolf" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#4a2a7a" />
-      <stop offset="1" stop-color="#2a1050" />
-    </linearGradient>
-  </defs>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- App icon background -->
+  <rect width="512" height="512" rx="114" fill="#1e1b4b"/>
 
-  <!-- Background -->
-  <rect width="128" height="128" rx="26" fill="url(#bg)" />
+  <!-- Dark blue circle -->
+  <circle cx="256" cy="272" r="188" fill="#1d3461"/>
+  <circle cx="256" cy="272" r="188" fill="none" stroke="#0a0614" stroke-width="16"/>
 
-  <!-- Body silhouette -->
-  <ellipse cx="64" cy="108" rx="26" ry="16" fill="url(#wolf)" />
-  <rect x="44" y="88" width="40" height="22" rx="8" fill="url(#wolf)" />
+  <!-- Wolf body / chest -->
+  <ellipse cx="256" cy="418" rx="100" ry="52" fill="#0a0614"/>
 
-  <!-- Neck -->
-  <rect x="56" y="76" width="16" height="16" rx="4" fill="url(#wolf)" />
+  <!-- Wolf head silhouette -->
+  <path d="
+    M 152,312
+    C 158,288 182,264 210,256
+    C 228,250 242,240 255,228
+    C 261,222 268,218 275,216
+    C 288,218 306,230 322,248
+    C 334,262 340,280 338,300
+    C 336,320 334,344 334,366
+    C 334,392 314,422 290,430
+    C 272,436 240,436 218,428
+    C 196,420 174,402 162,378
+    C 150,356 148,332 152,312 Z
+  " fill="#0a0614"/>
 
-  <!-- Head -->
-  <ellipse cx="64" cy="70" rx="22" ry="20" fill="url(#wolf)" />
+  <!-- Snout protruding left -->
+  <ellipse cx="165" cy="308" rx="54" ry="33" fill="#0a0614" transform="rotate(-12 165 308)"/>
 
-  <!-- Ears (pointy wolf ears) -->
-  <polygon points="44,58 38,30 56,52" fill="url(#wolf)" />
-  <polygon points="84,58 90,30 72,52" fill="url(#wolf)" />
-  <!-- Inner ear -->
-  <polygon points="45,56 40,36 55,52" fill="#6a3aaa" opacity="0.5" />
-  <polygon points="83,56 88,36 73,52" fill="#6a3aaa" opacity="0.5" />
+  <!-- Visible ear (right side, pointing up) -->
+  <polygon points="290,226 336,136 308,228" fill="#0a0614"/>
 
-  <!-- Eyes (glowing) -->
-  <ellipse cx="56" cy="68" rx="4" ry="4.5" fill="#ffe066" />
-  <ellipse cx="72" cy="68" rx="4" ry="4.5" fill="#ffe066" />
-  <ellipse cx="56" cy="68" rx="2" ry="2.5" fill="#cc8800" />
-  <ellipse cx="72" cy="68" rx="2" ry="2.5" fill="#cc8800" />
-
-  <!-- Snout -->
-  <ellipse cx="64" cy="77" rx="9" ry="6" fill="#3a1a60" />
-  <!-- Nose -->
-  <ellipse cx="64" cy="73" rx="3.5" ry="2.5" fill="#1a0a30" />
-
-  <!-- Fangs -->
-  <polygon points="59,79 56,88 62,79" fill="white" />
-  <polygon points="69,79 66,79 72,88" fill="white" />
-
-  <!-- Party hat -->
-  <polygon points="64,12 44,54 84,54" fill="url(#hat)" />
-  <!-- Hat stripes -->
-  <polygon points="64,12 60,21 68,21" fill="rgba(255,255,255,0.25)" />
-  <polygon points="64,12 54,35 74,35" fill="rgba(255,255,255,0.15)" />
-  <!-- Hat brim -->
-  <ellipse cx="64" cy="54" rx="20" ry="5" fill="#ff6bd6" />
-  <!-- Pompom on top -->
-  <circle cx="64" cy="12" r="5" fill="#ffe066" />
+  <!-- Party hat body -->
+  <polygon points="232,216 310,210 288,106" fill="#7c3aed"/>
+  <!-- Hat highlight stripe -->
+  <polygon points="268,175 296,172 291,130 278,131" fill="rgba(255,255,255,0.18)"/>
   <!-- Hat dots -->
-  <circle cx="58" cy="42" r="2" fill="rgba(255,255,255,0.5)" />
-  <circle cx="70" cy="32" r="1.5" fill="rgba(255,255,255,0.5)" />
-  <circle cx="65" cy="47" r="1.5" fill="rgba(255,255,255,0.4)" />
-
-  <!-- Sparkles -->
-  <text x="14" y="30" font-size="10" fill="#ffe066" opacity="0.8">✦</text>
-  <text x="104" y="45" font-size="8" fill="#ff6bd6" opacity="0.8">✦</text>
-  <text x="100" y="100" font-size="7" fill="#a06bff" opacity="0.6">✦</text>
+  <circle cx="248" cy="196" r="4" fill="rgba(255,255,255,0.35)"/>
+  <circle cx="282" cy="210" r="3" fill="rgba(255,255,255,0.25)"/>
+  <circle cx="260" cy="215" r="2.5" fill="rgba(255,255,255,0.2)"/>
+  <!-- Hat brim -->
+  <ellipse cx="271" cy="215" rx="42" ry="11" fill="#6d28d9"/>
+  <!-- Pompom -->
+  <circle cx="288" cy="105" r="12" fill="#f9a8d4"/>
+  <circle cx="288" cy="105" r="6" fill="#f472b6"/>
 </svg>
