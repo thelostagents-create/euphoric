@@ -5,6 +5,7 @@ import { Chat } from "./components/Chat";
 import { Friends } from "./components/Friends";
 import { Discover } from "./components/Discover";
 import { Feed } from "./components/Feed";
+import { setFeedNav } from "./lib/feedNav";
 import { Profile } from "./components/Profile";
 import { Settings } from "./components/Settings";
 import { ChatIcon, FriendsIcon, DiscoverIcon, FeedIcon, ProfileIcon, SettingsIcon } from "./components/Icons";
@@ -31,6 +32,16 @@ export function App() {
   const { state } = useStore();
   const [tab, setTab] = useState<Tab>("chat");
   const [nav, setNav] = useState<ChatNav | null>(null);
+  const [feedUser, setFeedUser] = useState<string | null>(null);
+
+  // Let UserSheet (anywhere) jump to a user's feed.
+  useEffect(() => {
+    setFeedNav((uid) => {
+      setFeedUser(uid);
+      setTab("feed");
+    });
+    return () => setFeedNav(null);
+  }, []);
 
   // Apply the user's chosen app accent color.
   const me = state.users[state.currentUserId];
@@ -60,7 +71,7 @@ export function App() {
           }}
         />
       )}
-      {tab === "feed" && <Feed />}
+      {tab === "feed" && <Feed initialUserId={feedUser} onUserConsumed={() => setFeedUser(null)} />}
       {tab === "discover" && <Discover />}
       {tab === "profile" && <Profile onManageSubscription={() => setTab("settings")} />}
       {tab === "settings" && <Settings />}

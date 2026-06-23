@@ -4,6 +4,7 @@ import { useAuth } from "../auth";
 import { isSupabaseConfigured } from "../lib/supabase";
 import { createFeedPostDb, loadFeedDb, deleteFeedPostDb, toggleFeedReactionDb } from "../lib/db";
 import { ImagePicker } from "./ImagePicker";
+import { ImageCarousel } from "./ImageCarousel";
 import { ReactionPicker, longPressProps } from "./Reactions";
 import { UserSheet } from "./UserSheet";
 import { displayName } from "../social";
@@ -11,9 +12,16 @@ import { timeAgo } from "./Modal";
 import type { FeedPost } from "../types";
 
 const MAX_IMAGES = 4;
+type TypeFilter = "all" | "notes" | "dumps";
 
 /** The friends feed — photo dumps & notes from your mutuals, with reactions. */
-export function Feed() {
+export function Feed({
+  initialUserId,
+  onUserConsumed,
+}: {
+  initialUserId?: string | null;
+  onUserConsumed?: () => void;
+}) {
   const { state, dispatch } = useStore();
   const { session } = useAuth();
   const uid = session?.user.id;
@@ -24,7 +32,20 @@ export function Feed() {
   const [images, setImages] = useState<string[]>([]);
   const [reactFor, setReactFor] = useState<string | null>(null);
   const [sheetUser, setSheetUser] = useState<string | null>(null);
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
+  const [dateFilter, setDateFilter] = useState("");
+  const [userQuery, setUserQuery] = useState("");
   const loadedRef = useRef(false);
+
+  // When navigated here from a profile, filter to that user's posts.
+  useEffect(() => {
+    if (initialUserId) {
+      const u = state.users[initialUserId];
+      setUserQuery(u?.username ?? "");
+      onUserConsumed?.();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialUserId]);
 
   // In live mode, pull the mutual-friends feed into the store once.
   async function refresh() {
@@ -68,7 +89,19 @@ export function Feed() {
     setImages((prev) => [...prev, url]);
   }
 
-  const posts = state.feedPosts;
+  const q = userQuery.trim().toLowerCase();
+  const posts = state.feedPosts.filter((p) => {
+    if (typeFilter === "notes" && p.images.length > 0) return false;
+    if (typeFilter === "dumps" && p.images.length === 0) return false;
+    if (dateFilter && new Date(p.createdAt).toISOString().slice(0, 10) !== dateFilter) return false;
+    if (q) {
+      const u = state.users[p.authorId];
+      const hay = `${u?.username ?? ""} ${u?.nickname ?? ""}`.toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+  const filtering = typeFilter !== "all" || !!dateFilter || !!q;
 
   return (
     <div className="screen">
@@ -113,9 +146,42 @@ export function Feed() {
           </div>
         </div>
 
+        {/* Filters */}
+        <div className="card" style={{ display: "grid", gap: 8 }}>
+          <div className="chips">
+            <button className={`chip ${typeFilter === "all" ? "accent" : ""}`} onClick={() => setTypeFilter("all")}>All</button>
+            <button className={`chip ${typeFilter === "notes" ? "accent" : ""}`} onClick={() => setTypeFilter("notes")}>📝 Notes</button>
+            <button className={`chip ${typeFilter === "dumps" ? "accent" : ""}`} onClick={() => setTypeFilter("dumps")}>🖼 Photo dumps</button>
+          </div>
+          <div className="row" style={{ gap: 8 }}>
+            <input
+              value={userQuery}
+              placeholder="Search by username…"
+              onChange={(e) => setUserQuery(e.target.value)}
+              style={{ flex: 1, minWidth: 0 }}
+            />
+            <input
+              type="date"
+              value={dateFilter}
+              onChange={(e) => setDateFilter(e.target.value)}
+              style={{ flex: "0 0 auto" }}
+            />
+          </div>
+          {filtering && (
+            <button
+              className="btn ghost sm"
+              onClick={() => { setTypeFilter("all"); setDateFilter(""); setUserQuery(""); }}
+            >
+              Clear filters
+            </button>
+          )}
+        </div>
+
         {posts.length === 0 ? (
           <div className="center-empty">
-            Nothing here yet. Posts from your mutual friends — and your own — show up here.
+            {filtering
+              ? "No posts match these filters."
+              : "Nothing here yet. Posts from your mutual friends — and your own — show up here."}
           </div>
         ) : (
           posts.map((p) => (
@@ -185,20 +251,7 @@ function PostCard({
 
       {post.text && <p style={{ margin: "10px 0 0", whiteSpace: "pre-wrap", fontSize: 14 }}>{post.text}</p>}
 
-      {post.images.length > 0 && (
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: post.images.length === 1 ? "1fr" : "1fr 1fr",
-            gap: 6,
-            marginTop: 10,
-          }}
-        >
-          {post.images.map((src, i) => (
-            <img key={i} src={src} alt="" style={{ width: "100%", borderRadius: 10, objectFit: "cover", maxHeight: 320 }} />
-          ))}
-        </div>
-      )}
+      {post.images.length > 0 && <ImageCarousel images={post.images} />}
 
       <div className="row" style={{ gap: 6, marginTop: 10, flexWrap: "wrap", alignItems: "center" }}>
         {reactions.map(([emoji, ids]) => (
