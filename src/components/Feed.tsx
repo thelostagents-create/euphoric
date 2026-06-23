@@ -307,20 +307,6 @@ function PostCard({
           </span>
           <span className="muted" style={{ fontSize: 12, marginLeft: 8 }}>{timeAgo(post.createdAt)}</span>
         </div>
-        {multi && (
-          <div className="row" style={{ gap: 6, alignItems: "center", marginLeft: 4 }}>
-            <button className="carousel-nav" onClick={(e) => go(e, -1)} aria-label="Previous">‹</button>
-            <button className="carousel-nav" onClick={(e) => go(e, 1)} aria-label="Next">›</button>
-            <div style={{ display: "flex", gap: 5 }}>
-              {post.images.map((_, j) => (
-                <span
-                  key={j}
-                  style={{ width: 7, height: 7, borderRadius: "50%", background: j === at ? "var(--accent)" : "var(--border)" }}
-                />
-              ))}
-            </div>
-          </div>
-        )}
         <div style={{ flex: 1 }} />
         {onDelete && (
           <button className="btn ghost sm" title="Delete post" onClick={onDelete}>🗑</button>
@@ -350,8 +336,16 @@ function PostCard({
         ))}
         <button className="btn ghost sm" onClick={onOpenReactions}>＋ React</button>
         {multi && (
-          <button className="btn ghost sm" onClick={(e) => go(e, 1)}>
-            Next photo {imgAt + 1}/{post.images.length}
+          <button className="btn ghost sm" onClick={(e) => go(e, 1)} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            Next photo
+            <span style={{ display: "flex", gap: 4, alignItems: "center" }}>
+              {post.images.map((_, j) => (
+                <span
+                  key={j}
+                  style={{ width: 6, height: 6, borderRadius: "50%", background: j === at ? "var(--accent)" : "var(--border)", flexShrink: 0 }}
+                />
+              ))}
+            </span>
           </button>
         )}
       </div>
