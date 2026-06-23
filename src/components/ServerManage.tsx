@@ -29,6 +29,7 @@ export function ServerManage({ server, onClose }: { server: Server; onClose: () 
   const canManageChannels = owner || can(server, meId, "MANAGE_CHANNELS");
   const canManageAutomod = owner || can(server, meId, "MANAGE_AUTOMOD");
   const canManageOnboarding = owner || can(server, meId, "MANAGE_ONBOARDING");
+  const canViewAudit = owner || can(server, meId, "VIEW_AUDIT_LOG");
 
   const tabs: { id: Tab; label: string }[] = [
     { id: "overview", label: "Overview" },
@@ -38,7 +39,7 @@ export function ServerManage({ server, onClose }: { server: Server; onClose: () 
     { id: "stickers", label: "Stickers" },
     { id: "automod", label: "AutoMod" },
     { id: "onboarding", label: "Onboarding" },
-    { id: "audit", label: "Audit Log" },
+    ...(canViewAudit ? [{ id: "audit" as Tab, label: "Audit Log" }] : []),
   ];
 
   return (

@@ -349,6 +349,11 @@ function PostCard({
           </button>
         ))}
         <button className="btn ghost sm" onClick={onOpenReactions}>＋ React</button>
+        {multi && (
+          <button className="btn ghost sm" onClick={(e) => go(e, 1)}>
+            Next photo {imgAt + 1}/{post.images.length}
+          </button>
+        )}
       </div>
     </div>
   );

@@ -14,7 +14,8 @@ export type Permission =
   | "MANAGE_CHANNELS"
   | "MANAGE_AUTOMOD"
   | "MANAGE_ONBOARDING"
-  | "MANAGE_SERVER";
+  | "MANAGE_SERVER"
+  | "VIEW_AUDIT_LOG";
 
 export const ALL_PERMISSIONS: { id: Permission; label: string; desc: string }[] = [
   { id: "KICK_MEMBERS", label: "Kick Members", desc: "Remove members from the server." },
@@ -28,6 +29,7 @@ export const ALL_PERMISSIONS: { id: Permission; label: string; desc: string }[] 
   { id: "MANAGE_AUTOMOD", label: "Manage AutoMod", desc: "Configure blocked words." },
   { id: "MANAGE_ONBOARDING", label: "Manage Onboarding", desc: "Set up the new-member onboarding screen." },
   { id: "MANAGE_SERVER", label: "Manage Party", desc: "Edit party settings, invite and discovery." },
+  { id: "VIEW_AUDIT_LOG", label: "View Audit Log", desc: "See moderation history for the party." },
 ];
 
 /** Boost thresholds unlocked by spent Stars. */

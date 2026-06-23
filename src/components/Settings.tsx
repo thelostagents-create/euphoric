@@ -103,6 +103,7 @@ export function AccountSettings() {
   const [showOrder, setShowOrder] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
   const [showPrivacy, setShowPrivacy] = useState(false);
+  const [showBlocked, setShowBlocked] = useState(false);
 
   function moveServer(index: number, dir: -1 | 1) {
     const next = [...myServers];
@@ -249,22 +250,30 @@ export function AccountSettings() {
         </>
       )}
 
-      <div className="section-title">Blocked users</div>
-      {blocked.length === 0 ? (
-        <p className="muted">You haven't blocked anyone.</p>
-      ) : (
-        blocked.map((u) => (
-          <div className="row" key={u.id} style={{ marginBottom: 8 }}>
-            <img src={u.avatar} alt="" style={{ width: 32, height: 32, borderRadius: "50%" }} />
-            <span style={{ flex: 1 }}>{u.username}</span>
-            <button
-              className="btn ghost sm"
-              onClick={() => dispatch({ type: "TOGGLE_BLOCK", userId: u.id })}
-            >
-              Unblock
-            </button>
-          </div>
-        ))
+      <button
+        className="btn ghost full"
+        onClick={() => setShowBlocked((v) => !v)}
+        style={{ textAlign: "left", marginBottom: 4 }}
+      >
+        Blocked{blocked.length > 0 ? ` (${blocked.length})` : ""} {showBlocked ? "▲" : "▼"}
+      </button>
+      {showBlocked && (
+        blocked.length === 0 ? (
+          <p className="muted">You haven't blocked anyone.</p>
+        ) : (
+          blocked.map((u) => (
+            <div className="row" key={u.id} style={{ marginBottom: 8 }}>
+              <img src={u.avatar} alt="" style={{ width: 32, height: 32, borderRadius: "50%" }} />
+              <span style={{ flex: 1 }}>{u.username}</span>
+              <button
+                className="btn ghost sm"
+                onClick={() => dispatch({ type: "TOGGLE_BLOCK", userId: u.id })}
+              >
+                Unblock
+              </button>
+            </div>
+          ))
+        )
       )}
 
       <div className="section-title">Legal</div>
