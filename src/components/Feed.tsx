@@ -336,16 +336,8 @@ function PostCard({
         ))}
         <button className="btn ghost sm" onClick={onOpenReactions}>＋ React</button>
         {multi && (
-          <button className="btn ghost sm" onClick={(e) => go(e, 1)} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            Next photo
-            <span style={{ display: "flex", gap: 4, alignItems: "center" }}>
-              {post.images.map((_, j) => (
-                <span
-                  key={j}
-                  style={{ width: 6, height: 6, borderRadius: "50%", background: j === at ? "var(--accent)" : "var(--border)", flexShrink: 0 }}
-                />
-              ))}
-            </span>
+          <button className="btn ghost sm" onClick={(e) => go(e, 1)}>
+            Next photo {imgAt + 1}/{post.images.length}
           </button>
         )}
       </div>
