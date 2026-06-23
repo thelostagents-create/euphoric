@@ -48,6 +48,7 @@ export function Feed({
   const [sheetUser, setSheetUser] = useState<string | null>(null);
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [userQuery, setUserQuery] = useState("");
+  const [visible, setVisible] = useState(20);
   const loadedRef = useRef(false);
 
   // When navigated here from a profile, filter to that user's posts.
@@ -116,6 +117,13 @@ export function Feed({
     return true;
   });
   const filtering = typeFilter !== "all" || !!q;
+
+  // Show 20 at a time; reset the window whenever the filter changes.
+  useEffect(() => {
+    setVisible(20);
+  }, [typeFilter, userQuery]);
+  const shown = posts.slice(0, visible);
+  const hasMore = posts.length > shown.length;
 
   return (
     <div className="screen">
@@ -209,17 +217,24 @@ export function Feed({
               : "Nothing here yet. Posts from your mutual friends — and your own — show up here."}
           </div>
         ) : (
-          posts.map((p) => (
-            <PostCard
-              key={p.id}
-              post={p}
-              meId={me}
-              onReact={(emoji) => react(p.id, emoji)}
-              onOpenReactions={() => setReactFor(p.id)}
-              onDelete={p.authorId === me ? () => remove(p.id) : undefined}
-              onOpenUser={() => setSheetUser(p.authorId)}
-            />
-          ))
+          <>
+            {shown.map((p) => (
+              <PostCard
+                key={p.id}
+                post={p}
+                meId={me}
+                onReact={(emoji) => react(p.id, emoji)}
+                onOpenReactions={() => setReactFor(p.id)}
+                onDelete={p.authorId === me ? () => remove(p.id) : undefined}
+                onOpenUser={() => setSheetUser(p.authorId)}
+              />
+            ))}
+            {hasMore && (
+              <button className="btn ghost full" onClick={() => setVisible((v) => v + 20)}>
+                More
+              </button>
+            )}
+          </>
         )}
       </div>
 
