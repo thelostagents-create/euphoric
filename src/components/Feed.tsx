@@ -333,6 +333,7 @@ function PostCard({
         <img
           src={post.images[at]}
           alt=""
+          loading="lazy"
           style={{ width: "100%", borderRadius: 10, objectFit: "cover", maxHeight: 320, display: "block", marginTop: 10 }}
         />
       )}

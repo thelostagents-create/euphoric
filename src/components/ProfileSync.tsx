@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { useAuth } from "../auth";
 import { useStore } from "../store";
 import { ensureProfile, loadProfile, saveProfile, triggerServersReload } from "../lib/db";
+import { deleteMedia } from "../lib/storage";
 
 /**
  * Syncs the signed-in user's profile with Supabase: ensures a profile row
@@ -14,6 +15,7 @@ export function ProfileSync() {
   const uid = session?.user.id;
   const me = state.users[state.currentUserId];
   const loaded = useRef(false);
+  const savedAvatarRef = useRef("");
 
   // Load once per signed-in user, re-keying the current user by their auth id.
   useEffect(() => {
@@ -27,6 +29,7 @@ export function ProfileSync() {
       const p = await loadProfile(uid);
       if (!active) return;
       dispatch({ type: "SET_CURRENT_USER", id: uid, profile: p ?? {} });
+      savedAvatarRef.current = p?.avatar ?? "";
       loaded.current = true;
       triggerServersReload();
     })();
@@ -35,10 +38,16 @@ export function ProfileSync() {
     };
   }, [uid]);
 
-  // Save edits back (after the initial load, debounced).
+  // Save edits back (after the initial load, debounced). Delete old avatar
+  // from storage when the user uploads a new one.
   useEffect(() => {
     if (!uid || !loaded.current) return;
-    const t = setTimeout(() => saveProfile(uid, me), 800);
+    const t = setTimeout(async () => {
+      const oldAvatar = savedAvatarRef.current;
+      savedAvatarRef.current = me.avatar ?? "";
+      if (oldAvatar && oldAvatar !== me.avatar) await deleteMedia([oldAvatar]);
+      await saveProfile(uid, me);
+    }, 800);
     return () => clearTimeout(t);
   }, [uid, me]);
 
