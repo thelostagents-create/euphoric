@@ -83,7 +83,7 @@ export function AuthGate({ onGuest }: { onGuest: () => void }) {
               {" "}and{" "}
               <button
                 type="button"
-                onClick={() => setShowPrivacy(true)}
+                onClick={() => window.open("/privacy.html", "_blank")}
                 style={{ background: "none", border: "none", padding: 0, color: "var(--accent)", cursor: "pointer", textDecoration: "underline", font: "inherit" }}
               >
                 Privacy Policy

@@ -21,8 +21,8 @@ export interface ChatNav {
 
 const TABS: { id: Tab; icon: (p: { size?: number }) => JSX.Element; label: string }[] = [
   { id: "chat", icon: ChatIcon, label: "Chat" },
-  { id: "friends", icon: FriendsIcon, label: "Friends" },
   { id: "feed", icon: FeedIcon, label: "Feed" },
+  { id: "friends", icon: FriendsIcon, label: "Friends" },
   { id: "discover", icon: DiscoverIcon, label: "Explore" },
   { id: "profile", icon: ProfileIcon, label: "Profile" },
   { id: "settings", icon: SettingsIcon, label: "Settings" },

@@ -280,7 +280,7 @@ export function AccountSettings() {
       <button className="btn ghost full" onClick={() => setShowTerms(true)}>
         Terms of Service
       </button>
-      <button className="btn ghost full" style={{ marginTop: 8 }} onClick={() => setShowPrivacy(true)}>
+      <button className="btn ghost full" style={{ marginTop: 8 }} onClick={() => window.open("/privacy.html", "_blank")}>
         Privacy Policy
       </button>
 

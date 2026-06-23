@@ -475,7 +475,7 @@ textarea:focus {
 
 .reaction {
   background: var(--bg-3);
-  border: 1px solid var(--border);
+  border: 1.5px solid #111;
   border-radius: 999px;
   padding: 2px 8px;
   font-size: 12px;
