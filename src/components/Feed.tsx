@@ -4,7 +4,6 @@ import { useAuth } from "../auth";
 import { isSupabaseConfigured } from "../lib/supabase";
 import { createFeedPostDb, loadFeedDb, deleteFeedPostDb, toggleFeedReactionDb } from "../lib/db";
 import { ImagePicker } from "./ImagePicker";
-import { ImageCarousel } from "./ImageCarousel";
 import { ReactionPicker, longPressProps } from "./Reactions";
 import { UserSheet } from "./UserSheet";
 import { displayName } from "../social";
@@ -217,6 +216,14 @@ function PostCard({
   const { state } = useStore();
   const author = state.users[post.authorId];
   const reactions = Object.entries(post.reactions ?? {}).filter(([, ids]) => ids.length > 0);
+  const [imgAt, setImgAt] = useState(0);
+  const multi = post.images.length > 1;
+  const at = Math.min(imgAt, post.images.length - 1);
+  const go = (e: React.MouseEvent, dir: -1 | 1) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setImgAt((prev) => (prev + dir + post.images.length) % post.images.length);
+  };
 
   return (
     <div className="card" {...longPressProps(onOpenReactions)}>
@@ -227,12 +234,27 @@ function PostCard({
           onClick={onOpenUser}
           style={{ width: 38, height: 38, borderRadius: "50%", objectFit: "cover", cursor: "pointer" }}
         />
-        <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ minWidth: 0 }}>
           <span style={{ fontWeight: 700, cursor: "pointer" }} onClick={onOpenUser}>
             {displayName(author)}
           </span>
           <span className="muted" style={{ fontSize: 12, marginLeft: 8 }}>{timeAgo(post.createdAt)}</span>
         </div>
+        {multi && (
+          <div className="row" style={{ gap: 6, alignItems: "center", marginLeft: 4 }}>
+            <button className="carousel-nav" onClick={(e) => go(e, -1)} aria-label="Previous">‹</button>
+            <button className="carousel-nav" onClick={(e) => go(e, 1)} aria-label="Next">›</button>
+            <div style={{ display: "flex", gap: 5 }}>
+              {post.images.map((_, j) => (
+                <span
+                  key={j}
+                  style={{ width: 7, height: 7, borderRadius: "50%", background: j === at ? "var(--accent)" : "var(--border)" }}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+        <div style={{ flex: 1 }} />
         {onDelete && (
           <button className="btn ghost sm" title="Delete post" onClick={onDelete}>🗑</button>
         )}
@@ -240,7 +262,13 @@ function PostCard({
 
       {post.text && <p style={{ margin: "10px 0 0", whiteSpace: "pre-wrap", fontSize: 14 }}>{post.text}</p>}
 
-      {post.images.length > 0 && <ImageCarousel images={post.images} />}
+      {post.images.length > 0 && (
+        <img
+          src={post.images[at]}
+          alt=""
+          style={{ width: "100%", borderRadius: 10, objectFit: "cover", maxHeight: 320, display: "block", marginTop: 10 }}
+        />
+      )}
 
       <div className="row" style={{ gap: 6, marginTop: 10, flexWrap: "wrap", alignItems: "center" }}>
         {reactions.map(([emoji, ids]) => (
