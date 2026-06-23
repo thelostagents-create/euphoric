@@ -7,7 +7,7 @@ import { useAuth } from "../auth";
 import { isSupabaseConfigured } from "../lib/supabase";
 import { joinServerDb } from "../lib/db";
 
-const VERIFIED = "★verified";
+const TRENDING = "★trending";
 
 export function Discover() {
   const { state, dispatch } = useStore();
@@ -44,7 +44,7 @@ export function Discover() {
     return state.servers
       .filter((s) => s.discoverable)
       .filter((s) => {
-        if (query === VERIFIED) return s.verified;
+        if (query === TRENDING) return s.verified;
         return (
           s.name.toLowerCase().includes(query) ||
           s.description.toLowerCase().includes(query) ||
@@ -90,11 +90,11 @@ export function Discover() {
         />
         <div className="chips">
           <button
-            className={`chip ${q === VERIFIED ? "accent" : ""}`}
+            className={`chip ${q === TRENDING ? "accent" : ""}`}
             style={{ fontWeight: 800 }}
-            onClick={() => setQ(q === VERIFIED ? "" : VERIFIED)}
+            onClick={() => setQ(q === TRENDING ? "" : TRENDING)}
           >
-            #verified
+            🔥 trending
           </button>
           {allKeywords.map((k) => (
             <button key={k} className={`chip ${q === k ? "accent" : ""}`} onClick={() => setQ(q === k ? "" : k)}>
@@ -107,7 +107,7 @@ export function Discover() {
           <div className="center-empty">Pick a tag or search to find parties.</div>
         )}
         {active && results.length === 0 && (
-          <div className="center-empty">No parties match {q === VERIFIED ? "#verified" : `“${q}”`}.</div>
+          <div className="center-empty">No parties match {q === TRENDING ? "trending" : `“${q}”`}.</div>
         )}
 
         {results.map((s) => {
@@ -133,7 +133,7 @@ export function Discover() {
                 <div style={{ flex: 1 }}>
                   <h3>
                     {s.name}
-                    {s.verified && <span style={{ color: "var(--accent)", marginLeft: 5 }} title="Verified">✓</span>}
+                    {s.verified && <span style={{ marginLeft: 5 }} title="Trending">🔥</span>}
                   </h3>
                   <div className="muted" style={{ fontSize: 12 }}>
                     {s.members.length} members{serverStars(state, s.id) > 0 ? ` · ${serverStars(state, s.id)} ⭐` : ""}

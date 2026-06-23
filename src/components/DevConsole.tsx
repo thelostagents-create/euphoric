@@ -14,7 +14,7 @@ import type { Server, Tier, User } from "../types";
 
 type Pane = "reports" | "subs" | "servers";
 
-/** Developer-only control panel: triage reports, set tiers, verify parties. */
+/** Developer-only control panel: triage reports, set tiers, mark parties trending. */
 export function DevConsole() {
   const [pane, setPane] = useState<Pane>("reports");
 
@@ -36,7 +36,7 @@ export function DevConsole() {
           Subscriptions
         </button>
         <button className={`chip ${pane === "servers" ? "accent" : ""}`} onClick={() => setPane("servers")}>
-          Verify parties
+          Trending parties
         </button>
       </div>
       {pane === "reports" && <ReportsPane />}
@@ -189,7 +189,7 @@ function ServersPane() {
   return (
     <>
       <p className="muted" style={{ fontSize: 12, marginTop: 0 }}>
-        Enter a party's invite code (or full euphoric.chat link) to verify it.
+        Enter a party's invite code (or full euphoric.chat link) to mark it trending.
       </p>
       <div className="row" style={{ gap: 8 }}>
         <input
@@ -210,13 +210,13 @@ function ServersPane() {
               </span>
               <div>
                 <div style={{ fontWeight: 700 }}>
-                  {server.name} {server.verified && <span style={{ color: "var(--accent)" }}>✓</span>}
+                  {server.name} {server.verified && <span title="Trending">🔥</span>}
                 </div>
                 <div className="muted" style={{ fontSize: 11 }}>{server.members.length} members</div>
               </div>
             </div>
             <button className={`btn sm ${server.verified ? "ghost" : ""}`} disabled={busy} onClick={toggle}>
-              {server.verified ? "Unverify" : "Verify"}
+              {server.verified ? "Remove from trending" : "Add to trending"}
             </button>
           </div>
         </div>

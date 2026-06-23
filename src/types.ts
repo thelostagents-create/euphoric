@@ -247,7 +247,8 @@ export interface Server {
   invite: string;
   /** Discovery opt-in. */
   discoverable: boolean;
-  /** Verified parties surface under the bold #verified tag in Explore. */
+  /** Trending parties surface under the bold 🔥 trending tag in Explore.
+   *  (Stored as `verified` for backwards compatibility.) */
   verified: boolean;
   description: string;
   keywords: string[];

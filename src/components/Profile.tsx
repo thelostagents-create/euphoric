@@ -6,6 +6,7 @@ import { getMember } from "../permissions";
 import { ImagePicker } from "./ImagePicker";
 import { AestheticProfile } from "./AestheticProfile";
 import { CreativeProfile } from "./CreativeProfile";
+import { isNativeIOS } from "../lib/platform";
 import type { CreativeControl } from "../types";
 
 const FONTS = [
@@ -83,9 +84,11 @@ export function Profile({ onManageSubscription }: { onManageSubscription: () => 
       </div>
 
       <div className="list">
-        <button className="btn ghost full" onClick={onManageSubscription}>
-          ⭐ Manage subscription
-        </button>
+        {!isNativeIOS() && (
+          <button className="btn ghost full" onClick={onManageSubscription}>
+            ⭐ Manage subscription
+          </button>
+        )}
         <button
           className="btn ghost full"
           onClick={() => document.getElementById("aesthetic-section")?.scrollIntoView({ behavior: "smooth", block: "start" })}

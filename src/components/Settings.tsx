@@ -5,6 +5,7 @@ import { starCapacity, starsAvailable } from "../social";
 import { useAuth } from "../auth";
 import { isSupabaseConfigured } from "../lib/supabase";
 import { openPatreonPage, patreonUrl } from "../lib/payments";
+import { isNativeIOS } from "../lib/platform";
 import { DevConsole } from "./DevConsole";
 import { Terms } from "./Terms";
 import { PrivacyPolicy } from "./PrivacyPolicy";
@@ -64,6 +65,9 @@ export function AccountSettings() {
   const { session, signOut, deleteAccount } = useAuth();
   const user = state.users[state.currentUserId];
   const signedIn = isSupabaseConfigured && !!session;
+  // Apple requires digital subscriptions to use In-App Purchase, so the
+  // Patreon-based subscription UI is hidden inside the native iOS app.
+  const hideSubs = isNativeIOS();
 
   async function logOut() {
     await signOut();
@@ -189,56 +193,60 @@ export function AccountSettings() {
         </>
       )}
 
-      <div className="section-title" id="subscription-section">Subscription</div>
-      {TIERS.map((t) => {
-        const active = user.tier === t.id;
-        return (
-          <div
-            className="card"
-            key={t.id}
-            style={active ? { borderColor: "var(--accent-2)" } : undefined}
-          >
-            <div className="row" style={{ justifyContent: "space-between" }}>
-              <h3 style={{ margin: 0 }}>{t.name}</h3>
-              <span style={{ fontWeight: 800 }}>{t.price}</span>
-            </div>
-            <ul style={{ margin: "8px 0 12px", paddingLeft: 18, color: "var(--muted)", fontSize: 13 }}>
-              {t.perks.map((p) => (
-                <li key={p}>{p}</li>
-              ))}
-            </ul>
-            <button
-              className={`btn full ${active ? "ghost" : ""}`}
-              disabled={active}
-              onClick={() => {
-                if (signedIn && t.id !== "free" && patreonUrl) {
-                  openPatreonPage();
-                } else {
-                  dispatch({ type: "SET_TIER", tier: t.id });
-                }
-              }}
-            >
-              {active ? "Current plan" : t.id === "free" ? "Choose Free" : `Subscribe on Patreon`}
-            </button>
-          </div>
-        );
-      })}
-      {signedIn && patreonUrl && user.tier !== "free" && (
-        <a className="btn ghost full" href={patreonUrl} target="_blank" rel="noreferrer">
-          Manage / cancel on Patreon
-        </a>
-      )}
-      <p className="muted" style={{ fontSize: 11 }}>
-        {signedIn && patreonUrl
-          ? "Subscriptions are handled through Patreon. Your plan updates here automatically once your membership is confirmed."
-          : "Demo mode — no real payment is processed."}{" "}
-        You have {starCapacity(user.tier)} ⭐ Star{starCapacity(user.tier) === 1 ? "" : "s"} (
-        {starsAvailable(user)} available to spend).
-      </p>
-      {signedIn && patreonUrl && (
-        <p className="muted" style={{ fontSize: 11, marginTop: 0 }}>
-          Important: use the same email address on Patreon that you signed up with here ({session!.user.email}) so your subscription is linked automatically.
-        </p>
+      {!hideSubs && (
+        <>
+          <div className="section-title" id="subscription-section">Subscription</div>
+          {TIERS.map((t) => {
+            const active = user.tier === t.id;
+            return (
+              <div
+                className="card"
+                key={t.id}
+                style={active ? { borderColor: "var(--accent-2)" } : undefined}
+              >
+                <div className="row" style={{ justifyContent: "space-between" }}>
+                  <h3 style={{ margin: 0 }}>{t.name}</h3>
+                  <span style={{ fontWeight: 800 }}>{t.price}</span>
+                </div>
+                <ul style={{ margin: "8px 0 12px", paddingLeft: 18, color: "var(--muted)", fontSize: 13 }}>
+                  {t.perks.map((p) => (
+                    <li key={p}>{p}</li>
+                  ))}
+                </ul>
+                <button
+                  className={`btn full ${active ? "ghost" : ""}`}
+                  disabled={active}
+                  onClick={() => {
+                    if (signedIn && t.id !== "free" && patreonUrl) {
+                      openPatreonPage();
+                    } else {
+                      dispatch({ type: "SET_TIER", tier: t.id });
+                    }
+                  }}
+                >
+                  {active ? "Current plan" : t.id === "free" ? "Choose Free" : `Subscribe on Patreon`}
+                </button>
+              </div>
+            );
+          })}
+          {signedIn && patreonUrl && user.tier !== "free" && (
+            <a className="btn ghost full" href={patreonUrl} target="_blank" rel="noreferrer">
+              Manage / cancel on Patreon
+            </a>
+          )}
+          <p className="muted" style={{ fontSize: 11 }}>
+            {signedIn && patreonUrl
+              ? "Subscriptions are handled through Patreon. Your plan updates here automatically once your membership is confirmed."
+              : "Demo mode — no real payment is processed."}{" "}
+            You have {starCapacity(user.tier)} ⭐ Star{starCapacity(user.tier) === 1 ? "" : "s"} (
+            {starsAvailable(user)} available to spend).
+          </p>
+          {signedIn && patreonUrl && (
+            <p className="muted" style={{ fontSize: 11, marginTop: 0 }}>
+              Important: use the same email address on Patreon that you signed up with here ({session!.user.email}) so your subscription is linked automatically.
+            </p>
+          )}
+        </>
       )}
 
       <div className="section-title">Blocked users</div>
