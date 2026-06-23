@@ -13,26 +13,11 @@ export function ImageCarousel({ images, maxHeight = 320 }: { images: string[]; m
   };
 
   return (
-    <div style={{ position: "relative", marginTop: 10 }}>
-      <img
-        src={images[at]}
-        alt=""
-        style={{ width: "100%", borderRadius: 10, objectFit: "cover", maxHeight, display: "block" }}
-      />
+    <div style={{ marginTop: 10 }}>
       {images.length > 1 && (
-        <>
-          <button className="carousel-nav" style={{ left: 6 }} onClick={(e) => go(e, -1)} aria-label="Previous">‹</button>
-          <button className="carousel-nav" style={{ right: 6 }} onClick={(e) => go(e, 1)} aria-label="Next">›</button>
-          <div
-            style={{
-              position: "absolute",
-              bottom: 8,
-              left: "50%",
-              transform: "translateX(-50%)",
-              display: "flex",
-              gap: 5,
-            }}
-          >
+        <div className="row" style={{ justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+          <button className="carousel-nav" onClick={(e) => go(e, -1)} aria-label="Previous">‹</button>
+          <div style={{ display: "flex", gap: 5 }}>
             {images.map((_, j) => (
               <span
                 key={j}
@@ -40,13 +25,19 @@ export function ImageCarousel({ images, maxHeight = 320 }: { images: string[]; m
                   width: 6,
                   height: 6,
                   borderRadius: "50%",
-                  background: j === at ? "#fff" : "rgba(255,255,255,.45)",
+                  background: j === at ? "var(--accent)" : "var(--border)",
                 }}
               />
             ))}
           </div>
-        </>
+          <button className="carousel-nav" onClick={(e) => go(e, 1)} aria-label="Next">›</button>
+        </div>
       )}
+      <img
+        src={images[at]}
+        alt=""
+        style={{ width: "100%", borderRadius: 10, objectFit: "cover", maxHeight, display: "block" }}
+      />
     </div>
   );
 }

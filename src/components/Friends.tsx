@@ -10,6 +10,7 @@ import { ReplyArrowIcon, SearchIcon, XIcon } from "./Icons";
 import { StickerButton } from "./StickerButton";
 import { allowSend } from "../ratelimit";
 import { CreateGroupModal, GroupView, GroupAvatar } from "./Groups";
+import { UserSheet } from "./UserSheet";
 import type { GroupChat, Message, User } from "../types";
 import { useAuth } from "../auth";
 import { isSupabaseConfigured } from "../lib/supabase";
@@ -315,6 +316,7 @@ function DmView({ friendId, onBack }: { friendId: string; onBack: () => void }) 
   const [editDraft, setEditDraft] = useState("");
   const [search, setSearch] = useState("");
   const [searching, setSearching] = useState(false);
+  const [sheetUser, setSheetUser] = useState<string | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
 
   const users: Record<string, User> = live
@@ -350,8 +352,13 @@ function DmView({ friendId, onBack }: { friendId: string; onBack: () => void }) 
     <div className="chat-main" style={{ height: "100%" }}>
       <div className="topbar">
         <button className="btn ghost sm" onClick={onBack}>‹</button>
-        <img src={friend?.avatar} alt="" style={{ width: 28, height: 28, borderRadius: "50%" }} />
-        <h2>{displayName(friend)}</h2>
+        <img
+          src={friend?.avatar}
+          alt=""
+          style={{ width: 28, height: 28, borderRadius: "50%", cursor: "pointer" }}
+          onClick={() => setSheetUser(friendId)}
+        />
+        <h2 style={{ cursor: "pointer" }} onClick={() => setSheetUser(friendId)}>{displayName(friend)}</h2>
         <div className="spacer" />
         <button className="gear-btn" onClick={() => setSearching((v) => !v)} title="Search messages">
           <SearchIcon size={20} />
@@ -384,11 +391,11 @@ function DmView({ friendId, onBack }: { friendId: string; onBack: () => void }) 
           };
           return (
             <div key={m.id} className="msg" {...longPressProps(() => setReactFor(m.id))}>
-              <img className="avatar" src={author?.avatar} alt="" />
+              <img className="avatar" src={author?.avatar} alt="" style={{ cursor: "pointer" }} onClick={() => setSheetUser(m.authorId)} />
               <div className="body">
                 {m.replyTo && <ReplyPreview replyTo={m.replyTo} messages={messages} users={users} />}
                 <div className="meta">
-                  <span className="name">{displayName(author)}</span>
+                  <span className="name" style={{ cursor: "pointer" }} onClick={() => setSheetUser(m.authorId)}>{displayName(author)}</span>
                   <span className="time">{timeAgo(m.createdAt)}</span>
                   <span className="msg-tools">
                     <button className="msg-action" title="React or reply" onClick={() => setReactFor(m.id)}>
@@ -467,6 +474,8 @@ function DmView({ friendId, onBack }: { friendId: string; onBack: () => void }) 
           </div>
         </>
       )}
+
+      {sheetUser && <UserSheet userId={sheetUser} onClose={() => setSheetUser(null)} />}
     </div>
   );
 }

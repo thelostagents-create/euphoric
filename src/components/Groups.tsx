@@ -10,6 +10,7 @@ import { ReplyPreview, ReplyBar } from "./Reply";
 import { ReplyArrowIcon, SearchIcon, SettingsIcon } from "./Icons";
 import { ImagePicker } from "./ImagePicker";
 import { StickerButton } from "./StickerButton";
+import { UserSheet } from "./UserSheet";
 import { allowSend } from "../ratelimit";
 import { useAuth } from "../auth";
 import { isSupabaseConfigured } from "../lib/supabase";
@@ -203,6 +204,7 @@ export function GroupView({ groupId, onBack }: { groupId: string; onBack: () => 
   const [draft, setDraft] = useState("");
   const [showAdd, setShowAdd] = useState(false);
   const [reactFor, setReactFor] = useState<string | null>(null);
+  const [sheetUser, setSheetUser] = useState<string | null>(null);
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [searching, setSearching] = useState(false);
@@ -275,11 +277,11 @@ export function GroupView({ groupId, onBack }: { groupId: string; onBack: () => 
           const author = users[m.authorId];
           return (
             <div key={m.id} className="msg" {...longPressProps(() => setReactFor(m.id))}>
-              <img className="avatar" src={author?.avatar} alt="" />
+              <img className="avatar" src={author?.avatar} alt="" style={{ cursor: "pointer" }} onClick={() => setSheetUser(m.authorId)} />
               <div className="body">
                 {m.replyTo && <ReplyPreview replyTo={m.replyTo} messages={messages} users={users} />}
                 <div className="meta">
-                  <span className="name">{displayName(author)}</span>
+                  <span className="name" style={{ cursor: "pointer" }} onClick={() => setSheetUser(m.authorId)}>{displayName(author)}</span>
                   <span className="time">{timeAgo(m.createdAt)}</span>
                   <button className="msg-action" title="React or reply" onClick={() => setReactFor(m.id)}>
                     <ReplyArrowIcon size={15} />
@@ -339,6 +341,7 @@ export function GroupView({ groupId, onBack }: { groupId: string; onBack: () => 
           onClose={() => setReactFor(null)}
         />
       )}
+      {sheetUser && <UserSheet userId={sheetUser} onClose={() => setSheetUser(null)} />}
     </div>
   );
 }
