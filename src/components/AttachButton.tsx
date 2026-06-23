@@ -1,6 +1,7 @@
 import { useRef } from "react";
 import { useStore } from "../store";
-import { MAX_UPLOAD, readFileAsDataURL } from "../upload";
+import { MAX_UPLOAD } from "../upload";
+import { uploadMedia } from "../lib/storage";
 import { isNsfw } from "../lib/nsfw";
 import type { Attachment } from "../types";
 
@@ -33,7 +34,7 @@ export function AttachButton({
       alert("That image was flagged as explicit and can't be sent.");
       return;
     }
-    const url = await readFileAsDataURL(file);
+    const url = await uploadMedia(file);
     if (onSend) onSend({ kind, url });
     else dispatch({ type: "SEND_MESSAGE", channelId, content: "", attachment: { kind, url } });
   }

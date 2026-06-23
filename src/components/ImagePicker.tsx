@@ -1,5 +1,6 @@
 import { useRef } from "react";
-import { MAX_UPLOAD, readFileAsDataURL } from "../upload";
+import { MAX_UPLOAD } from "../upload";
+import { uploadMedia } from "../lib/storage";
 import { isNsfw } from "../lib/nsfw";
 
 /** URL field plus an "Import" button that reads a local image as a data URL. */
@@ -30,7 +31,7 @@ export function ImagePicker({
       alert("That image was flagged as explicit and can't be used.");
       return;
     }
-    onChange(await readFileAsDataURL(file));
+    onChange(await uploadMedia(file));
   }
 
   return (
