@@ -1,5 +1,9 @@
+import { useState } from "react";
+import { useStore } from "../store";
 import { bannerStyle } from "./Modal";
 import { displayName } from "../social";
+import { getMember } from "../permissions";
+import { ServerIcon } from "./ServerIcon";
 import type { CreativeControl, User } from "../types";
 
 /** A bordered box with an accent heading, used across all three layouts. */
@@ -116,7 +120,7 @@ export function CreativeProfile({ user }: { user: User }) {
         <div style={{ display: "flex", gap: 6, alignItems: "center", color: c.accentColor, fontWeight: 700 }}>
           <span>←</span><span>→</span><span>⟳</span>
           <div style={{ flex: 1, background: c.cardColor, border: `1px solid ${c.borderColor}`, borderRadius: 20, padding: "3px 10px", fontSize: 12, color: c.textColor, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-            {c.title || `${user.username}.carrd.co`}
+            {c.title || `${user.username}.net`}
           </div>
         </div>
         <Blurb user={user} c={c} />
@@ -143,30 +147,7 @@ export function CreativeProfile({ user }: { user: User }) {
   }
 
   // ── Style 4: fandom card, loose box-grid layout (ported from Aesthetic) ─
-  if (c.style === 4) {
-    return wrap(
-      <>
-        <Chrome c={c} label={c.title || `${name}'s space`} />
-        <Blurb user={user} c={c} />
-        <Banner user={user} h={120} />
-        <div style={{ display: "flex", gap: 10 }}>
-          <div style={{ flex: "0 0 auto", textAlign: "center" }}>
-            <Avatar user={user} c={c} size={72} />
-            <div style={{ fontWeight: 800, marginTop: 6, color: c.nameColor }}>@{user.username}</div>
-          </div>
-          <div style={{ flex: 1, minWidth: 0, fontSize: 13, whiteSpace: "pre-wrap" }}>
-            {user.bio || <span style={{ opacity: 0.5 }}>no bio yet</span>}
-          </div>
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-          <Box title={c.box1Title} body={c.box1Body} c={c} empty="likes…" />
-          <Box title={c.box2Title} body={c.box2Body} c={c} empty="dislikes…" />
-        </div>
-        <Box title={c.box3Title} body={c.box3Body} c={c} empty="before you follow…" />
-        <Box title={c.box4Title} body={c.box4Body} c={c} empty="do not follow if…" />
-      </>,
-    );
-  }
+  if (c.style === 4) return <FandomCard user={user} />;
 
   // ── Style 3: archive window, banner at the top ───────────────────────
   return wrap(
@@ -190,5 +171,84 @@ export function CreativeProfile({ user }: { user: User }) {
         </div>
       </div>
     </>,
+  );
+}
+
+/** Style 4 — the original loose, fandom-style box-grid layout with a gallery
+ *  and a repped party. Ported from the old standalone Aesthetic profile. */
+function FandomCard({ user }: { user: User }) {
+  const { state, dispatch } = useStore();
+  const c = user.creative;
+  const [joined, setJoined] = useState(false);
+  const gallery = c.gallery ?? [];
+
+  const repServer = c.repServerId ? state.servers.find((s) => s.id === c.repServerId) : undefined;
+  const alreadyMember = repServer ? !!getMember(repServer, state.currentUserId) : false;
+
+  function repClick() {
+    if (!repServer || alreadyMember) return;
+    dispatch({ type: "JOIN_SERVER", serverId: repServer.id });
+    setJoined(true);
+  }
+
+  return (
+    <div style={{ background: c.bgColor, borderRadius: 16, padding: 12, color: c.textColor }}>
+      <div style={{ background: c.accentColor, color: c.bgColor, borderRadius: 8, padding: "6px 12px", fontWeight: 800, marginBottom: 10 }}>
+        {c.title || `${displayName(user)}'s space`}
+      </div>
+
+      {user.blurb && (
+        <div style={{ background: c.cardColor, border: `1px solid ${c.borderColor}`, borderRadius: 8, padding: "6px 10px", marginBottom: 10, fontWeight: 600, fontSize: 13, color: user.blurbColor }}>
+          {user.blurb}
+        </div>
+      )}
+
+      <div style={{ height: 120, borderRadius: 10, ...bannerStyle(user) }} />
+
+      <div style={{ display: "flex", gap: 10, marginTop: 10 }}>
+        <div style={{ flex: "0 0 auto", textAlign: "center" }}>
+          <img src={user.avatar} alt="" style={{ width: 72, height: 72, borderRadius: 10, objectFit: "cover", border: `2px solid ${c.accentColor}` }} />
+          <div style={{ fontWeight: 800, marginTop: 6, color: c.nameColor }}>@{user.username}</div>
+        </div>
+        <div style={{ flex: 1, minWidth: 0, fontSize: 13, whiteSpace: "pre-wrap" }}>
+          {user.bio || <span style={{ opacity: 0.5 }}>no bio yet</span>}
+        </div>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 10 }}>
+        <Box title={c.box1Title} body={c.box1Body} c={c} empty="add your likes" />
+        <Box title={c.box2Title} body={c.box2Body} c={c} empty="add your dislikes" />
+      </div>
+      <div style={{ display: "grid", gap: 8, marginTop: 8 }}>
+        <Box title={c.box3Title} body={c.box3Body} c={c} empty="a little intro…" />
+        <Box title={c.box4Title} body={c.box4Body} c={c} empty="your boundaries…" />
+      </div>
+
+      {gallery.some(Boolean) && (
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6, marginTop: 10 }}>
+          {gallery.filter(Boolean).slice(0, 3).map((src, i) => (
+            <img key={i} src={src} alt="" style={{ width: "100%", aspectRatio: "1", objectFit: "cover", borderRadius: 8, border: `1px solid ${c.borderColor}` }} />
+          ))}
+        </div>
+      )}
+
+      {repServer && (
+        <button
+          onClick={repClick}
+          style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", marginTop: 10, background: c.cardColor, border: `1px solid ${c.borderColor}`, borderRadius: 8, padding: "8px 10px", color: c.textColor, textAlign: "left" }}
+        >
+          <span style={{ width: 30, height: 30, borderRadius: 8, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", flex: "0 0 auto" }}>
+            <ServerIcon server={repServer} size={20} />
+          </span>
+          <span style={{ flex: 1, minWidth: 0 }}>
+            <span style={{ fontSize: 11, opacity: 0.7, display: "block" }}>repping</span>
+            <b>{repServer.name}</b>
+          </span>
+          <span style={{ color: c.accentColor, fontWeight: 700, fontSize: 13 }}>
+            {joined || alreadyMember ? "Joined ✓" : "Join →"}
+          </span>
+        </button>
+      )}
+    </div>
   );
 }

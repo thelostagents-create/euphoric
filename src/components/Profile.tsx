@@ -218,10 +218,9 @@ export function Profile({ onManageSubscription }: { onManageSubscription: () => 
             </button>
             <button
               className={`chip ${mode === "aesthetic" ? "accent" : ""}`}
-              disabled={!canCustomize}
-              onClick={() => canCustomize && setMode("aesthetic")}
+              onClick={() => setMode("aesthetic")}
             >
-              🎨 Aesthetic {canCustomize ? "" : "🔒"}
+              🎨 Aesthetic
             </button>
             <button
               className={`chip ${mode === "creative" ? "accent" : ""}`}
@@ -233,15 +232,15 @@ export function Profile({ onManageSubscription }: { onManageSubscription: () => 
           </div>
           <p className="muted" style={{ fontSize: 12, margin: "10px 0 0" }}>
             {mode === "standard" && "The classic profile card with your banner, avatar and colors."}
-            {mode === "aesthetic" && "A custom, fill-in profile card with boxes and a gallery."}
-            {mode === "creative" && "A window-style profile card in one of three layouts."}
-            {!canCustomize && " Aesthetic & Creative are Supernova features."}
+            {mode === "aesthetic" && "A clean site-window card with two boxes — free for everyone."}
+            {mode === "creative" && "A window-style profile card in one of four layouts."}
+            {!canCustomize && " Creative Control is a Supernova feature."}
           </p>
         </div>
 
         {/* ── Style-specific controls ──────────────────────── */}
         {mode === "standard" && <StandardThemeSection canFont={canFont} />}
-        {mode === "aesthetic" && canCustomize && (
+        {mode === "aesthetic" && (
           <AestheticSection user={user} setAesthetic={setAesthetic} />
         )}
         {mode === "creative" && canCustomize && <CreativeControlSection />}
@@ -300,16 +299,7 @@ function AestheticSection({
   user: ReturnType<typeof useStore>["state"]["users"][string];
   setAesthetic: (patch: Partial<typeof user.aesthetic>) => void;
 }) {
-  const { state } = useStore();
   const a = user.aesthetic;
-  const myServers = state.servers.filter((s) => getMember(s, user.id));
-
-  function setGalleryAt(i: number, url: string) {
-    const g = [...a.gallery];
-    while (g.length < 3) g.push("");
-    g[i] = url;
-    setAesthetic({ gallery: g.slice(0, 3) });
-  }
 
   return (
     <>
@@ -340,43 +330,6 @@ function AestheticSection({
         <div className="section-title" style={{ marginTop: 6 }}>Boxes (rename any header)</div>
         <BoxEditor headerValue={a.likesTitle} onHeader={(v) => setAesthetic({ likesTitle: v })} bodyValue={a.likes} onBody={(v) => setAesthetic({ likes: v })} multiline />
         <BoxEditor headerValue={a.dislikesTitle} onHeader={(v) => setAesthetic({ dislikesTitle: v })} bodyValue={a.dislikes} onBody={(v) => setAesthetic({ dislikes: v })} multiline />
-
-        <div className="field">
-          <label>Gallery images (up to 3)</label>
-          {[0, 1, 2].map((i) => (
-            <div key={i} className="row" style={{ gap: 8, marginBottom: 6 }}>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <ImagePicker value={a.gallery[i] ?? ""} placeholder={`image ${i + 1}`} onChange={(v) => setGalleryAt(i, v)} />
-              </div>
-              {a.gallery[i] && (
-                <button className="btn ghost sm" title="Remove image" onClick={() => setGalleryAt(i, "")}>
-                  ✕
-                </button>
-              )}
-            </div>
-          ))}
-        </div>
-
-        <div className="field">
-          <label>Rep a party (its icon links to joining it)</label>
-          <div className="chips">
-            <button
-              className={`chip ${a.repServerId === "" ? "accent" : ""}`}
-              onClick={() => setAesthetic({ repServerId: "" })}
-            >
-              None
-            </button>
-            {myServers.map((s) => (
-              <button
-                key={s.id}
-                className={`chip ${a.repServerId === s.id ? "accent" : ""}`}
-                onClick={() => setAesthetic({ repServerId: s.id })}
-              >
-                {s.icon} {s.name}
-              </button>
-            ))}
-          </div>
-        </div>
       </div>
     </>
   );
@@ -444,15 +397,19 @@ function BlurbEditor() {
         maxLength={60}
         onChange={(e) => dispatch({ type: "UPDATE_PROFILE", blurb: e.target.value })}
       />
-      {/* Color picker sits directly below the blurb input. */}
-      <div className="row" style={{ gap: 8, marginTop: 6, alignItems: "center" }}>
+      {/* Color picker + hex code sit directly below the blurb input. */}
+      <div className="row" style={{ gap: 6, marginTop: 6, alignItems: "center" }}>
         <input
           type="color"
           className="swatch"
           value={user.blurbColor}
           onChange={(e) => dispatch({ type: "UPDATE_PROFILE", blurbColor: e.target.value })}
         />
-        <span className="muted" style={{ fontSize: 12 }}>Blurb color</span>
+        <input
+          value={user.blurbColor}
+          placeholder="#aabbcc"
+          onChange={(e) => dispatch({ type: "UPDATE_PROFILE", blurbColor: e.target.value })}
+        />
       </div>
     </div>
   );
@@ -470,9 +427,17 @@ function CreativeControlSection() {
   const { state, dispatch } = useStore();
   const user = state.users[state.currentUserId];
   const c = user.creative;
+  const myServers = state.servers.filter((s) => getMember(s, user.id));
 
   function setCreative(patch: Partial<CreativeControl>) {
     dispatch({ type: "UPDATE_CREATIVE", patch });
+  }
+
+  function setGalleryAt(i: number, url: string) {
+    const g = [...(c.gallery ?? [])];
+    while (g.length < 3) g.push("");
+    g[i] = url;
+    setCreative({ gallery: g.slice(0, 3) });
   }
 
   return (
@@ -525,6 +490,48 @@ function CreativeControlSection() {
         <BoxEditor headerValue={c.box2Title} onHeader={(v) => setCreative({ box2Title: v })} bodyValue={c.box2Body} onBody={(v) => setCreative({ box2Body: v })} multiline />
         <BoxEditor headerValue={c.box3Title} onHeader={(v) => setCreative({ box3Title: v })} bodyValue={c.box3Body} onBody={(v) => setCreative({ box3Body: v })} multiline />
         <BoxEditor headerValue={c.box4Title} onHeader={(v) => setCreative({ box4Title: v })} bodyValue={c.box4Body} onBody={(v) => setCreative({ box4Body: v })} multiline />
+
+        {/* Fandom card extras: a gallery and a repped party. */}
+        {c.style === 4 && (
+          <>
+            <div className="field" style={{ marginTop: 12 }}>
+              <label>Gallery images (up to 3)</label>
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="row" style={{ gap: 8, marginBottom: 6 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <ImagePicker value={(c.gallery ?? [])[i] ?? ""} placeholder={`image ${i + 1}`} onChange={(v) => setGalleryAt(i, v)} />
+                  </div>
+                  {(c.gallery ?? [])[i] && (
+                    <button className="btn ghost sm" title="Remove image" onClick={() => setGalleryAt(i, "")}>
+                      ✕
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <div className="field">
+              <label>Rep a party (its icon links to joining it)</label>
+              <div className="chips">
+                <button
+                  className={`chip ${(c.repServerId ?? "") === "" ? "accent" : ""}`}
+                  onClick={() => setCreative({ repServerId: "" })}
+                >
+                  None
+                </button>
+                {myServers.map((s) => (
+                  <button
+                    key={s.id}
+                    className={`chip ${c.repServerId === s.id ? "accent" : ""}`}
+                    onClick={() => setCreative({ repServerId: s.id })}
+                  >
+                    {s.icon} {s.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </>
   );

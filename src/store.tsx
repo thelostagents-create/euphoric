@@ -131,6 +131,8 @@ function defaultCreative(): CreativeControl {
     box3Body: "",
     box4Title: "Dislikes",
     box4Body: "",
+    gallery: [],
+    repServerId: "",
   };
 }
 

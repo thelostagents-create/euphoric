@@ -57,7 +57,7 @@ export function UserSheet({
   const canAssignRoles =
     !!server && (isOwner(server, state.currentUserId) || can(server, state.currentUserId, "MANAGE_ROLES"));
 
-  const aesthetic = user.aesthetic.enabled && supernova;
+  const aesthetic = user.aesthetic.enabled; // free for everyone
   const creative = user.creative.enabled && supernova;
 
   return (

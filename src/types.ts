@@ -117,6 +117,9 @@ export interface CreativeControl {
   box2Title: string; box2Body: string;
   box3Title: string; box3Body: string;
   box4Title: string; box4Body: string;
+  /** Fandom card (style 4) only: up to 3 gallery images and a repped party. */
+  gallery?: string[];
+  repServerId?: string;
 }
 
 export interface User {
