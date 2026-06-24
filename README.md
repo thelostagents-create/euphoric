@@ -1,4 +1,4 @@
-# Euphoric
+# Youphoric
 
 A minimal group-chat app with deep premium profile customization.
 

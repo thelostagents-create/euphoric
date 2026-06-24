@@ -15,7 +15,7 @@ export function PrivacyPolicy({ onClose }: { onClose: () => void }) {
 
         <h3>2. How we use it</h3>
         <p style={{ fontSize: 13 }}>
-          Your data is used only to operate Euphoric — to show your messages to the people you
+          Your data is used only to operate Youphoric — to show your messages to the people you
           send them to, display your profile, and maintain your account. We do not sell your
           personal data to third parties.
         </p>
@@ -41,7 +41,7 @@ export function PrivacyPolicy({ onClose }: { onClose: () => void }) {
 
         <h3>6. Children</h3>
         <p style={{ fontSize: 13 }}>
-          Euphoric is not directed at children under 13 (or the minimum digital-consent age in
+          Youphoric is not directed at children under 13 (or the minimum digital-consent age in
           your country). We do not knowingly collect data from them.
         </p>
 

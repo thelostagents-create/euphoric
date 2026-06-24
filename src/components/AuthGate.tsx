@@ -39,7 +39,7 @@ export function AuthGate({ onGuest }: { onGuest: () => void }) {
       <div className="screen" style={{ display: "flex", flexDirection: "column", justifyContent: "center", padding: "0 24px" }}>
         <div style={{ textAlign: "center", marginBottom: 24 }}>
           <div style={{ fontSize: 40 }}>🪐</div>
-          <h1 style={{ margin: "8px 0 0" }}>euphoric</h1>
+          <h1 style={{ margin: "8px 0 0" }}>youphoric</h1>
           <p className="muted" style={{ fontSize: 13 }}>{mode === "in" ? "Welcome back" : "Create your account"}</p>
         </div>
 

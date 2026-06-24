@@ -78,7 +78,7 @@ function user(
 
 const users: Record<string, User> = {
   me: user("me", "you", {
-    bio: "just vibing ✨ welcome to my corner of euphoric",
+    bio: "just vibing ✨ welcome to my corner of youphoric",
     blurb: "🌙 chilling tonight",
     blurbColor: "#ff6bd6",
     tier: "supernova",

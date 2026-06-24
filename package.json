@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "Euphoric — a minimal group chat app with deep profile customization.",
+  "description": "Youphoric — a minimal group chat app with deep profile customization.",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",

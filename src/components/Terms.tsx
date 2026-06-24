@@ -8,14 +8,14 @@ export function Terms({ onClose }: { onClose: () => void }) {
 
         <h3>1. Acceptance</h3>
         <p style={{ fontSize: 13 }}>
-          By creating an account on Euphoric you agree to these Terms. If you do not agree, do
+          By creating an account on Youphoric you agree to these Terms. If you do not agree, do
           not use the service. You must be at least 13 years old (or the minimum digital-consent
-          age in your country) to use Euphoric.
+          age in your country) to use Youphoric.
         </p>
 
         <h3>2. Conduct</h3>
         <p style={{ fontSize: 13 }}>
-          You agree not to use Euphoric to harass, threaten, or abuse others; to post illegal
+          You agree not to use Youphoric to harass, threaten, or abuse others; to post illegal
           content, sexual content involving minors, or content that infringes others' rights; to
           spam, scam, or distribute malware; or to evade bans. You are responsible for everything
           posted from your account.
@@ -23,7 +23,7 @@ export function Terms({ onClose }: { onClose: () => void }) {
 
         <h3>3. Content &amp; reporting</h3>
         <p style={{ fontSize: 13 }}>
-          You retain ownership of what you post but grant Euphoric a license to host and display
+          You retain ownership of what you post but grant Youphoric a license to host and display
           it so the service can function. Users may report content or accounts that violate these
           Terms, and we may remove content or suspend accounts at our discretion.
         </p>
@@ -36,7 +36,7 @@ export function Terms({ onClose }: { onClose: () => void }) {
 
         <h3>5. Disclaimer</h3>
         <p style={{ fontSize: 13 }}>
-          Euphoric is provided "as is" without warranties of any kind. We are not liable for any
+          Youphoric is provided "as is" without warranties of any kind. We are not liable for any
           damages arising from your use of the service, to the maximum extent permitted by law.
         </p>
 

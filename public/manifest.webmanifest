@@ -1,6 +1,6 @@
 {
-  "name": "Euphoric",
-  "short_name": "Euphoric",
+  "name": "Youphoric",
+  "short_name": "Youphoric",
   "description": "A minimal group chat with deep profile customization.",
   "start_url": "./",
   "scope": "./",

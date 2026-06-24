@@ -4,7 +4,7 @@ import type { CapacitorConfig } from "@capacitor/cli";
 // shell. Build the web app first (`npm run build`), then `npx cap sync`.
 const config: CapacitorConfig = {
   appId: "chat.euphoric.app",
-  appName: "Euphoric",
+  appName: "Youphoric",
   webDir: "dist",
   server: {
     // Allow the in-app webview to use https origins (Supabase, Patreon, etc).
