@@ -1,15 +1,17 @@
 // NSFW image classifier using nsfwjs + TensorFlow.js.
-// The model (~25 MB) is loaded once on first use and cached for the session.
-// Only images are classified; videos are not checked (nsfwjs doesn't support them).
-
-import * as nsfwjs from "nsfwjs";
+// nsfwjs + TensorFlow are imported dynamically so they DON'T weigh down the
+// initial app bundle — the chunk only downloads the first time a user picks
+// an image. The model weights (~25 MB) load once on first use and are cached
+// for the session. Only images are classified; videos are not checked.
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let modelPromise: Promise<any> | null = null;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function getModel(): Promise<any> {
-  if (!modelPromise) modelPromise = nsfwjs.load();
+  if (!modelPromise) {
+    modelPromise = import("nsfwjs").then((nsfwjs) => nsfwjs.load());
+  }
   return modelPromise;
 }
 
