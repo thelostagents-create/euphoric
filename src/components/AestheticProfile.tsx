@@ -1,5 +1,9 @@
+import { useState } from "react";
+import { useStore } from "../store";
 import { bannerStyle } from "./Modal";
 import { displayName } from "../social";
+import { getMember } from "../permissions";
+import { ServerIcon } from "./ServerIcon";
 import type { User } from "../types";
 
 /** A filled box with an accent heading. */
@@ -26,31 +30,47 @@ function Box({
   );
 }
 
-/** "Aesthetic avatar" profile — a clean site-window layout with 2 boxes.
+/** "Aesthetic avatar" profile — a clean site-window layout with 3 boxes.
  *  Free for everyone; the fuller fandom layout lives in Creative Control. */
 export function AestheticProfile({ user }: { user: User }) {
+  const { state, dispatch } = useStore();
   const a = user.aesthetic;
+  const [joined, setJoined] = useState(false);
+
+  const repServer = a.repServerId ? state.servers.find((s) => s.id === a.repServerId) : undefined;
+  const alreadyMember = repServer ? !!getMember(repServer, state.currentUserId) : false;
+
+  function repClick() {
+    if (!repServer || alreadyMember) return;
+    dispatch({ type: "JOIN_SERVER", serverId: repServer.id });
+    setJoined(true);
+  }
 
   return (
     <div style={{ background: a.bgColor, borderRadius: 16, padding: 12, color: a.textColor }}>
-      {/* window chrome title bar */}
-      <div
-        style={{
-          background: a.accentColor,
-          color: a.bgColor,
-          borderRadius: 8,
-          padding: "6px 12px",
-          fontWeight: 800,
-          marginBottom: 10,
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <span style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-          {a.title || `${displayName(user)}.net`}
-        </span>
-        <span style={{ opacity: 0.8 }}>✕</span>
+      {/* browser-tab title bar — a real-looking tab sitting on a toolbar edge */}
+      <div style={{ display: "flex", borderBottom: `2px solid ${a.accentColor}`, marginBottom: 10 }}>
+        <div
+          style={{
+            background: a.accentColor,
+            color: a.bgColor,
+            borderRadius: "9px 9px 0 0",
+            padding: "5px 11px",
+            fontWeight: 700,
+            fontSize: 13,
+            maxWidth: "88%",
+            display: "flex",
+            alignItems: "center",
+            gap: 7,
+          }}
+        >
+          {/* favicon dot */}
+          <span style={{ width: 10, height: 10, borderRadius: "50%", background: a.bgColor, opacity: 0.75, flex: "0 0 auto" }} />
+          <span style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {a.title || `${displayName(user)}.net`}
+          </span>
+          <span style={{ opacity: 0.7, flex: "0 0 auto" }}>✕</span>
+        </div>
       </div>
 
       {/* banner (from main profile) */}
@@ -97,6 +117,40 @@ export function AestheticProfile({ user }: { user: User }) {
         <Box title={a.likesTitle || "Likes"} body={a.likes} a={a} empty="add your likes" />
         <Box title={a.dislikesTitle || "Dislikes"} body={a.dislikes} a={a} empty="add your dislikes" />
       </div>
+      <div style={{ marginTop: 8 }}>
+        <Box title={a.beforeTitle || "Before you follow"} body={a.beforeFollow} a={a} empty="a little intro…" />
+      </div>
+
+      {/* repped server — tap the icon to join */}
+      {repServer && (
+        <button
+          onClick={repClick}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            width: "100%",
+            marginTop: 10,
+            background: a.cardColor,
+            border: `1px solid ${a.accentColor}`,
+            borderRadius: 8,
+            padding: "8px 10px",
+            color: a.textColor,
+            textAlign: "left",
+          }}
+        >
+          <span style={{ width: 30, height: 30, borderRadius: 8, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", flex: "0 0 auto" }}>
+            <ServerIcon server={repServer} size={20} />
+          </span>
+          <span style={{ flex: 1, minWidth: 0 }}>
+            <span style={{ fontSize: 11, opacity: 0.7, display: "block" }}>repping</span>
+            <b>{repServer.name}</b>
+          </span>
+          <span style={{ color: a.accentColor, fontWeight: 700, fontSize: 13 }}>
+            {joined || alreadyMember ? "Joined ✓" : "Join →"}
+          </span>
+        </button>
+      )}
     </div>
   );
 }

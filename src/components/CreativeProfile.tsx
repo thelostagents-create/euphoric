@@ -32,6 +32,32 @@ function Avatar({ user, c, size = 86 }: { user: User; c: CreativeControl; size?:
   );
 }
 
+/** A real-looking browser tab sitting on a toolbar edge. */
+function BrowserTab({ c, label }: { c: CreativeControl; label: string }) {
+  return (
+    <div style={{ display: "flex", borderBottom: `2px solid ${c.accentColor}` }}>
+      <div
+        style={{
+          background: c.accentColor,
+          color: c.bgColor,
+          borderRadius: "9px 9px 0 0",
+          padding: "5px 11px",
+          fontWeight: 700,
+          fontSize: 13,
+          maxWidth: "88%",
+          display: "flex",
+          alignItems: "center",
+          gap: 7,
+        }}
+      >
+        <span style={{ width: 10, height: 10, borderRadius: "50%", background: c.bgColor, opacity: 0.75, flex: "0 0 auto" }} />
+        <span style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{label}</span>
+        <span style={{ opacity: 0.7, flex: "0 0 auto" }}>✕</span>
+      </div>
+    </div>
+  );
+}
+
 /** A fake window chrome bar with the user's title. */
 function Chrome({ c, label }: { c: CreativeControl; label: string }) {
   return (
@@ -86,7 +112,7 @@ export function CreativeProfile({ user }: { user: User }) {
   if (c.style === 1) {
     return wrap(
       <>
-        <Chrome c={c} label={c.title || `${name}.net`} />
+        <BrowserTab c={c} label={c.title || `${name}.net`} />
         <Banner user={user} />
         <Blurb user={user} c={c} />
         <div style={{ display: "flex", gap: 10 }}>

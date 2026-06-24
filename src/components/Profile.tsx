@@ -299,7 +299,9 @@ function AestheticSection({
   user: ReturnType<typeof useStore>["state"]["users"][string];
   setAesthetic: (patch: Partial<typeof user.aesthetic>) => void;
 }) {
+  const { state } = useStore();
   const a = user.aesthetic;
+  const myServers = state.servers.filter((s) => getMember(s, user.id));
 
   return (
     <>
@@ -330,6 +332,28 @@ function AestheticSection({
         <div className="section-title" style={{ marginTop: 6 }}>Boxes (rename any header)</div>
         <BoxEditor headerValue={a.likesTitle} onHeader={(v) => setAesthetic({ likesTitle: v })} bodyValue={a.likes} onBody={(v) => setAesthetic({ likes: v })} multiline />
         <BoxEditor headerValue={a.dislikesTitle} onHeader={(v) => setAesthetic({ dislikesTitle: v })} bodyValue={a.dislikes} onBody={(v) => setAesthetic({ dislikes: v })} multiline />
+        <BoxEditor headerValue={a.beforeTitle} onHeader={(v) => setAesthetic({ beforeTitle: v })} bodyValue={a.beforeFollow} onBody={(v) => setAesthetic({ beforeFollow: v })} multiline />
+
+        <div className="field">
+          <label>Rep a party (its icon links to joining it)</label>
+          <div className="chips">
+            <button
+              className={`chip ${a.repServerId === "" ? "accent" : ""}`}
+              onClick={() => setAesthetic({ repServerId: "" })}
+            >
+              None
+            </button>
+            {myServers.map((s) => (
+              <button
+                key={s.id}
+                className={`chip ${a.repServerId === s.id ? "accent" : ""}`}
+                onClick={() => setAesthetic({ repServerId: s.id })}
+              >
+                {s.icon} {s.name}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
     </>
   );
@@ -416,10 +440,10 @@ function BlurbEditor() {
 }
 
 const CREATIVE_STYLES: { id: 1 | 2 | 3 | 4; label: string; desc: string }[] = [
-  { id: 1, label: "Site card", desc: "Window with the banner up top." },
   { id: 2, label: "Browser card", desc: "URL bar with the banner at the bottom." },
-  { id: 3, label: "Archive card", desc: "Two columns with the banner at the top." },
   { id: 4, label: "Fandom card", desc: "Loose box-grid with likes, dislikes and follow notes." },
+  { id: 3, label: "Archive card", desc: "Two columns with the banner at the top." },
+  { id: 1, label: "Site card", desc: "Window with the banner up top." },
 ];
 
 /** Creative-mode controls — only the fields unique to this layout. */
