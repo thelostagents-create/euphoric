@@ -142,6 +142,32 @@ export function CreativeProfile({ user }: { user: User }) {
     );
   }
 
+  // ── Style 4: fandom card, loose box-grid layout (ported from Aesthetic) ─
+  if (c.style === 4) {
+    return wrap(
+      <>
+        <Chrome c={c} label={c.title || `${name}'s space`} />
+        <Blurb user={user} c={c} />
+        <Banner user={user} h={120} />
+        <div style={{ display: "flex", gap: 10 }}>
+          <div style={{ flex: "0 0 auto", textAlign: "center" }}>
+            <Avatar user={user} c={c} size={72} />
+            <div style={{ fontWeight: 800, marginTop: 6, color: c.nameColor }}>@{user.username}</div>
+          </div>
+          <div style={{ flex: 1, minWidth: 0, fontSize: 13, whiteSpace: "pre-wrap" }}>
+            {user.bio || <span style={{ opacity: 0.5 }}>no bio yet</span>}
+          </div>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+          <Box title={c.box1Title} body={c.box1Body} c={c} empty="likes…" />
+          <Box title={c.box2Title} body={c.box2Body} c={c} empty="dislikes…" />
+        </div>
+        <Box title={c.box3Title} body={c.box3Body} c={c} empty="before you follow…" />
+        <Box title={c.box4Title} body={c.box4Body} c={c} empty="do not follow if…" />
+      </>,
+    );
+  }
+
   // ── Style 3: archive window, banner at the top ───────────────────────
   return wrap(
     <>

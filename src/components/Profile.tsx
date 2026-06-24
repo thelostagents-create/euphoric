@@ -42,6 +42,8 @@ export function Profile({ onManageSubscription }: { onManageSubscription: () => 
     dispatch({ type: "UPDATE_AESTHETIC", patch });
   }
 
+  const [showBasics, setShowBasics] = useState(false);
+
   // Usernames are unique and claimed explicitly.
   const [nameDraft, setNameDraft] = useState(user.username);
   const trimmed = nameDraft.trim();
@@ -131,69 +133,78 @@ export function Profile({ onManageSubscription }: { onManageSubscription: () => 
         </div>
 
         {/* ── Profile basics (shared by every style) ───────── */}
-        <div className="section-title">Profile basics</div>
+        <button
+          className="btn ghost full"
+          onClick={() => setShowBasics((v) => !v)}
+          style={{ textAlign: "left", marginTop: 4 }}
+        >
+          Profile basics {showBasics ? "▲" : "▼"}
+        </button>
+        {showBasics && (
+          <>
+            <div className="field">
+              <label>
+                Avatar — import or paste a URL {canGif ? "(animated GIFs allowed ✨)" : "(static only)"}
+              </label>
+              <ImagePicker
+                value={user.avatar}
+                placeholder="https://…"
+                onChange={(v) => dispatch({ type: "UPDATE_PROFILE", avatar: v })}
+              />
+              {!canGif && (
+                <p className="muted" style={{ fontSize: 12, marginTop: 6 }}>
+                  Upgrade to Premium to use an animated GIF avatar.
+                </p>
+              )}
+            </div>
 
-        <div className="field">
-          <label>
-            Avatar — import or paste a URL {canGif ? "(animated GIFs allowed ✨)" : "(static only)"}
-          </label>
-          <ImagePicker
-            value={user.avatar}
-            placeholder="https://…"
-            onChange={(v) => dispatch({ type: "UPDATE_PROFILE", avatar: v })}
-          />
-          {!canGif && (
-            <p className="muted" style={{ fontSize: 12, marginTop: 6 }}>
-              Upgrade to Premium to use an animated GIF avatar.
-            </p>
-          )}
-        </div>
+            <BlurbEditor />
 
-        <BlurbEditor />
+            <div className="field">
+              <label>Bio</label>
+              <textarea
+                rows={3}
+                value={user.bio}
+                placeholder="Tell people about yourself…"
+                onChange={(e) => dispatch({ type: "UPDATE_PROFILE", bio: e.target.value })}
+              />
+            </div>
 
-        <div className="field">
-          <label>Bio</label>
-          <textarea
-            rows={3}
-            value={user.bio}
-            placeholder="Tell people about yourself…"
-            onChange={(e) => dispatch({ type: "UPDATE_PROFILE", bio: e.target.value })}
-          />
-        </div>
-
-        <div className="card">
-          <HexField label="Banner color" value={user.banner.color} onChange={(v) => dispatch({ type: "UPDATE_BANNER", color: v })} />
-          <div className="field" style={{ marginTop: 12, marginBottom: 0 }}>
-            <label>Banner image — import or paste a URL {canGif ? "(GIFs allowed ✨)" : "(static only — GIFs need Premium)"}</label>
-            <ImagePicker
-              value={user.banner.image}
-              placeholder="https://…"
-              onChange={(v) => dispatch({ type: "UPDATE_BANNER", image: v })}
-            />
-            {user.banner.image && (
-              <>
-                <label style={{ display: "block", fontSize: 12, color: "var(--muted)", margin: "12px 0 5px", fontWeight: 600 }}>
-                  Crop — drag to choose which part of the banner shows
-                </label>
-                <input
-                  type="range"
-                  min={0}
-                  max={100}
-                  value={user.banner.position}
-                  onChange={(e) => dispatch({ type: "UPDATE_BANNER", position: Number(e.target.value) })}
-                  style={{ width: "100%" }}
+            <div className="card">
+              <HexField label="Banner color" value={user.banner.color} onChange={(v) => dispatch({ type: "UPDATE_BANNER", color: v })} />
+              <div className="field" style={{ marginTop: 12, marginBottom: 0 }}>
+                <label>Banner image — import or paste a URL {canGif ? "(GIFs allowed ✨)" : "(static only — GIFs need Premium)"}</label>
+                <ImagePicker
+                  value={user.banner.image}
+                  placeholder="https://…"
+                  onChange={(v) => dispatch({ type: "UPDATE_BANNER", image: v })}
                 />
-                <button
-                  className="btn ghost sm"
-                  style={{ marginTop: 8 }}
-                  onClick={() => dispatch({ type: "UPDATE_BANNER", image: "" })}
-                >
-                  Remove image
-                </button>
-              </>
-            )}
-          </div>
-        </div>
+                {user.banner.image && (
+                  <>
+                    <label style={{ display: "block", fontSize: 12, color: "var(--muted)", margin: "12px 0 5px", fontWeight: 600 }}>
+                      Crop — drag to choose which part of the banner shows
+                    </label>
+                    <input
+                      type="range"
+                      min={0}
+                      max={100}
+                      value={user.banner.position}
+                      onChange={(e) => dispatch({ type: "UPDATE_BANNER", position: Number(e.target.value) })}
+                      style={{ width: "100%" }}
+                    />
+                    <button
+                      className="btn ghost sm"
+                      style={{ marginTop: 8 }}
+                      onClick={() => dispatch({ type: "UPDATE_BANNER", image: "" })}
+                    >
+                      Remove image
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          </>
+        )}
 
         {/* ── Profile style picker ─────────────────────────── */}
         <div className="section-title">Profile style</div>
@@ -327,10 +338,8 @@ function AestheticSection({
         </div>
 
         <div className="section-title" style={{ marginTop: 6 }}>Boxes (rename any header)</div>
-        <BoxEditor headerValue={a.likesTitle} onHeader={(v) => setAesthetic({ likesTitle: v })} bodyValue={a.likes} onBody={(v) => setAesthetic({ likes: v })} />
-        <BoxEditor headerValue={a.dislikesTitle} onHeader={(v) => setAesthetic({ dislikesTitle: v })} bodyValue={a.dislikes} onBody={(v) => setAesthetic({ dislikes: v })} />
-        <BoxEditor headerValue={a.beforeTitle} onHeader={(v) => setAesthetic({ beforeTitle: v })} bodyValue={a.beforeFollow} onBody={(v) => setAesthetic({ beforeFollow: v })} multiline />
-        <BoxEditor headerValue={a.dnfTitle} onHeader={(v) => setAesthetic({ dnfTitle: v })} bodyValue={a.doNotFollow} onBody={(v) => setAesthetic({ doNotFollow: v })} multiline />
+        <BoxEditor headerValue={a.likesTitle} onHeader={(v) => setAesthetic({ likesTitle: v })} bodyValue={a.likes} onBody={(v) => setAesthetic({ likes: v })} multiline />
+        <BoxEditor headerValue={a.dislikesTitle} onHeader={(v) => setAesthetic({ dislikesTitle: v })} bodyValue={a.dislikes} onBody={(v) => setAesthetic({ dislikes: v })} multiline />
 
         <div className="field">
           <label>Gallery images (up to 3)</label>
@@ -427,29 +436,33 @@ function BlurbEditor() {
   const { state, dispatch } = useStore();
   const user = state.users[state.currentUserId];
   return (
-    <>
-      <div className="field">
-        <label>Blurb (a short status shown above your banner)</label>
-        <input
-          value={user.blurb}
-          placeholder="e.g. 🌙 chilling tonight"
-          maxLength={60}
-          onChange={(e) => dispatch({ type: "UPDATE_PROFILE", blurb: e.target.value })}
-        />
-      </div>
-      <HexField
-        label="Blurb color"
-        value={user.blurbColor}
-        onChange={(v) => dispatch({ type: "UPDATE_PROFILE", blurbColor: v })}
+    <div className="field">
+      <label>Blurb (a short status shown above your banner)</label>
+      <input
+        value={user.blurb}
+        placeholder="e.g. 🌙 chilling tonight"
+        maxLength={60}
+        onChange={(e) => dispatch({ type: "UPDATE_PROFILE", blurb: e.target.value })}
       />
-    </>
+      {/* Color picker sits directly below the blurb input. */}
+      <div className="row" style={{ gap: 8, marginTop: 6, alignItems: "center" }}>
+        <input
+          type="color"
+          className="swatch"
+          value={user.blurbColor}
+          onChange={(e) => dispatch({ type: "UPDATE_PROFILE", blurbColor: e.target.value })}
+        />
+        <span className="muted" style={{ fontSize: 12 }}>Blurb color</span>
+      </div>
+    </div>
   );
 }
 
-const CREATIVE_STYLES: { id: 1 | 2 | 3; label: string; desc: string }[] = [
+const CREATIVE_STYLES: { id: 1 | 2 | 3 | 4; label: string; desc: string }[] = [
   { id: 1, label: "Site card", desc: "Window with the banner up top." },
   { id: 2, label: "Browser card", desc: "URL bar with the banner at the bottom." },
   { id: 3, label: "Archive card", desc: "Two columns with the banner at the top." },
+  { id: 4, label: "Fandom card", desc: "Loose box-grid with likes, dislikes and follow notes." },
 ];
 
 /** Creative-mode controls — only the fields unique to this layout. */

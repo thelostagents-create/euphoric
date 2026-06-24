@@ -30,7 +30,7 @@ function Box({
   );
 }
 
-/** "Aesthetic avatars" profile card — a loose, link-free profile layout. */
+/** "Aesthetic avatars" profile card — a clean site-window layout with 2 boxes. */
 export function AestheticProfile({ user }: { user: User }) {
   const { state, dispatch } = useStore();
   const a = user.aesthetic;
@@ -47,7 +47,7 @@ export function AestheticProfile({ user }: { user: User }) {
 
   return (
     <div style={{ background: a.bgColor, borderRadius: 16, padding: 12, color: a.textColor }}>
-      {/* title bar */}
+      {/* window chrome title bar */}
       <div
         style={{
           background: a.accentColor,
@@ -56,12 +56,21 @@ export function AestheticProfile({ user }: { user: User }) {
           padding: "6px 12px",
           fontWeight: 800,
           marginBottom: 10,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
         }}
       >
-        {a.title || `${displayName(user)}'s space`}
+        <span style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          {a.title || `${displayName(user)}.net`}
+        </span>
+        <span style={{ opacity: 0.8 }}>✕</span>
       </div>
 
-      {/* blurb — shown right above the banner */}
+      {/* banner (from main profile) */}
+      <div style={{ height: 120, borderRadius: 10, ...bannerStyle(user) }} />
+
+      {/* blurb — shown right under the banner */}
       {user.blurb && (
         <div
           style={{
@@ -69,7 +78,7 @@ export function AestheticProfile({ user }: { user: User }) {
             border: `1px solid ${a.accentColor}`,
             borderRadius: 8,
             padding: "6px 10px",
-            marginBottom: 10,
+            marginTop: 10,
             fontWeight: 600,
             fontSize: 13,
             color: user.blurbColor,
@@ -79,32 +88,28 @@ export function AestheticProfile({ user }: { user: User }) {
         </div>
       )}
 
-      {/* banner (from main profile) */}
-      <div style={{ height: 120, borderRadius: 10, ...bannerStyle(user) }} />
-
-      {/* identity */}
+      {/* identity — avatar + status on the left, profile heading + bio on the right */}
       <div style={{ display: "flex", gap: 10, marginTop: 10 }}>
         <div style={{ flex: "0 0 auto", textAlign: "center" }}>
           <img
             src={user.avatar}
             alt=""
-            style={{ width: 72, height: 72, borderRadius: 10, objectFit: "cover", border: `2px solid ${a.accentColor}` }}
+            style={{ width: 86, height: 86, borderRadius: 8, objectFit: "cover", border: `2px solid ${a.accentColor}` }}
           />
           <div style={{ fontWeight: 800, marginTop: 6, color: a.nameColor }}>@{user.username}</div>
+          <div style={{ fontSize: 11, color: a.accentColor, fontWeight: 700 }}>ON-LINE</div>
         </div>
-        <div style={{ flex: 1, minWidth: 0, fontSize: 13, whiteSpace: "pre-wrap" }}>
-          {user.bio || <span style={{ opacity: 0.5 }}>no bio yet</span>}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 20, fontWeight: 800, fontStyle: "italic", color: a.nameColor }}>My Profile</div>
+          <div style={{ fontSize: 13, whiteSpace: "pre-wrap", marginTop: 4 }}>
+            {user.bio || <span style={{ opacity: 0.5 }}>no bio yet</span>}
+          </div>
         </div>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 10 }}>
         <Box title={a.likesTitle || "Likes"} body={a.likes} a={a} empty="add your likes" />
         <Box title={a.dislikesTitle || "Dislikes"} body={a.dislikes} a={a} empty="add your dislikes" />
-      </div>
-
-      <div style={{ display: "grid", gap: 8, marginTop: 8 }}>
-        <Box title={a.beforeTitle || "Before you follow"} body={a.beforeFollow} a={a} empty="a little intro…" />
-        <Box title={a.dnfTitle || "Do not follow if…"} body={a.doNotFollow} a={a} empty="your boundaries…" />
       </div>
 
       {a.gallery.some(Boolean) && (

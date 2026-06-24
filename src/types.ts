@@ -91,17 +91,18 @@ export interface Aesthetic {
 }
 
 /**
- * "Creative Control" — a customizable profile card with three window-style
+ * "Creative Control" — a customizable profile card with four window-style
  * layouts (Supernova only). Banner/avatar come from the main profile.
  *  - style 1: site window, banner at top, no social widgets
  *  - style 2: browser window, banner at the bottom
  *  - style 3: archive window, banner at the top
- * All three share four renameable text boxes and the same color controls.
+ *  - style 4: fandom card, loose box-grid layout (ported from Aesthetic)
+ * All share four renameable text boxes and the same color controls.
  */
 export interface CreativeControl {
   enabled: boolean;
-  /** Which layout: 1, 2, or 3. */
-  style: 1 | 2 | 3;
+  /** Which layout: 1, 2, 3, or 4. */
+  style: 1 | 2 | 3 | 4;
   /** Window/site title shown in the chrome bar. */
   title: string;
   /** The line under the name (pronouns / age / etc). */
