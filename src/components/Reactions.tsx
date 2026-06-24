@@ -1,7 +1,7 @@
 import { useStore } from "../store";
 import type { Message } from "../types";
 
-export const REACTION_EMOJIS = ["❤️", "👍", "👎", "😂", "🔥", "🎉"];
+export const REACTION_EMOJIS = ["❤️", "👍", "👎", "😂", "😭", "🔥", "🎉"];
 
 let pressTimer: number | undefined;
 let lastTap = 0;
