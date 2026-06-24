@@ -17,27 +17,30 @@ const FONTS = [
   { label: "Fantasy", value: "'Papyrus', fantasy" },
 ];
 
+type ProfileMode = "standard" | "aesthetic" | "creative";
+
 export function Profile({ onManageSubscription }: { onManageSubscription: () => void }) {
   const { state, dispatch } = useStore();
   const user = state.users[state.currentUserId];
   const canGif = user.tier === "premium" || user.tier === "supernova";
-  const canCustomize = user.tier === "supernova"; // aesthetic avatars
+  const canCustomize = user.tier === "supernova"; // aesthetic / creative profiles
   const canFont = canGif; // custom username font is paid
 
-  const showTheme = true; // profile colors are available to everyone
   const theme = user.theme;
   const a = user.aesthetic;
+  const c = user.creative;
+
+  // A single source of truth for which profile style is active. Creative wins
+  // if both legacy flags are on (matches the viewer in UserSheet).
+  const mode: ProfileMode = c.enabled ? "creative" : a.enabled ? "aesthetic" : "standard";
+  function setMode(m: ProfileMode) {
+    dispatch({ type: "UPDATE_AESTHETIC", patch: { enabled: m === "aesthetic" } });
+    dispatch({ type: "UPDATE_CREATIVE", patch: { enabled: m === "creative" } });
+  }
 
   function setAesthetic(patch: Partial<typeof a>) {
     dispatch({ type: "UPDATE_AESTHETIC", patch });
   }
-  function setGalleryAt(i: number, url: string) {
-    const g = [...a.gallery];
-    while (g.length < 3) g.push("");
-    g[i] = url;
-    setAesthetic({ gallery: g.slice(0, 3) });
-  }
-  const myServers = state.servers.filter((s) => getMember(s, user.id));
 
   // Usernames are unique and claimed explicitly.
   const [nameDraft, setNameDraft] = useState(user.username);
@@ -53,21 +56,17 @@ export function Profile({ onManageSubscription }: { onManageSubscription: () => 
         <h1>Profile</h1>
       </div>
 
-      {/* Live preview — reflects banner + supernova theming */}
+      {/* Live preview — reflects banner + theming */}
       <div className="profile-banner" style={bannerStyle(user)} />
       <div
         className="profile-hero"
-        style={
-          showTheme
-            ? { background: theme.backgroundColor, color: theme.textColor }
-            : undefined
-        }
+        style={{ background: theme.backgroundColor, color: theme.textColor }}
       >
         <img
           className="avatar overlap"
           src={user.avatar}
           alt=""
-          style={{ borderColor: showTheme ? theme.accentColor : "var(--accent)" }}
+          style={{ borderColor: theme.accentColor }}
         />
         <div
           className="username"
@@ -89,19 +88,8 @@ export function Profile({ onManageSubscription }: { onManageSubscription: () => 
             ⭐ Manage subscription
           </button>
         )}
-        <button
-          className="btn ghost full"
-          onClick={() => document.getElementById("aesthetic-section")?.scrollIntoView({ behavior: "smooth", block: "start" })}
-        >
-          🎨 Aesthetic Avatars
-        </button>
-        <button
-          className="btn ghost full"
-          onClick={() => document.getElementById("creative-section")?.scrollIntoView({ behavior: "smooth", block: "start" })}
-        >
-          🪟 Creative Control
-        </button>
 
+        {/* ── Identity ─────────────────────────────────────── */}
         <div className="field">
           <label>Username (unique — one per person)</label>
           <div className="row" style={{ gap: 8 }}>
@@ -142,19 +130,8 @@ export function Profile({ onManageSubscription }: { onManageSubscription: () => 
           />
         </div>
 
-        {!a.enabled && (
-        <>
-        <BlurbEditor />
-
-        <div className="field">
-          <label>Bio</label>
-          <textarea
-            rows={3}
-            value={user.bio}
-            placeholder="Tell people about yourself…"
-            onChange={(e) => dispatch({ type: "UPDATE_PROFILE", bio: e.target.value })}
-          />
-        </div>
+        {/* ── Profile basics (shared by every style) ───────── */}
+        <div className="section-title">Profile basics</div>
 
         <div className="field">
           <label>
@@ -172,7 +149,18 @@ export function Profile({ onManageSubscription }: { onManageSubscription: () => 
           )}
         </div>
 
-        <div className="section-title">Banner</div>
+        <BlurbEditor />
+
+        <div className="field">
+          <label>Bio</label>
+          <textarea
+            rows={3}
+            value={user.bio}
+            placeholder="Tell people about yourself…"
+            onChange={(e) => dispatch({ type: "UPDATE_PROFILE", bio: e.target.value })}
+          />
+        </div>
+
         <div className="card">
           <HexField label="Banner color" value={user.banner.color} onChange={(v) => dispatch({ type: "UPDATE_BANNER", color: v })} />
           <div className="field" style={{ marginTop: 12, marginBottom: 0 }}>
@@ -207,167 +195,181 @@ export function Profile({ onManageSubscription }: { onManageSubscription: () => 
           </div>
         </div>
 
-        <div className="section-title">Profile Theme</div>
+        {/* ── Profile style picker ─────────────────────────── */}
+        <div className="section-title">Profile style</div>
         <div className="card">
-          <div className="field">
-            <label>Username font {canFont ? "" : "(Premium)"}</label>
-            {canFont ? (
-              <div className="chips">
-                {FONTS.map((f) => (
-                  <button
-                    key={f.value}
-                    className={`chip ${theme.usernameFont === f.value ? "accent" : ""}`}
-                    style={{ fontFamily: f.value }}
-                    onClick={() => dispatch({ type: "UPDATE_THEME", theme: { usernameFont: f.value } })}
-                  >
-                    {f.label}
-                  </button>
-                ))}
-              </div>
-            ) : (
-              <p className="muted" style={{ fontSize: 12, margin: 0 }}>
-                Custom username fonts are a <b>Premium</b> feature.
-              </p>
-            )}
+          <div className="chips">
+            <button
+              className={`chip ${mode === "standard" ? "accent" : ""}`}
+              onClick={() => setMode("standard")}
+            >
+              Standard
+            </button>
+            <button
+              className={`chip ${mode === "aesthetic" ? "accent" : ""}`}
+              disabled={!canCustomize}
+              onClick={() => canCustomize && setMode("aesthetic")}
+            >
+              🎨 Aesthetic {canCustomize ? "" : "🔒"}
+            </button>
+            <button
+              className={`chip ${mode === "creative" ? "accent" : ""}`}
+              disabled={!canCustomize}
+              onClick={() => canCustomize && setMode("creative")}
+            >
+              🪟 Creative {canCustomize ? "" : "🔒"}
+            </button>
           </div>
-          <div className="row" style={{ gap: 12 }}>
-            <HexField label="Background" value={theme.backgroundColor} onChange={(v) => dispatch({ type: "UPDATE_THEME", theme: { backgroundColor: v } })} />
-            <HexField label="Accent" value={theme.accentColor} onChange={(v) => dispatch({ type: "UPDATE_THEME", theme: { accentColor: v } })} />
-          </div>
-          <div className="row" style={{ gap: 12, marginTop: 8 }}>
-            <HexField label="Name" value={theme.nameColor} onChange={(v) => dispatch({ type: "UPDATE_THEME", theme: { nameColor: v } })} />
-            <HexField label="Description" value={theme.textColor} onChange={(v) => dispatch({ type: "UPDATE_THEME", theme: { textColor: v } })} />
-          </div>
+          <p className="muted" style={{ fontSize: 12, margin: "10px 0 0" }}>
+            {mode === "standard" && "The classic profile card with your banner, avatar and colors."}
+            {mode === "aesthetic" && "A custom, fill-in profile card with boxes and a gallery."}
+            {mode === "creative" && "A window-style profile card in one of three layouts."}
+            {!canCustomize && " Aesthetic & Creative are Supernova features."}
+          </p>
         </div>
-        </>
+
+        {/* ── Style-specific controls ──────────────────────── */}
+        {mode === "standard" && <StandardThemeSection canFont={canFont} />}
+        {mode === "aesthetic" && canCustomize && (
+          <AestheticSection user={user} setAesthetic={setAesthetic} />
         )}
-
-        <div className="section-title" id="aesthetic-section">Aesthetic Avatars</div>
-        {!canCustomize ? (
-          <div className="card">
-            <p className="desc" style={{ margin: 0 }}>
-              Aesthetic Avatars — a custom, fill-in profile card — is a <b>Supernova</b> feature.
-            </p>
-          </div>
-        ) : (
-          <div className="card">
-            <div className="row" style={{ justifyContent: "space-between", marginBottom: 12 }}>
-              <div>
-                <div style={{ fontWeight: 700 }}>Aesthetic profile</div>
-                <div className="muted" style={{ fontSize: 12 }}>Replace your profile with a custom card.</div>
-              </div>
-              <button
-                className={`toggle ${a.enabled ? "on" : ""}`}
-                onClick={() => setAesthetic({ enabled: !a.enabled })}
-              />
-            </div>
-
-            {a.enabled && (
-              <>
-                <div style={{ marginBottom: 12 }}>
-                  <AestheticProfile user={user} />
-                </div>
-
-                <div className="field">
-                  <label>Title</label>
-                  <input value={a.title} placeholder="your space ✨" onChange={(e) => setAesthetic({ title: e.target.value })} />
-                </div>
-
-                <BlurbEditor />
-
-                <div className="field">
-                  <label>About me (bio)</label>
-                  <textarea
-                    rows={3}
-                    value={user.bio}
-                    placeholder="Tell people about yourself…"
-                    onChange={(e) => dispatch({ type: "UPDATE_PROFILE", bio: e.target.value })}
-                  />
-                </div>
-
-                <div className="field">
-                  <label>Profile picture {canGif ? "(GIFs allowed ✨)" : ""}</label>
-                  <ImagePicker value={user.avatar} placeholder="https://…" onChange={(v) => dispatch({ type: "UPDATE_PROFILE", avatar: v })} />
-                </div>
-                <div className="field">
-                  <label>Banner image</label>
-                  <ImagePicker value={user.banner.image} placeholder="https://…" onChange={(v) => dispatch({ type: "UPDATE_BANNER", image: v })} />
-                  {user.banner.image && (
-                    <input
-                      type="range"
-                      min={0}
-                      max={100}
-                      value={user.banner.position}
-                      onChange={(e) => dispatch({ type: "UPDATE_BANNER", position: Number(e.target.value) })}
-                      style={{ width: "100%", marginTop: 8 }}
-                    />
-                  )}
-                </div>
-
-                <div className="section-title" style={{ marginTop: 6 }}>Colors</div>
-                <div className="row" style={{ gap: 12 }}>
-                  <HexField label="Background" value={a.bgColor} onChange={(v) => setAesthetic({ bgColor: v })} />
-                  <HexField label="Card" value={a.cardColor} onChange={(v) => setAesthetic({ cardColor: v })} />
-                </div>
-                <div className="row" style={{ gap: 12, marginTop: 8 }}>
-                  <HexField label="Accent" value={a.accentColor} onChange={(v) => setAesthetic({ accentColor: v })} />
-                  <HexField label="Text" value={a.textColor} onChange={(v) => setAesthetic({ textColor: v })} />
-                </div>
-                <div className="row" style={{ gap: 12, marginTop: 8 }}>
-                  <HexField label="Name" value={a.nameColor} onChange={(v) => setAesthetic({ nameColor: v })} />
-                  <HexField label="Banner" value={user.banner.color} onChange={(v) => dispatch({ type: "UPDATE_BANNER", color: v })} />
-                </div>
-
-                <div className="section-title" style={{ marginTop: 6 }}>Boxes (rename any header)</div>
-                <BoxEditor headerValue={a.likesTitle} onHeader={(v) => setAesthetic({ likesTitle: v })} bodyValue={a.likes} onBody={(v) => setAesthetic({ likes: v })} />
-                <BoxEditor headerValue={a.dislikesTitle} onHeader={(v) => setAesthetic({ dislikesTitle: v })} bodyValue={a.dislikes} onBody={(v) => setAesthetic({ dislikes: v })} />
-                <BoxEditor headerValue={a.beforeTitle} onHeader={(v) => setAesthetic({ beforeTitle: v })} bodyValue={a.beforeFollow} onBody={(v) => setAesthetic({ beforeFollow: v })} multiline />
-                <BoxEditor headerValue={a.dnfTitle} onHeader={(v) => setAesthetic({ dnfTitle: v })} bodyValue={a.doNotFollow} onBody={(v) => setAesthetic({ doNotFollow: v })} multiline />
-
-                <div className="field">
-                  <label>Gallery images (up to 3)</label>
-                  {[0, 1, 2].map((i) => (
-                    <div key={i} className="row" style={{ gap: 8, marginBottom: 6 }}>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <ImagePicker value={a.gallery[i] ?? ""} placeholder={`image ${i + 1}`} onChange={(v) => setGalleryAt(i, v)} />
-                      </div>
-                      {a.gallery[i] && (
-                        <button className="btn ghost sm" title="Remove image" onClick={() => setGalleryAt(i, "")}>
-                          ✕
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-
-                <div className="field">
-                  <label>Rep a party (its icon links to joining it)</label>
-                  <div className="chips">
-                    <button
-                      className={`chip ${a.repServerId === "" ? "accent" : ""}`}
-                      onClick={() => setAesthetic({ repServerId: "" })}
-                    >
-                      None
-                    </button>
-                    {myServers.map((s) => (
-                      <button
-                        key={s.id}
-                        className={`chip ${a.repServerId === s.id ? "accent" : ""}`}
-                        onClick={() => setAesthetic({ repServerId: s.id })}
-                      >
-                        {s.icon} {s.name}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-        )}
-
-        <CreativeControlSection />
+        {mode === "creative" && canCustomize && <CreativeControlSection />}
       </div>
     </div>
+  );
+}
+
+/** Standard-mode theming: username font + the four profile colors. */
+function StandardThemeSection({ canFont }: { canFont: boolean }) {
+  const { state, dispatch } = useStore();
+  const theme = state.users[state.currentUserId].theme;
+  return (
+    <>
+      <div className="section-title">Profile theme</div>
+      <div className="card">
+        <div className="field">
+          <label>Username font {canFont ? "" : "(Premium)"}</label>
+          {canFont ? (
+            <div className="chips">
+              {FONTS.map((f) => (
+                <button
+                  key={f.value}
+                  className={`chip ${theme.usernameFont === f.value ? "accent" : ""}`}
+                  style={{ fontFamily: f.value }}
+                  onClick={() => dispatch({ type: "UPDATE_THEME", theme: { usernameFont: f.value } })}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <p className="muted" style={{ fontSize: 12, margin: 0 }}>
+              Custom username fonts are a <b>Premium</b> feature.
+            </p>
+          )}
+        </div>
+        <div className="row" style={{ gap: 12 }}>
+          <HexField label="Background" value={theme.backgroundColor} onChange={(v) => dispatch({ type: "UPDATE_THEME", theme: { backgroundColor: v } })} />
+          <HexField label="Accent" value={theme.accentColor} onChange={(v) => dispatch({ type: "UPDATE_THEME", theme: { accentColor: v } })} />
+        </div>
+        <div className="row" style={{ gap: 12, marginTop: 8 }}>
+          <HexField label="Name" value={theme.nameColor} onChange={(v) => dispatch({ type: "UPDATE_THEME", theme: { nameColor: v } })} />
+          <HexField label="Description" value={theme.textColor} onChange={(v) => dispatch({ type: "UPDATE_THEME", theme: { textColor: v } })} />
+        </div>
+      </div>
+    </>
+  );
+}
+
+/** Aesthetic-mode controls — only the fields unique to this layout. */
+function AestheticSection({
+  user,
+  setAesthetic,
+}: {
+  user: ReturnType<typeof useStore>["state"]["users"][string];
+  setAesthetic: (patch: Partial<typeof user.aesthetic>) => void;
+}) {
+  const { state } = useStore();
+  const a = user.aesthetic;
+  const myServers = state.servers.filter((s) => getMember(s, user.id));
+
+  function setGalleryAt(i: number, url: string) {
+    const g = [...a.gallery];
+    while (g.length < 3) g.push("");
+    g[i] = url;
+    setAesthetic({ gallery: g.slice(0, 3) });
+  }
+
+  return (
+    <>
+      <div className="section-title">Aesthetic profile</div>
+      <div className="card">
+        <div style={{ marginBottom: 12 }}>
+          <AestheticProfile user={user} />
+        </div>
+
+        <div className="field">
+          <label>Title</label>
+          <input value={a.title} placeholder="your space ✨" onChange={(e) => setAesthetic({ title: e.target.value })} />
+        </div>
+
+        <div className="section-title" style={{ marginTop: 6 }}>Colors</div>
+        <div className="row" style={{ gap: 12 }}>
+          <HexField label="Background" value={a.bgColor} onChange={(v) => setAesthetic({ bgColor: v })} />
+          <HexField label="Card" value={a.cardColor} onChange={(v) => setAesthetic({ cardColor: v })} />
+        </div>
+        <div className="row" style={{ gap: 12, marginTop: 8 }}>
+          <HexField label="Accent" value={a.accentColor} onChange={(v) => setAesthetic({ accentColor: v })} />
+          <HexField label="Text" value={a.textColor} onChange={(v) => setAesthetic({ textColor: v })} />
+        </div>
+        <div className="row" style={{ gap: 12, marginTop: 8 }}>
+          <HexField label="Name" value={a.nameColor} onChange={(v) => setAesthetic({ nameColor: v })} />
+        </div>
+
+        <div className="section-title" style={{ marginTop: 6 }}>Boxes (rename any header)</div>
+        <BoxEditor headerValue={a.likesTitle} onHeader={(v) => setAesthetic({ likesTitle: v })} bodyValue={a.likes} onBody={(v) => setAesthetic({ likes: v })} />
+        <BoxEditor headerValue={a.dislikesTitle} onHeader={(v) => setAesthetic({ dislikesTitle: v })} bodyValue={a.dislikes} onBody={(v) => setAesthetic({ dislikes: v })} />
+        <BoxEditor headerValue={a.beforeTitle} onHeader={(v) => setAesthetic({ beforeTitle: v })} bodyValue={a.beforeFollow} onBody={(v) => setAesthetic({ beforeFollow: v })} multiline />
+        <BoxEditor headerValue={a.dnfTitle} onHeader={(v) => setAesthetic({ dnfTitle: v })} bodyValue={a.doNotFollow} onBody={(v) => setAesthetic({ doNotFollow: v })} multiline />
+
+        <div className="field">
+          <label>Gallery images (up to 3)</label>
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="row" style={{ gap: 8, marginBottom: 6 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <ImagePicker value={a.gallery[i] ?? ""} placeholder={`image ${i + 1}`} onChange={(v) => setGalleryAt(i, v)} />
+              </div>
+              {a.gallery[i] && (
+                <button className="btn ghost sm" title="Remove image" onClick={() => setGalleryAt(i, "")}>
+                  ✕
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+
+        <div className="field">
+          <label>Rep a party (its icon links to joining it)</label>
+          <div className="chips">
+            <button
+              className={`chip ${a.repServerId === "" ? "accent" : ""}`}
+              onClick={() => setAesthetic({ repServerId: "" })}
+            >
+              None
+            </button>
+            {myServers.map((s) => (
+              <button
+                key={s.id}
+                className={`chip ${a.repServerId === s.id ? "accent" : ""}`}
+                onClick={() => setAesthetic({ repServerId: s.id })}
+              >
+                {s.icon} {s.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    </>
   );
 }
 
@@ -450,11 +452,10 @@ const CREATIVE_STYLES: { id: 1 | 2 | 3; label: string; desc: string }[] = [
   { id: 3, label: "Archive card", desc: "Two columns with the banner at the top." },
 ];
 
+/** Creative-mode controls — only the fields unique to this layout. */
 function CreativeControlSection() {
   const { state, dispatch } = useStore();
   const user = state.users[state.currentUserId];
-  const canCustomize = user.tier === "supernova";
-  const canGif = user.tier === "premium" || user.tier === "supernova";
   const c = user.creative;
 
   function setCreative(patch: Partial<CreativeControl>) {
@@ -463,113 +464,55 @@ function CreativeControlSection() {
 
   return (
     <>
-      <div className="section-title" id="creative-section">Creative Control</div>
-      {!canCustomize ? (
-        <div className="card">
-          <p className="desc" style={{ margin: 0 }}>
-            Creative Control — pick from three window-style profile cards — is a <b>Supernova</b> feature.
-          </p>
-        </div>
-      ) : (
-        <div className="card">
-          <div className="row" style={{ justifyContent: "space-between", marginBottom: 12 }}>
-            <div>
-              <div style={{ fontWeight: 700 }}>Creative Control</div>
-              <div className="muted" style={{ fontSize: 12 }}>A window-style profile card in one of three layouts.</div>
-            </div>
+      <div className="section-title">Creative Control</div>
+      <div className="card">
+        <div className="section-title" style={{ marginTop: 0 }}>Style</div>
+        <div className="chips" style={{ marginBottom: 12 }}>
+          {CREATIVE_STYLES.map((s) => (
             <button
-              className={`toggle ${c.enabled ? "on" : ""}`}
-              onClick={() => setCreative({ enabled: !c.enabled })}
-            />
-          </div>
-
-          {c.enabled && (
-            <>
-              {/* Blurb editor sits at the top of the menu. */}
-              <BlurbEditor />
-
-              <div className="section-title" style={{ marginTop: 6 }}>Style</div>
-              <div className="chips" style={{ marginBottom: 12 }}>
-                {CREATIVE_STYLES.map((s) => (
-                  <button
-                    key={s.id}
-                    className={`chip ${c.style === s.id ? "accent" : ""}`}
-                    onClick={() => setCreative({ style: s.id })}
-                    title={s.desc}
-                  >
-                    {s.label}
-                  </button>
-                ))}
-              </div>
-
-              <div style={{ marginBottom: 12 }}>
-                <CreativeProfile user={user} />
-              </div>
-
-              <div className="field">
-                <label>Window title</label>
-                <input value={c.title} placeholder="yoursite.net" onChange={(e) => setCreative({ title: e.target.value })} />
-              </div>
-              <div className="field">
-                <label>Details line (pronouns / age / etc)</label>
-                <input value={c.details} placeholder="16 · she/they · pisces" onChange={(e) => setCreative({ details: e.target.value })} />
-              </div>
-
-              <div className="field">
-                <label>About me (bio)</label>
-                <textarea
-                  rows={3}
-                  value={user.bio}
-                  placeholder="Tell people about yourself…"
-                  onChange={(e) => dispatch({ type: "UPDATE_PROFILE", bio: e.target.value })}
-                />
-              </div>
-
-              <div className="field">
-                <label>Profile picture {canGif ? "(GIFs allowed ✨)" : ""}</label>
-                <ImagePicker value={user.avatar} placeholder="https://…" onChange={(v) => dispatch({ type: "UPDATE_PROFILE", avatar: v })} />
-              </div>
-              <div className="field">
-                <label>Banner image</label>
-                <ImagePicker value={user.banner.image} placeholder="https://…" onChange={(v) => dispatch({ type: "UPDATE_BANNER", image: v })} />
-                {user.banner.image && (
-                  <input
-                    type="range"
-                    min={0}
-                    max={100}
-                    value={user.banner.position}
-                    onChange={(e) => dispatch({ type: "UPDATE_BANNER", position: Number(e.target.value) })}
-                    style={{ width: "100%", marginTop: 8 }}
-                  />
-                )}
-              </div>
-
-              <div className="section-title" style={{ marginTop: 6 }}>Colors</div>
-              <div className="row" style={{ gap: 12 }}>
-                <HexField label="Background" value={c.bgColor} onChange={(v) => setCreative({ bgColor: v })} />
-                <HexField label="Card" value={c.cardColor} onChange={(v) => setCreative({ cardColor: v })} />
-              </div>
-              <div className="row" style={{ gap: 12, marginTop: 8 }}>
-                <HexField label="Accent" value={c.accentColor} onChange={(v) => setCreative({ accentColor: v })} />
-                <HexField label="Text" value={c.textColor} onChange={(v) => setCreative({ textColor: v })} />
-              </div>
-              <div className="row" style={{ gap: 12, marginTop: 8 }}>
-                <HexField label="Name" value={c.nameColor} onChange={(v) => setCreative({ nameColor: v })} />
-                <HexField label="Border" value={c.borderColor} onChange={(v) => setCreative({ borderColor: v })} />
-              </div>
-              <div className="row" style={{ gap: 12, marginTop: 8 }}>
-                <HexField label="Banner" value={user.banner.color} onChange={(v) => dispatch({ type: "UPDATE_BANNER", color: v })} />
-              </div>
-
-              <div className="section-title" style={{ marginTop: 6 }}>Boxes (rename any header)</div>
-              <BoxEditor headerValue={c.box1Title} onHeader={(v) => setCreative({ box1Title: v })} bodyValue={c.box1Body} onBody={(v) => setCreative({ box1Body: v })} multiline />
-              <BoxEditor headerValue={c.box2Title} onHeader={(v) => setCreative({ box2Title: v })} bodyValue={c.box2Body} onBody={(v) => setCreative({ box2Body: v })} multiline />
-              <BoxEditor headerValue={c.box3Title} onHeader={(v) => setCreative({ box3Title: v })} bodyValue={c.box3Body} onBody={(v) => setCreative({ box3Body: v })} multiline />
-              <BoxEditor headerValue={c.box4Title} onHeader={(v) => setCreative({ box4Title: v })} bodyValue={c.box4Body} onBody={(v) => setCreative({ box4Body: v })} multiline />
-            </>
-          )}
+              key={s.id}
+              className={`chip ${c.style === s.id ? "accent" : ""}`}
+              onClick={() => setCreative({ style: s.id })}
+              title={s.desc}
+            >
+              {s.label}
+            </button>
+          ))}
         </div>
-      )}
+
+        <div style={{ marginBottom: 12 }}>
+          <CreativeProfile user={user} />
+        </div>
+
+        <div className="field">
+          <label>Window title</label>
+          <input value={c.title} placeholder="yoursite.net" onChange={(e) => setCreative({ title: e.target.value })} />
+        </div>
+        <div className="field">
+          <label>Details line (pronouns / age / etc)</label>
+          <input value={c.details} placeholder="16 · she/they · pisces" onChange={(e) => setCreative({ details: e.target.value })} />
+        </div>
+
+        <div className="section-title" style={{ marginTop: 6 }}>Colors</div>
+        <div className="row" style={{ gap: 12 }}>
+          <HexField label="Background" value={c.bgColor} onChange={(v) => setCreative({ bgColor: v })} />
+          <HexField label="Card" value={c.cardColor} onChange={(v) => setCreative({ cardColor: v })} />
+        </div>
+        <div className="row" style={{ gap: 12, marginTop: 8 }}>
+          <HexField label="Accent" value={c.accentColor} onChange={(v) => setCreative({ accentColor: v })} />
+          <HexField label="Text" value={c.textColor} onChange={(v) => setCreative({ textColor: v })} />
+        </div>
+        <div className="row" style={{ gap: 12, marginTop: 8 }}>
+          <HexField label="Name" value={c.nameColor} onChange={(v) => setCreative({ nameColor: v })} />
+          <HexField label="Border" value={c.borderColor} onChange={(v) => setCreative({ borderColor: v })} />
+        </div>
+
+        <div className="section-title" style={{ marginTop: 6 }}>Boxes (rename any header)</div>
+        <BoxEditor headerValue={c.box1Title} onHeader={(v) => setCreative({ box1Title: v })} bodyValue={c.box1Body} onBody={(v) => setCreative({ box1Body: v })} multiline />
+        <BoxEditor headerValue={c.box2Title} onHeader={(v) => setCreative({ box2Title: v })} bodyValue={c.box2Body} onBody={(v) => setCreative({ box2Body: v })} multiline />
+        <BoxEditor headerValue={c.box3Title} onHeader={(v) => setCreative({ box3Title: v })} bodyValue={c.box3Body} onBody={(v) => setCreative({ box3Body: v })} multiline />
+        <BoxEditor headerValue={c.box4Title} onHeader={(v) => setCreative({ box4Title: v })} bodyValue={c.box4Body} onBody={(v) => setCreative({ box4Body: v })} multiline />
+      </div>
     </>
   );
 }
